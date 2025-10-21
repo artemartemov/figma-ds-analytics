@@ -5575,6 +5575,12 @@ function countVariableBoundPropertiesRecursive(node: SceneNode, depth: number = 
   radius: number;
 } {
   const MAX_DEPTH = 50; // Prevent stack overflow on deeply nested components
+
+  // Early return: skip this node and ALL its descendants if it matches skip patterns
+  if (isSkippedNode(node) || ('visible' in node && node.visible === false)) {
+    return { colors: 0, typography: 0, spacing: 0, radius: 0 };
+  }
+
   const totals = countVariableBoundProperties(node);
 
   if (depth < MAX_DEPTH && 'children' in node) {
@@ -5603,6 +5609,12 @@ function detectHardcodedValuesRecursive(node: SceneNode, depth: number = 0): {
   radius: number;
 } {
   const MAX_DEPTH = 50; // Prevent stack overflow on deeply nested components
+
+  // Early return: skip this node and ALL its descendants if it matches skip patterns
+  if (isSkippedNode(node) || ('visible' in node && node.visible === false)) {
+    return { colors: 0, typography: 0, spacing: 0, radius: 0 };
+  }
+
   const totals = detectHardcodedValues(node);
 
   // Recursively check children
@@ -5630,6 +5642,11 @@ function collectOrphanDetails(node: SceneNode, details: OrphanDetail[], depth: n
   const MAX_DETAILS = 100; // Limit to prevent performance issues
 
   if (depth >= MAX_DEPTH || details.length >= MAX_DETAILS) return;
+
+  // Early return: skip this node and ALL its descendants if it matches skip patterns
+  if (isSkippedNode(node) || ('visible' in node && node.visible === false)) {
+    return;
+  }
 
   // Check this node for orphans
   const orphan = detectHardcodedValuesWithDetails(node);
