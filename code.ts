@@ -14,6 +14,8 @@ interface OrphanDetail {
   category: 'colors' | 'typography' | 'spacing' | 'radius';
   properties: string[];
   values?: string[];
+  parentComponentId: string;
+  parentComponentName: string;
 }
 
 interface CoverageMetrics {
@@ -4494,6 +4496,26 @@ async function saveCollectionMappings(mappings: Map<string, string>): Promise<vo
   await figma.clientStorage.setAsync(COLLECTION_MAPPINGS_KEY, obj);
 }
 
+// ========================================
+// IGNORED COMPONENTS STORAGE
+// ========================================
+
+const IGNORED_COMPONENTS_KEY = 'ignoredComponents';
+
+// Load ignored component IDs from client storage
+async function loadIgnoredComponents(): Promise<Set<string>> {
+  const stored = await figma.clientStorage.getAsync(IGNORED_COMPONENTS_KEY);
+  if (stored && Array.isArray(stored)) {
+    return new Set(stored);
+  }
+  return new Set();
+}
+
+// Save ignored component IDs to client storage
+async function saveIgnoredComponents(componentIds: Set<string>): Promise<void> {
+  await figma.clientStorage.setAsync(IGNORED_COMPONENTS_KEY, Array.from(componentIds));
+}
+
 // Get library name from variable by checking its collection
 async function getLibraryNameFromVariable(variable: Variable): Promise<string | null> {
   const mappings = await loadCollectionMappings();
@@ -4928,10 +4950,16 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   console.log('\n=== COLLECTING ORPHAN DETAILS ===');
   const orphanDetails: OrphanDetail[] = [];
   for (const instance of instancesToAnalyze) {
-    collectOrphanDetails(instance, orphanDetails);
+    const componentName = instance.mainComponent?.name || instance.name || 'Unknown Component';
+    collectOrphanDetails(instance, orphanDetails, 0, instance.id, componentName);
     if (orphanDetails.length >= 100) break; // Limit to first 100
   }
   console.log(`Collected ${orphanDetails.length} orphan details (max 100)`);
+
+  // Filter out orphans from ignored components
+  const ignoredComponents = await loadIgnoredComponents();
+  const filteredOrphanDetails = orphanDetails.filter(orphan => !ignoredComponents.has(orphan.parentComponentId));
+  console.log(`Filtered to ${filteredOrphanDetails.length} orphans after removing ignored components`);
 
   // Calculate TRUE total opportunities (variable-bound + hardcoded)
   // This is the research-backed approach: count ALL properties that could use tokens
@@ -4970,7 +4998,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
       radius: hardcodedTotals.radius,
       totalHardcoded,
       totalOpportunities,
-      details: orphanDetails,
+      details: filteredOrphanDetails,
     },
   };
 }
@@ -5469,7 +5497,7 @@ function detectHardcodedValues(node: SceneNode): {
 }
 
 // Detect hardcoded values WITH details for troubleshooting
-function detectHardcodedValuesWithDetails(node: SceneNode): OrphanDetail | null {
+function detectHardcodedValuesWithDetails(node: SceneNode, parentComponentId: string = '', parentComponentName: string = ''): OrphanDetail | null {
   // Skip hidden layers
   if ('visible' in node && node.visible === false) {
     return null;
@@ -5561,6 +5589,8 @@ function detectHardcodedValuesWithDetails(node: SceneNode): OrphanDetail | null 
       category,
       properties,
       values,
+      parentComponentId,
+      parentComponentName,
     };
   }
 
@@ -5637,7 +5667,7 @@ function detectHardcodedValuesRecursive(node: SceneNode, depth: number = 0): {
 }
 
 // Recursively collect detailed orphan information
-function collectOrphanDetails(node: SceneNode, details: OrphanDetail[], depth: number = 0): void {
+function collectOrphanDetails(node: SceneNode, details: OrphanDetail[], depth: number = 0, parentComponentId: string = '', parentComponentName: string = ''): void {
   const MAX_DEPTH = 50;
   const MAX_DETAILS = 100; // Limit to prevent performance issues
 
@@ -5649,7 +5679,7 @@ function collectOrphanDetails(node: SceneNode, details: OrphanDetail[], depth: n
   }
 
   // Check this node for orphans
-  const orphan = detectHardcodedValuesWithDetails(node);
+  const orphan = detectHardcodedValuesWithDetails(node, parentComponentId, parentComponentName);
   if (orphan) {
     details.push(orphan);
   }
@@ -5663,7 +5693,7 @@ function collectOrphanDetails(node: SceneNode, details: OrphanDetail[], depth: n
       if (('visible' in child && child.visible === false) || isSkippedNode(child)) {
         continue;
       }
-      collectOrphanDetails(child, details, depth + 1);
+      collectOrphanDetails(child, details, depth + 1, parentComponentId, parentComponentName);
     }
   }
 }
@@ -5742,6 +5772,42 @@ figma.ui.onmessage = async (msg) => {
       figma.ui.postMessage({
         type: 'error',
         message: error instanceof Error ? error.message : 'Failed to select node',
+      });
+    }
+  } else if (msg.type === 'ignore-component') {
+    try {
+      const componentId = msg.componentId;
+      const ignoredComponents = await loadIgnoredComponents();
+      ignoredComponents.add(componentId);
+      await saveIgnoredComponents(ignoredComponents);
+      console.log('Component ignored:', componentId);
+
+      figma.ui.postMessage({
+        type: 'component-ignored',
+        componentId,
+      });
+    } catch (error) {
+      figma.ui.postMessage({
+        type: 'error',
+        message: 'Failed to ignore component',
+      });
+    }
+  } else if (msg.type === 'unignore-component') {
+    try {
+      const componentId = msg.componentId;
+      const ignoredComponents = await loadIgnoredComponents();
+      ignoredComponents.delete(componentId);
+      await saveIgnoredComponents(ignoredComponents);
+      console.log('Component unignored:', componentId);
+
+      figma.ui.postMessage({
+        type: 'component-unignored',
+        componentId,
+      });
+    } catch (error) {
+      figma.ui.postMessage({
+        type: 'error',
+        message: 'Failed to unignore component',
       });
     }
   } else if (msg.type === 'cancel') {
