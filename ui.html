@@ -472,6 +472,7 @@
     let currentData = null; // Store current analysis data
     let ignoredComponentsSet = new Set(); // Track ignored components
     let orphanDetailsOpen = false; // Track accordion state
+    let lastLoadedData = null; // Track if we've received new data from backend
 
     function formatPercent(value) {
       return Math.round(value) + '%';
@@ -496,11 +497,21 @@
       console.log('displayResults called with data:', data);
       const { componentCoverage, variableCoverage, stats, libraryBreakdown, variableBreakdown, hardcodedValues } = data;
 
+      // Check if this is NEW data from backend (new analysis) or re-render with same data (from toggle)
+      const isNewData = (data !== lastLoadedData);
+      console.log('Is this new data from backend?', isNewData);
+
       // Store data for filtering
       currentData = data;
-      if (hardcodedValues && hardcodedValues.ignoredComponents) {
+
+      // IMPORTANT: Only load ignoredComponents from backend when we receive NEW data
+      // Don't overwrite local changes when re-rendering from checkbox toggles
+      if (isNewData && hardcodedValues && hardcodedValues.ignoredComponents) {
         ignoredComponentsSet = new Set(hardcodedValues.ignoredComponents);
-        console.log('Loaded ignoredComponents from data:', Array.from(ignoredComponentsSet));
+        lastLoadedData = data;
+        console.log('✓ New data from backend - loaded ignoredComponents:', Array.from(ignoredComponentsSet));
+      } else {
+        console.log('✓ Re-render with same data - keeping local ignoredComponentsSet:', Array.from(ignoredComponentsSet));
       }
 
       // Foundation-First Weighting (Research-backed formula)
