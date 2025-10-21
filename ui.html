@@ -427,18 +427,27 @@
     </div>
 
     <div class="breakdown-section">
-      <div class="breakdown-title">Component Sources</div>
-      <div id="libraryBreakdown"></div>
+      <div class="breakdown-title" onclick="toggleComponentSources()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+        <span>Component Sources</span>
+        <span id="component-sources-arrow" style="font-size: 12px; color: #666;">▼</span>
+      </div>
+      <div id="libraryBreakdown" style="display: block;"></div>
     </div>
 
     <div class="breakdown-section">
-      <div class="breakdown-title">Variable Sources</div>
-      <div id="variableBreakdown"></div>
+      <div class="breakdown-title" onclick="toggleVariableSources()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+        <span>Variable Sources</span>
+        <span id="variable-sources-arrow" style="font-size: 12px; color: #666;">▼</span>
+      </div>
+      <div id="variableBreakdown" style="display: block;"></div>
     </div>
 
     <div class="breakdown-section">
-      <div class="breakdown-title">Hardcoded Values (Should Use Variables)</div>
-      <div id="hardcodedBreakdown"></div>
+      <div class="breakdown-title" onclick="toggleHardcodedValues()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+        <span>Hardcoded Values (Should Use Variables)</span>
+        <span id="hardcoded-values-arrow" style="font-size: 12px; color: #666;">▼</span>
+      </div>
+      <div id="hardcodedBreakdown" style="display: block;"></div>
     </div>
 
     <div id="benchmark" class="benchmark" style="display: none;">
@@ -482,10 +491,15 @@
     let orphanDetailsOpen = false; // Track accordion state
     let lastLoadedData = null; // Track if we've received new data from backend
 
-    // Icon SVG for select buttons
-    const locationIconSVG = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 1C4.067 1 2.5 2.567 2.5 4.5C2.5 7.125 6 11 6 11C6 11 9.5 7.125 9.5 4.5C9.5 2.567 7.933 1 6 1Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="6" cy="4.5" r="1" fill="currentColor"/>
+    // Accordion states for breakdown sections
+    let componentSourcesOpen = true;
+    let variableSourcesOpen = true;
+    let hardcodedValuesOpen = true;
+
+    // Icon SVG for view buttons
+    const eyeIconSVG = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 2.5C3.5 2.5 1.5 4.5 1 6C1.5 7.5 3.5 9.5 6 9.5C8.5 9.5 10.5 7.5 11 6C10.5 4.5 8.5 2.5 6 2.5Z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="6" cy="6" r="1.5" stroke="currentColor" stroke-width="1" fill="none"/>
     </svg>`;
 
     function formatPercent(value) {
@@ -535,10 +549,10 @@
         console.log('✓ Re-render - keeping local ignored sets');
       }
 
-      // Foundation-First Weighting (Research-backed formula)
-      // Variables (foundation) 55%, Components 45%
-      // Based on industry research: foundational elements (tokens/variables) drive 80% of consistency value
-      const overallScore = (variableCoverage * 0.55) + (componentCoverage * 0.45);
+      // Balanced Weighting
+      // Variables 50%, Components 50%
+      // Equal weight for foundational tokens and component adoption
+      const overallScore = (variableCoverage * 0.5) + (componentCoverage * 0.5);
 
       // Calculate Orphan Rate (quality metric)
       // Orphan Rate = Hardcoded Values / Total Opportunities
@@ -553,8 +567,8 @@
       document.getElementById('componentScore').textContent = formatPercent(componentCoverage);
       document.getElementById('variableScore').textContent = formatPercent(variableCoverage);
 
-      // Update formula badges with actual calculations (Foundation-First methodology)
-      const overallFormula = `(Vars ${Math.round(variableCoverage)}% × 0.55) + (Comps ${Math.round(componentCoverage)}% × 0.45) = ${Math.round(overallScore)}%`;
+      // Update formula badges with actual calculations (50/50 balanced weighting)
+      const overallFormula = `(Vars ${Math.round(variableCoverage)}% × 0.5) + (Comps ${Math.round(componentCoverage)}% × 0.5) = ${Math.round(overallScore)}%`;
       document.getElementById('formulaBadge').textContent = overallFormula;
 
       const totalInstances = stats.libraryInstances + stats.localInstances;
@@ -715,7 +729,7 @@
             const filteredOrphanRate = filteredTotalOpportunities > 0
               ? (filteredTotalHardcoded / filteredTotalOpportunities) * 100
               : 0;
-            const filteredOverallScore = (filteredVariableCoverage * 0.55) + (componentCoverage * 0.45);
+            const filteredOverallScore = (filteredVariableCoverage * 0.5) + (componentCoverage * 0.5);
 
             // Update displayed metrics with filtered values
             const overallScoreEl = document.getElementById('overallScore');
@@ -726,8 +740,8 @@
               variableScoreEl.textContent = formatPercent(filteredVariableCoverage);
             }
 
-            // Update formula badges with filtered calculations
-            const filteredOverallFormula = `(Vars ${Math.round(filteredVariableCoverage)}% × 0.55) + (Comps ${Math.round(componentCoverage)}% × 0.45) = ${Math.round(filteredOverallScore)}%`;
+            // Update formula badges with filtered calculations (50/50 balanced weighting)
+            const filteredOverallFormula = `(Vars ${Math.round(filteredVariableCoverage)}% × 0.5) + (Comps ${Math.round(componentCoverage)}% × 0.5) = ${Math.round(filteredOverallScore)}%`;
             document.getElementById('formulaBadge').textContent = filteredOverallFormula;
 
             const filteredVariableFormula = filteredTotalOpportunities > 0
@@ -765,12 +779,12 @@
                         </div>
                         <button
                           onclick="selectNode('${detail.nodeId}')"
-                          title="Select in Figma"
+                          title="View in canvas"
                           style="padding: 4px 6px; background: #18A0FB; color: white; border: none; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center;"
                           onmouseover="this.style.background='#0D8ADB'"
                           onmouseout="this.style.background='#18A0FB'"
                         >
-                          ${locationIconSVG}
+                          ${eyeIconSVG}
                         </button>
                       </div>
                     </div>
@@ -800,12 +814,12 @@
                       </div>
                       <button
                         onclick="selectNode('${component.id}')"
-                        title="Select parent component in Figma"
+                        title="View in canvas"
                         style="padding: 4px 6px; background: #18A0FB; color: white; border: none; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center;"
                         onmouseover="this.style.background='#0D8ADB'"
                         onmouseout="this.style.background='#18A0FB'"
                       >
-                        ${locationIconSVG}
+                        ${eyeIconSVG}
                       </button>
                     </div>
                   </div>
@@ -986,6 +1000,54 @@
           details.style.display = 'none';
           arrow.textContent = '▼';
           orphanDetailsOpen = false;
+        }
+      }
+    }
+
+    function toggleComponentSources() {
+      const content = document.getElementById('libraryBreakdown');
+      const arrow = document.getElementById('component-sources-arrow');
+      if (content && arrow) {
+        if (content.style.display === 'none') {
+          content.style.display = 'block';
+          arrow.textContent = '▼';
+          componentSourcesOpen = true;
+        } else {
+          content.style.display = 'none';
+          arrow.textContent = '►';
+          componentSourcesOpen = false;
+        }
+      }
+    }
+
+    function toggleVariableSources() {
+      const content = document.getElementById('variableBreakdown');
+      const arrow = document.getElementById('variable-sources-arrow');
+      if (content && arrow) {
+        if (content.style.display === 'none') {
+          content.style.display = 'block';
+          arrow.textContent = '▼';
+          variableSourcesOpen = true;
+        } else {
+          content.style.display = 'none';
+          arrow.textContent = '►';
+          variableSourcesOpen = false;
+        }
+      }
+    }
+
+    function toggleHardcodedValues() {
+      const content = document.getElementById('hardcodedBreakdown');
+      const arrow = document.getElementById('hardcoded-values-arrow');
+      if (content && arrow) {
+        if (content.style.display === 'none') {
+          content.style.display = 'block';
+          arrow.textContent = '▼';
+          hardcodedValuesOpen = true;
+        } else {
+          content.style.display = 'none';
+          arrow.textContent = '►';
+          hardcodedValuesOpen = false;
         }
       }
     }

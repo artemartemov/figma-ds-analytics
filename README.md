@@ -8,7 +8,7 @@ A Figma plugin that measures design system adoption by analyzing component usage
 - **Component Coverage** - Track usage of design system components vs. local/custom components
 - **Token Adoption** - Measure adoption of design tokens (colors, typography, radius, borders)
 - **Orphan Rate** - Identify hardcoded values that should be using design tokens (target: <20%)
-- **Foundation-First Weighting** - Research-backed formula (Variables 55%, Components 45%)
+- **Balanced Weighting** - Equal weight formula (Variables 50%, Components 50%)
 - **Library Breakdown** - See which team libraries are being used most
 - **Industry Benchmarks** - Compare your adoption against industry standards
 - **Transparent Formulas** - Show executives exactly how metrics are calculated
@@ -56,9 +56,9 @@ A Figma plugin that measures design system adoption by analyzing component usage
 ### Understanding the Metrics
 
 #### Design System Adoption (Overall Score)
-**Formula:** `(Token Adoption × 0.55) + (Component Coverage × 0.45)`
+**Formula:** `(Token Adoption × 0.5) + (Component Coverage × 0.5)`
 
-The overall adoption score uses a **Foundation-First** weighting that prioritizes design tokens (55%) over components (45%). This reflects research showing that foundational elements (tokens/variables) drive 80% of consistency value.
+The overall adoption score uses **balanced weighting** that treats design tokens and components equally (50% each). This provides a comprehensive view of design system adoption across both foundational elements and component usage.
 
 **Industry Benchmarks:**
 - **<40%** - Early adoption (needs intervention)
@@ -139,7 +139,7 @@ figma-ds-coverage/
 
 **`displayResults()`** (ui.html:452)
 - Renders metrics in the UI
-- Calculates Foundation-First weighted score
+- Calculates balanced 50/50 weighted score
 - Shows breakdowns and benchmarks
 
 ### Building
@@ -167,7 +167,7 @@ This plugin's methodology is based on research from:
 - **Airbnb Design System** - Near 100% at maturity
 
 Key insights applied:
-- Foundation-First weighting (tokens > components)
+- Balanced weighting (tokens = components, 50/50 split)
 - Orphan Rate as a quality metric (<20% target)
 - Property-level token measurement (not component-level)
 - Transparent formula display for executives
