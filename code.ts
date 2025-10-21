@@ -5252,6 +5252,22 @@ function collectVariableIdsRecursive(node: any): Set<string> {
   return allIds;
 }
 
+// Check if a node is a spacer layer (should be skipped)
+function isSpacerNode(node: SceneNode): boolean {
+  const name = (node.name || '').toLowerCase();
+
+  // Check for common spacer patterns (case-insensitive)
+  const spacerPatterns = [
+    'spacer',
+    '.spacer value',
+    '_spacervertical',
+    '_spacerhorizontal',
+    '_spacer',
+  ];
+
+  return spacerPatterns.some(pattern => name.includes(pattern.toLowerCase()));
+}
+
 // Count properties using variables (for proper token adoption calculation)
 function countVariableBoundProperties(node: SceneNode): {
   colors: number;
@@ -5262,6 +5278,11 @@ function countVariableBoundProperties(node: SceneNode): {
 } {
   // Skip hidden layers
   if ('visible' in node && node.visible === false) {
+    return { colors: 0, typography: 0, spacing: 0, radius: 0, borders: 0 };
+  }
+
+  // Skip spacer layers
+  if (isSpacerNode(node)) {
     return { colors: 0, typography: 0, spacing: 0, radius: 0, borders: 0 };
   }
 
@@ -5354,6 +5375,11 @@ function detectHardcodedValues(node: SceneNode): {
 } {
   // Skip hidden layers
   if ('visible' in node && node.visible === false) {
+    return { colors: 0, typography: 0, spacing: 0, radius: 0, borders: 0 };
+  }
+
+  // Skip spacer layers
+  if (isSpacerNode(node)) {
     return { colors: 0, typography: 0, spacing: 0, radius: 0, borders: 0 };
   }
 
@@ -5462,6 +5488,11 @@ function detectHardcodedValues(node: SceneNode): {
 function detectHardcodedValuesWithDetails(node: SceneNode): OrphanDetail | null {
   // Skip hidden layers
   if ('visible' in node && node.visible === false) {
+    return null;
+  }
+
+  // Skip spacer layers
+  if (isSpacerNode(node)) {
     return null;
   }
 
@@ -5581,6 +5612,10 @@ function countVariableBoundPropertiesRecursive(node: SceneNode, depth: number = 
   if (depth < MAX_DEPTH && 'children' in node) {
     const children = node.children as SceneNode[];
     for (const child of children) {
+      // Skip hidden layers and spacer layers
+      if (('visible' in child && child.visible === false) || isSpacerNode(child)) {
+        continue;
+      }
       const childBound = countVariableBoundPropertiesRecursive(child, depth + 1);
       totals.colors += childBound.colors;
       totals.typography += childBound.typography;
@@ -5608,6 +5643,10 @@ function detectHardcodedValuesRecursive(node: SceneNode, depth: number = 0): {
   if (depth < MAX_DEPTH && 'children' in node) {
     const children = node.children as SceneNode[];
     for (const child of children) {
+      // Skip hidden layers and spacer layers
+      if (('visible' in child && child.visible === false) || isSpacerNode(child)) {
+        continue;
+      }
       const childHardcoded = detectHardcodedValuesRecursive(child, depth + 1);
       totals.colors += childHardcoded.colors;
       totals.typography += childHardcoded.typography;
@@ -5638,6 +5677,10 @@ function collectOrphanDetails(node: SceneNode, details: OrphanDetail[], depth: n
     const children = node.children as SceneNode[];
     for (const child of children) {
       if (details.length >= MAX_DETAILS) break;
+      // Skip hidden layers and spacer layers
+      if (('visible' in child && child.visible === false) || isSpacerNode(child)) {
+        continue;
+      }
       collectOrphanDetails(child, details, depth + 1);
     }
   }
