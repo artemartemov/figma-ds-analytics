@@ -640,6 +640,10 @@
             };
 
             // Group orphans by parent component (keep ignored ones in the list)
+            console.log('--- Grouping orphans and filtering ---');
+            console.log('Total orphan details:', hv.details.length);
+            console.log('Currently ignored component IDs:', Array.from(ignoredComponentsSet));
+
             const orphansByComponent = new Map();
             let filteredOrphanCount = 0;
             const filteredHardcodedCounts = { colors: 0, typography: 0, spacing: 0, radius: 0 };
@@ -667,6 +671,9 @@
               orphansByComponent.get(compId).orphans.push(detail);
             });
 
+            console.log('Filtered orphan count:', filteredOrphanCount);
+            console.log('Filtered hardcoded counts by category:', filteredHardcodedCounts);
+
             // Recalculate totals based on filtered orphans
             const filteredTotalHardcoded = Object.values(filteredHardcodedCounts).reduce((sum, val) => sum + val, 0);
 
@@ -684,18 +691,27 @@
               : 0;
             const filteredOverallScore = (filteredVariableCoverage * 0.55) + (componentCoverage * 0.45);
 
-            console.log('Metric Recalculation:', {
-              originalHardcoded: hv.totalHardcoded,
-              filteredHardcoded: filteredTotalHardcoded,
-              tokenBound: tokenBoundCount,
-              filteredOpportunities: filteredTotalOpportunities,
-              filteredVariableCoverage: Math.round(filteredVariableCoverage),
-              filteredOverallScore: Math.round(filteredOverallScore)
-            });
+            console.log('--- Metric Recalculation ---');
+            console.log('Original hardcoded:', hv.totalHardcoded);
+            console.log('Filtered hardcoded:', filteredTotalHardcoded);
+            console.log('Token bound count:', tokenBoundCount);
+            console.log('Filtered opportunities:', filteredTotalOpportunities);
+            console.log('Filtered variable coverage:', Math.round(filteredVariableCoverage) + '%');
+            console.log('Filtered overall score:', Math.round(filteredOverallScore) + '%');
 
             // Update displayed metrics with filtered values
-            document.getElementById('overallScore').textContent = formatPercent(filteredOverallScore);
-            document.getElementById('variableScore').textContent = formatPercent(filteredVariableCoverage);
+            console.log('→ Updating DOM elements');
+            const overallScoreEl = document.getElementById('overallScore');
+            const variableScoreEl = document.getElementById('variableScore');
+
+            if (overallScoreEl && variableScoreEl) {
+              overallScoreEl.textContent = formatPercent(filteredOverallScore);
+              variableScoreEl.textContent = formatPercent(filteredVariableCoverage);
+              console.log('✓ Updated overallScore to:', formatPercent(filteredOverallScore));
+              console.log('✓ Updated variableScore to:', formatPercent(filteredVariableCoverage));
+            } else {
+              console.log('ERROR: Could not find score elements!');
+            }
 
             // Update formula badges with filtered calculations
             const filteredOverallFormula = `(Vars ${Math.round(filteredVariableCoverage)}% × 0.55) + (Comps ${Math.round(componentCoverage)}% × 0.45) = ${Math.round(filteredOverallScore)}%`;
@@ -706,8 +722,10 @@
               : 'No properties analyzed';
             document.getElementById('variableFormula').textContent = filteredVariableFormula;
 
+            console.log('--- Rendering component list ---');
             const detailsList = Array.from(orphansByComponent.values()).map(component => {
               const isIgnored = ignoredComponentsSet.has(component.id);
+              console.log(`Component ${component.name} (${component.id}): isIgnored=${isIgnored}`);
               const opacityStyle = isIgnored ? 'opacity: 0.5;' : '';
               const bgColor = isIgnored ? '#f9f9f9' : '#f5f5f5';
               const orphanItems = component.orphans.map(detail => {
@@ -743,16 +761,16 @@
                       <div style="font-weight: 600; color: #333; font-size: 11px;">${component.name} ${isIgnored ? '(Ignored)' : ''}</div>
                       <div style="font-size: 10px; color: #666; margin-top: 2px;">${component.orphans.length} orphan${component.orphans.length > 1 ? 's' : ''}</div>
                     </div>
-                    <label style="display: flex; align-items: center; cursor: pointer; font-size: 10px; color: #666; user-select: none;">
+                    <div style="display: flex; align-items: center; font-size: 10px; color: #666;">
                       <input
                         type="checkbox"
+                        id="ignore-${component.id}"
                         ${isIgnored ? 'checked' : ''}
-                        onclick="event.stopPropagation()"
                         onchange="toggleIgnoreComponent('${component.id}', event)"
                         style="margin-right: 6px; cursor: pointer;"
                       />
-                      <span onclick="event.stopPropagation()">Ignore</span>
-                    </label>
+                      <label for="ignore-${component.id}" style="cursor: pointer; user-select: none;">Ignore</label>
+                    </div>
                   </div>
                   <div style="padding: 8px; background: #fafafa;">
                     ${orphanItems}
@@ -928,6 +946,11 @@
     }
 
     function toggleIgnoreComponent(componentId, event) {
+      console.log('===== toggleIgnoreComponent called =====');
+      console.log('Component ID:', componentId);
+      console.log('Checkbox checked state:', event.target.checked);
+      console.log('Before toggle - ignoredComponentsSet:', Array.from(ignoredComponentsSet));
+
       // Stop propagation to prevent any parent click handlers
       if (event) {
         event.stopPropagation();
@@ -936,7 +959,7 @@
       // Toggle in local set
       if (ignoredComponentsSet.has(componentId)) {
         ignoredComponentsSet.delete(componentId);
-        console.log('Unignoring component:', componentId);
+        console.log('→ Unignoring component:', componentId);
         // Send unignore message to backend
         parent.postMessage({
           pluginMessage: {
@@ -946,7 +969,7 @@
         }, '*');
       } else {
         ignoredComponentsSet.add(componentId);
-        console.log('Ignoring component:', componentId);
+        console.log('→ Ignoring component:', componentId);
         // Send ignore message to backend
         parent.postMessage({
           pluginMessage: {
@@ -956,12 +979,16 @@
         }, '*');
       }
 
-      console.log('Ignored components set:', Array.from(ignoredComponentsSet));
+      console.log('After toggle - ignoredComponentsSet:', Array.from(ignoredComponentsSet));
 
       // Re-render with updated filter (no re-analysis needed)
       if (currentData) {
+        console.log('→ Calling displayResults to re-render');
         displayResults(currentData);
+      } else {
+        console.log('ERROR: currentData is null!');
       }
+      console.log('===== toggleIgnoreComponent done =====\n');
     }
 
     function saveLibraries() {
