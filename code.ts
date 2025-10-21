@@ -4547,6 +4547,26 @@ function detectVariableCollections(componentInstances: InstanceNode[]): Map<stri
 
 figma.showUI(__html__, { width: 440, height: 720 });
 
+// Send initial selection status to UI
+function checkAndSendSelectionStatus() {
+  const selection = figma.currentPage.selection;
+  const hasSelection = selection.length > 0;
+
+  figma.ui.postMessage({
+    type: 'selection-status',
+    hasSelection: hasSelection,
+    count: selection.length,
+  });
+}
+
+// Check selection status on plugin open
+checkAndSendSelectionStatus();
+
+// Listen for selection changes
+figma.on('selectionchange', () => {
+  checkAndSendSelectionStatus();
+});
+
 // Main analysis function
 async function analyzeCoverage(): Promise<CoverageMetrics> {
   const page = figma.currentPage;

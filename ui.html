@@ -448,6 +448,25 @@
 
   <div id="error" style="display: none;" class="error"></div>
 
+  <div id="empty-selection" style="display: none;">
+    <div style="text-align: center; padding: 40px 20px;">
+      <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;">📐</div>
+      <div style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 8px;">
+        No Selection
+      </div>
+      <div style="font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 24px;">
+        Select one or more frames, components, or sections on your canvas to analyze design system coverage.
+      </div>
+      <button class="btn-primary" id="analyzeBtn" disabled style="opacity: 0.5; cursor: not-allowed;">
+        Analyze Selection
+      </button>
+      <div style="margin-top: 16px;">
+        <button class="btn-secondary" onclick="showSettings()">⚙️ Settings</button>
+        <button class="btn-secondary" onclick="close()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let availableLibraries = [];
 
@@ -633,6 +652,7 @@
       document.getElementById('loading').style.display = 'none';
       document.getElementById('results').style.display = 'block';
       document.getElementById('error').style.display = 'none';
+      document.getElementById('empty-selection').style.display = 'none';
     }
 
     function displayError(message) {
@@ -640,12 +660,14 @@
       errorEl.textContent = 'Error: ' + message;
       errorEl.style.display = 'block';
       document.getElementById('loading').style.display = 'none';
+      document.getElementById('empty-selection').style.display = 'none';
     }
 
     function refresh() {
       document.getElementById('loading').style.display = 'block';
       document.getElementById('results').style.display = 'none';
       document.getElementById('error').style.display = 'none';
+      document.getElementById('empty-selection').style.display = 'none';
       parent.postMessage({ pluginMessage: { type: 'analyze' } }, '*');
     }
 
@@ -660,7 +682,16 @@
 
     function cancelSettings() {
       document.getElementById('settings').style.display = 'none';
-      document.getElementById('results').style.display = 'block';
+      // Check if we have results to show, otherwise show empty selection
+      const results = document.getElementById('results');
+      const emptySelection = document.getElementById('empty-selection');
+      const overallScore = document.getElementById('overallScore').textContent;
+
+      if (overallScore && overallScore !== '--') {
+        results.style.display = 'block';
+      } else {
+        emptySelection.style.display = 'block';
+      }
     }
 
     function displaySettings(libraries) {
@@ -699,6 +730,7 @@
       }
 
       document.getElementById('results').style.display = 'none';
+      document.getElementById('empty-selection').style.display = 'none';
       document.getElementById('settings').style.display = 'block';
     }
 
@@ -733,6 +765,45 @@
       refresh();
     }
 
+    // Handle selection status updates
+    function handleSelectionStatus(hasSelection, count) {
+      const analyzeBtn = document.getElementById('analyzeBtn');
+      const emptySelection = document.getElementById('empty-selection');
+      const loading = document.getElementById('loading');
+      const results = document.getElementById('results');
+      const error = document.getElementById('error');
+      const settings = document.getElementById('settings');
+
+      if (hasSelection) {
+        // Enable analyze button
+        analyzeBtn.disabled = false;
+        analyzeBtn.style.opacity = '1';
+        analyzeBtn.style.cursor = 'pointer';
+        analyzeBtn.textContent = `Analyze Selection (${count} item${count > 1 ? 's' : ''})`;
+        analyzeBtn.onclick = refresh;
+
+        // If we're in empty-selection view, stay there but with enabled button
+        // Otherwise keep current view
+        if (emptySelection.style.display !== 'none') {
+          // Keep empty selection view but with enabled button
+        }
+      } else {
+        // Disable analyze button and show empty selection view
+        analyzeBtn.disabled = true;
+        analyzeBtn.style.opacity = '0.5';
+        analyzeBtn.style.cursor = 'not-allowed';
+        analyzeBtn.textContent = 'Analyze Selection';
+        analyzeBtn.onclick = null;
+
+        // Show empty selection view, hide others
+        emptySelection.style.display = 'block';
+        loading.style.display = 'none';
+        results.style.display = 'none';
+        error.style.display = 'none';
+        settings.style.display = 'none';
+      }
+    }
+
     // Listen for messages from plugin code
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
@@ -742,6 +813,8 @@
         displayError(msg.message);
       } else if (msg.type === 'libraries') {
         displaySettings(msg.libraries);
+      } else if (msg.type === 'selection-status') {
+        handleSelectionStatus(msg.hasSelection, msg.count);
       }
     };
   </script>
