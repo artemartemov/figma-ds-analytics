@@ -39,6 +39,7 @@ interface CoverageMetrics {
     totalOpportunities: number;
     details: OrphanDetail[];
     ignoredComponents: string[];
+    ignoredOrphans: string[];
   };
 }
 
@@ -4502,6 +4503,7 @@ async function saveCollectionMappings(mappings: Map<string, string>): Promise<vo
 // ========================================
 
 const IGNORED_COMPONENTS_KEY = 'ignoredComponents';
+const IGNORED_ORPHANS_KEY = 'ignoredOrphans';
 
 // Load ignored component IDs from client storage
 async function loadIgnoredComponents(): Promise<Set<string>> {
@@ -4515,6 +4517,20 @@ async function loadIgnoredComponents(): Promise<Set<string>> {
 // Save ignored component IDs to client storage
 async function saveIgnoredComponents(componentIds: Set<string>): Promise<void> {
   await figma.clientStorage.setAsync(IGNORED_COMPONENTS_KEY, Array.from(componentIds));
+}
+
+// Load ignored orphan node IDs from client storage
+async function loadIgnoredOrphans(): Promise<Set<string>> {
+  const stored = await figma.clientStorage.getAsync(IGNORED_ORPHANS_KEY);
+  if (stored && Array.isArray(stored)) {
+    return new Set(stored);
+  }
+  return new Set();
+}
+
+// Save ignored orphan node IDs to client storage
+async function saveIgnoredOrphans(nodeIds: Set<string>): Promise<void> {
+  await figma.clientStorage.setAsync(IGNORED_ORPHANS_KEY, Array.from(nodeIds));
 }
 
 // Get library name from variable by checking its collection
@@ -4957,8 +4973,9 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   }
   console.log(`Collected ${orphanDetails.length} orphan details (max 100)`);
 
-  // Load ignored components (but don't filter - let UI handle it)
+  // Load ignored components and orphans (but don't filter - let UI handle it)
   const ignoredComponents = await loadIgnoredComponents();
+  const ignoredOrphans = await loadIgnoredOrphans();
 
   // Calculate TRUE total opportunities (variable-bound + hardcoded)
   // This is the research-backed approach: count ALL properties that could use tokens
@@ -4999,6 +5016,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
       totalOpportunities,
       details: orphanDetails,
       ignoredComponents: Array.from(ignoredComponents),
+      ignoredOrphans: Array.from(ignoredOrphans),
     },
   };
 }
@@ -5808,6 +5826,42 @@ figma.ui.onmessage = async (msg) => {
       figma.ui.postMessage({
         type: 'error',
         message: 'Failed to unignore component',
+      });
+    }
+  } else if (msg.type === 'ignore-orphan') {
+    try {
+      const nodeId = msg.nodeId;
+      const ignoredOrphans = await loadIgnoredOrphans();
+      ignoredOrphans.add(nodeId);
+      await saveIgnoredOrphans(ignoredOrphans);
+      console.log('Orphan ignored:', nodeId);
+
+      figma.ui.postMessage({
+        type: 'orphan-ignored',
+        nodeId,
+      });
+    } catch (error) {
+      figma.ui.postMessage({
+        type: 'error',
+        message: 'Failed to ignore orphan',
+      });
+    }
+  } else if (msg.type === 'unignore-orphan') {
+    try {
+      const nodeId = msg.nodeId;
+      const ignoredOrphans = await loadIgnoredOrphans();
+      ignoredOrphans.delete(nodeId);
+      await saveIgnoredOrphans(ignoredOrphans);
+      console.log('Orphan unignored:', nodeId);
+
+      figma.ui.postMessage({
+        type: 'orphan-unignored',
+        nodeId,
+      });
+    } catch (error) {
+      figma.ui.postMessage({
+        type: 'error',
+        message: 'Failed to unignore orphan',
       });
     }
   } else if (msg.type === 'cancel') {
