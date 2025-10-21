@@ -8,6 +8,7 @@ interface LibraryBreakdown {
 }
 
 interface OrphanDetail {
+  nodeId: string;
   nodeName: string;
   nodeType: string;
   category: 'colors' | 'typography' | 'spacing' | 'radius' | 'borders';
@@ -5259,6 +5260,11 @@ function countVariableBoundProperties(node: SceneNode): {
   radius: number;
   borders: number;
 } {
+  // Skip hidden layers
+  if ('visible' in node && node.visible === false) {
+    return { colors: 0, typography: 0, spacing: 0, radius: 0, borders: 0 };
+  }
+
   const variableBound = {
     colors: 0,
     typography: 0,
@@ -5346,6 +5352,11 @@ function detectHardcodedValues(node: SceneNode): {
   radius: number;
   borders: number;
 } {
+  // Skip hidden layers
+  if ('visible' in node && node.visible === false) {
+    return { colors: 0, typography: 0, spacing: 0, radius: 0, borders: 0 };
+  }
+
   const hardcoded = {
     colors: 0,
     typography: 0,
@@ -5449,6 +5460,11 @@ function detectHardcodedValues(node: SceneNode): {
 
 // Detect hardcoded values WITH details for troubleshooting
 function detectHardcodedValuesWithDetails(node: SceneNode): OrphanDetail | null {
+  // Skip hidden layers
+  if ('visible' in node && node.visible === false) {
+    return null;
+  }
+
   const properties: string[] = [];
   const values: string[] = [];
   let category: 'colors' | 'typography' | 'spacing' | 'radius' | 'borders' | null = null;
@@ -5539,6 +5555,7 @@ function detectHardcodedValuesWithDetails(node: SceneNode): OrphanDetail | null 
 
   if (properties.length > 0 && category) {
     return {
+      nodeId: node.id,
       nodeName: node.name || 'Unnamed',
       nodeType: node.type,
       category,
@@ -5674,6 +5691,32 @@ figma.ui.onmessage = async (msg) => {
       figma.ui.postMessage({
         type: 'error',
         message: 'Failed to save library settings',
+      });
+    }
+  } else if (msg.type === 'select-node') {
+    try {
+      const nodeId = msg.nodeId;
+      const node = figma.getNodeById(nodeId);
+
+      if (node) {
+        // Select the node and zoom to it
+        figma.currentPage.selection = [node as SceneNode];
+        figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
+
+        figma.ui.postMessage({
+          type: 'node-selected',
+          nodeName: node.name,
+        });
+      } else {
+        figma.ui.postMessage({
+          type: 'error',
+          message: 'Node not found. It may have been deleted.',
+        });
+      }
+    } catch (error) {
+      figma.ui.postMessage({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to select node',
       });
     }
   } else if (msg.type === 'cancel') {

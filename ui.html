@@ -639,7 +639,17 @@
 
               return `
                 <div style="padding: 8px; margin-bottom: 6px; background: #f8f8f8; border-radius: 4px; font-size: 10px;">
-                  <div style="font-weight: 600; color: #333; margin-bottom: 4px;">${detail.nodeName}</div>
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                    <div style="font-weight: 600; color: #333; flex: 1;">${detail.nodeName}</div>
+                    <button
+                      onclick="selectNode('${detail.nodeId}')"
+                      style="padding: 2px 6px; font-size: 9px; background: #18A0FB; color: white; border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; margin-left: 8px;"
+                      onmouseover="this.style.background='#0D8ADB'"
+                      onmouseout="this.style.background='#18A0FB'"
+                    >
+                      Select in Figma
+                    </button>
+                  </div>
                   <div style="color: #666; margin-bottom: 2px;"><span style="opacity: 0.7;">Type:</span> ${detail.nodeType}</div>
                   <div style="color: #666;"><span style="opacity: 0.7;">Hardcoded:</span> ${propertiesList}</div>
                 </div>
@@ -795,6 +805,15 @@
           arrow.textContent = '▼';
         }
       }
+    }
+
+    function selectNode(nodeId) {
+      parent.postMessage({
+        pluginMessage: {
+          type: 'select-node',
+          nodeId: nodeId
+        }
+      }, '*');
     }
 
     function saveLibraries() {
