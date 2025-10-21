@@ -637,28 +637,30 @@
               radius: '#f39c12'
             };
 
-            // Group orphans by parent component and filter out ignored ones
+            // Group orphans by parent component (keep ignored ones in the list)
             const orphansByComponent = new Map();
             let filteredOrphanCount = 0;
             const filteredHardcodedCounts = { colors: 0, typography: 0, spacing: 0, radius: 0 };
 
             hv.details.forEach(detail => {
               const compId = detail.parentComponentId;
+              const isIgnored = ignoredComponentsSet.has(compId);
 
-              // Skip if component is ignored
-              if (ignoredComponentsSet.has(compId)) return;
+              // Always add to the map, but only count if not ignored
+              if (!isIgnored) {
+                filteredOrphanCount++;
 
-              filteredOrphanCount++;
-
-              // Count hardcoded properties by category
-              const propCount = detail.properties.length;
-              filteredHardcodedCounts[detail.category] += propCount;
+                // Count hardcoded properties by category (only for non-ignored)
+                const propCount = detail.properties.length;
+                filteredHardcodedCounts[detail.category] += propCount;
+              }
 
               if (!orphansByComponent.has(compId)) {
                 orphansByComponent.set(compId, {
                   name: detail.parentComponentName,
                   id: compId,
-                  orphans: []
+                  orphans: [],
+                  isIgnored: isIgnored
                 });
               }
               orphansByComponent.get(compId).orphans.push(detail);
@@ -704,7 +706,9 @@
             document.getElementById('variableFormula').textContent = filteredVariableFormula;
 
             const detailsList = Array.from(orphansByComponent.values()).map(component => {
-              const isIgnored = ignoredComponentsSet.has(component.id);
+              const isIgnored = component.isIgnored;
+              const opacityStyle = isIgnored ? 'opacity: 0.5;' : '';
+              const bgColor = isIgnored ? '#f9f9f9' : '#f5f5f5';
               const orphanItems = component.orphans.map(detail => {
                 const color = categoryColors[detail.category] || '#666';
                 const propertiesList = detail.properties.map((prop, i) => {
@@ -713,7 +717,7 @@
                 }).join(', ');
 
                 return `
-                  <div style="padding: 8px; margin-bottom: 6px; background: #fff; border-radius: 4px; font-size: 10px;">
+                  <div style="padding: 8px; margin-bottom: 6px; background: #fff; border-radius: 4px; font-size: 10px; ${opacityStyle}">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
                       <div style="font-weight: 600; color: #333; flex: 1;">${detail.nodeName}</div>
                       <button
@@ -732,20 +736,21 @@
               }).join('');
 
               return `
-                <div style="margin-bottom: 12px; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden;">
-                  <div style="background: #f5f5f5; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="margin-bottom: 12px; border: 1px solid ${isIgnored ? '#d0d0d0' : '#e0e0e0'}; border-radius: 6px; overflow: hidden; ${opacityStyle}">
+                  <div style="background: ${bgColor}; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
                     <div style="flex: 1;">
-                      <div style="font-weight: 600; color: #333; font-size: 11px;">${component.name}</div>
+                      <div style="font-weight: 600; color: #333; font-size: 11px;">${component.name} ${isIgnored ? '(Ignored)' : ''}</div>
                       <div style="font-size: 10px; color: #666; margin-top: 2px;">${component.orphans.length} orphan${component.orphans.length > 1 ? 's' : ''}</div>
                     </div>
-                    <label style="display: flex; align-items: center; cursor: pointer; font-size: 10px; color: #666; user-select: none;" onclick="event.stopPropagation();">
+                    <label style="display: flex; align-items: center; cursor: pointer; font-size: 10px; color: #666; user-select: none;">
                       <input
                         type="checkbox"
                         ${isIgnored ? 'checked' : ''}
+                        onclick="event.stopPropagation()"
                         onchange="toggleIgnoreComponent('${component.id}', event)"
                         style="margin-right: 6px; cursor: pointer;"
                       />
-                      <span>Ignore</span>
+                      <span onclick="event.stopPropagation()">Ignore</span>
                     </label>
                   </div>
                   <div style="padding: 8px; background: #fafafa;">
