@@ -573,7 +573,7 @@
 
       const totalInstances = stats.libraryInstances + stats.localInstances;
       const componentFormula = totalInstances > 0
-        ? `DS Components / (DS + Local) = ${stats.libraryInstances} / ${totalInstances} = ${Math.round(componentCoverage)}%`
+        ? `Atomic Component / Total Components (File) = ${stats.libraryInstances} / ${totalInstances} = ${Math.round(componentCoverage)}%`
         : 'No components found';
       document.getElementById('componentFormula').textContent = componentFormula;
 
