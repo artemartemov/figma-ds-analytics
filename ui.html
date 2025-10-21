@@ -471,6 +471,7 @@
     let availableLibraries = [];
     let currentData = null; // Store current analysis data
     let ignoredComponentsSet = new Set(); // Track ignored components
+    let orphanDetailsOpen = false; // Track accordion state
 
     function formatPercent(value) {
       return Math.round(value) + '%';
@@ -680,6 +681,15 @@
               : 0;
             const filteredOverallScore = (filteredVariableCoverage * 0.55) + (componentCoverage * 0.45);
 
+            console.log('Metric Recalculation:', {
+              originalHardcoded: hv.totalHardcoded,
+              filteredHardcoded: filteredTotalHardcoded,
+              tokenBound: tokenBoundCount,
+              filteredOpportunities: filteredTotalOpportunities,
+              filteredVariableCoverage: Math.round(filteredVariableCoverage),
+              filteredOverallScore: Math.round(filteredOverallScore)
+            });
+
             // Update displayed metrics with filtered values
             document.getElementById('overallScore').textContent = formatPercent(filteredOverallScore);
             document.getElementById('variableScore').textContent = formatPercent(filteredVariableCoverage);
@@ -728,11 +738,11 @@
                       <div style="font-weight: 600; color: #333; font-size: 11px;">${component.name}</div>
                       <div style="font-size: 10px; color: #666; margin-top: 2px;">${component.orphans.length} orphan${component.orphans.length > 1 ? 's' : ''}</div>
                     </div>
-                    <label style="display: flex; align-items: center; cursor: pointer; font-size: 10px; color: #666; user-select: none;">
+                    <label style="display: flex; align-items: center; cursor: pointer; font-size: 10px; color: #666; user-select: none;" onclick="event.stopPropagation();">
                       <input
                         type="checkbox"
                         ${isIgnored ? 'checked' : ''}
-                        onchange="toggleIgnoreComponent('${component.id}')"
+                        onchange="toggleIgnoreComponent('${component.id}', event)"
                         style="margin-right: 6px; cursor: pointer;"
                       />
                       <span>Ignore</span>
@@ -753,9 +763,9 @@
               <div style="margin-top: 12px;">
                 <div onclick="toggleOrphanDetails()" style="cursor: pointer; padding: 8px 12px; background: #f0f0f0; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-size: 11px; font-weight: 600; color: #333;">📋 View Details (${countText})</span>
-                  <span id="orphan-details-arrow" style="font-size: 10px; color: #666;">▼</span>
+                  <span id="orphan-details-arrow" style="font-size: 10px; color: #666;">${orphanDetailsOpen ? '▲' : '▼'}</span>
                 </div>
-                <div id="orphan-details" style="display: none; max-height: 300px; overflow-y: auto; margin-top: 8px; padding: 8px; background: #fafafa; border-radius: 4px;">
+                <div id="orphan-details" style="display: ${orphanDetailsOpen ? 'block' : 'none'}; max-height: 300px; overflow-y: auto; margin-top: 8px; padding: 8px; background: #fafafa; border-radius: 4px;">
                   ${detailsList}
                   ${hv.details.length >= 100 ? '<div style="font-size: 10px; color: #999; font-style: italic; text-align: center; padding: 8px;">Showing first 100 orphans</div>' : ''}
                 </div>
@@ -893,9 +903,11 @@
         if (details.style.display === 'none') {
           details.style.display = 'block';
           arrow.textContent = '▲';
+          orphanDetailsOpen = true;
         } else {
           details.style.display = 'none';
           arrow.textContent = '▼';
+          orphanDetailsOpen = false;
         }
       }
     }
@@ -909,10 +921,16 @@
       }, '*');
     }
 
-    function toggleIgnoreComponent(componentId) {
+    function toggleIgnoreComponent(componentId, event) {
+      // Stop propagation to prevent any parent click handlers
+      if (event) {
+        event.stopPropagation();
+      }
+
       // Toggle in local set
       if (ignoredComponentsSet.has(componentId)) {
         ignoredComponentsSet.delete(componentId);
+        console.log('Unignoring component:', componentId);
         // Send unignore message to backend
         parent.postMessage({
           pluginMessage: {
@@ -922,6 +940,7 @@
         }, '*');
       } else {
         ignoredComponentsSet.add(componentId);
+        console.log('Ignoring component:', componentId);
         // Send ignore message to backend
         parent.postMessage({
           pluginMessage: {
@@ -930,6 +949,8 @@
           }
         }, '*');
       }
+
+      console.log('Ignored components set:', Array.from(ignoredComponentsSet));
 
       // Re-render with updated filter (no re-analysis needed)
       if (currentData) {
