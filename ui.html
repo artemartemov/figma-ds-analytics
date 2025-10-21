@@ -639,6 +639,8 @@
             // Group orphans by parent component and filter out ignored ones
             const orphansByComponent = new Map();
             let filteredOrphanCount = 0;
+            const filteredHardcodedCounts = { colors: 0, typography: 0, spacing: 0, radius: 0 };
+
             hv.details.forEach(detail => {
               const compId = detail.parentComponentId;
 
@@ -646,6 +648,11 @@
               if (ignoredComponentsSet.has(compId)) return;
 
               filteredOrphanCount++;
+
+              // Count hardcoded properties by category
+              const propCount = detail.properties.length;
+              filteredHardcodedCounts[detail.category] += propCount;
+
               if (!orphansByComponent.has(compId)) {
                 orphansByComponent.set(compId, {
                   name: detail.parentComponentName,
@@ -655,6 +662,36 @@
               }
               orphansByComponent.get(compId).orphans.push(detail);
             });
+
+            // Recalculate totals based on filtered orphans
+            const filteredTotalHardcoded = Object.values(filteredHardcodedCounts).reduce((sum, val) => sum + val, 0);
+
+            // When ignoring components, we only remove their hardcoded properties
+            // The token-bound count stays the same (we're just saying "ignore these orphans")
+            const tokenBoundCount = hv.totalOpportunities - hv.totalHardcoded;
+            const filteredTotalOpportunities = tokenBoundCount + filteredTotalHardcoded;
+
+            // Recalculate token adoption percentage
+            const filteredVariableCoverage = filteredTotalOpportunities > 0
+              ? (tokenBoundCount / filteredTotalOpportunities) * 100
+              : 0;
+            const filteredOrphanRate = filteredTotalOpportunities > 0
+              ? (filteredTotalHardcoded / filteredTotalOpportunities) * 100
+              : 0;
+            const filteredOverallScore = (filteredVariableCoverage * 0.55) + (componentCoverage * 0.45);
+
+            // Update displayed metrics with filtered values
+            document.getElementById('overallScore').textContent = formatPercent(filteredOverallScore);
+            document.getElementById('variableScore').textContent = formatPercent(filteredVariableCoverage);
+
+            // Update formula badges with filtered calculations
+            const filteredOverallFormula = `(Vars ${Math.round(filteredVariableCoverage)}% × 0.55) + (Comps ${Math.round(componentCoverage)}% × 0.45) = ${Math.round(filteredOverallScore)}%`;
+            document.getElementById('formulaBadge').textContent = filteredOverallFormula;
+
+            const filteredVariableFormula = filteredTotalOpportunities > 0
+              ? `Token-bound / Total Properties = ${tokenBoundCount} / ${filteredTotalOpportunities} = ${Math.round(filteredVariableCoverage)}%`
+              : 'No properties analyzed';
+            document.getElementById('variableFormula').textContent = filteredVariableFormula;
 
             const detailsList = Array.from(orphansByComponent.values()).map(component => {
               const isIgnored = ignoredComponentsSet.has(component.id);
