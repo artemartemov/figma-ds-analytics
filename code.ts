@@ -5259,6 +5259,7 @@ function isSkippedNode(node: SceneNode): boolean {
     'segmentedcontrol-ios',
     'ios home affordance',
     'home indicator',
+    'route builder map',
   ];
 
   return skipPatterns.some(pattern => name.includes(pattern.toLowerCase()));
