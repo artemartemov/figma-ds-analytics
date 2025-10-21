@@ -359,11 +359,11 @@
   <div id="loading" class="loading">
     <div style="margin-bottom: 16px;">
       <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">Analyzing selection...</div>
-      <div id="progress-step" style="font-size: 11px; color: #666; margin-bottom: 12px;">Initializing...</div>
-      <div style="width: 100%; height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden;">
-        <div id="progress-bar" style="width: 0%; height: 100%; background: #18A0FB; transition: width 0.3s ease;"></div>
+      <div id="progress-step" style="font-size: 11px; color: #333; margin-bottom: 12px; min-height: 16px; font-weight: 500;">Initializing...</div>
+      <div style="width: 100%; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
+        <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #18A0FB 0%, #0084D6 100%); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);"></div>
       </div>
-      <div id="progress-percent" style="font-size: 10px; color: #999; margin-top: 6px; text-align: center;">0%</div>
+      <div id="progress-percent" style="font-size: 11px; color: #666; margin-top: 8px; text-align: center; font-weight: 500;">0%</div>
     </div>
   </div>
 
@@ -888,6 +888,15 @@
     }
 
     function refresh() {
+      // Reset progress state
+      currentProgress = 0;
+      const progressBar = document.getElementById('progress-bar');
+      const progressStep = document.getElementById('progress-step');
+      const progressPercent = document.getElementById('progress-percent');
+      if (progressBar) progressBar.style.width = '0%';
+      if (progressStep) progressStep.textContent = 'Initializing...';
+      if (progressPercent) progressPercent.textContent = '0%';
+
       document.getElementById('loading').style.display = 'block';
       document.getElementById('results').style.display = 'none';
       document.getElementById('error').style.display = 'none';
@@ -1120,14 +1129,28 @@
     }
 
     // Listen for messages from plugin code
+    let currentProgress = 0;
     function updateProgress(step, percent) {
       const stepEl = document.getElementById('progress-step');
       const barEl = document.getElementById('progress-bar');
       const percentEl = document.getElementById('progress-percent');
 
-      if (stepEl) stepEl.textContent = step;
-      if (barEl) barEl.style.width = percent + '%';
-      if (percentEl) percentEl.textContent = Math.round(percent) + '%';
+      // Only update if progress is moving forward (prevent jumps back)
+      if (percent >= currentProgress) {
+        currentProgress = percent;
+
+        if (stepEl) {
+          stepEl.textContent = step;
+        }
+
+        if (barEl) {
+          barEl.style.width = percent + '%';
+        }
+
+        if (percentEl) {
+          percentEl.textContent = Math.round(percent) + '%';
+        }
+      }
     }
 
     window.onmessage = (event) => {

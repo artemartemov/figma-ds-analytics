@@ -4616,13 +4616,15 @@ figma.on('selectionchange', () => {
 });
 
 // Main analysis function
-// Helper function to send progress updates to UI
-function sendProgress(step: string, percent: number) {
+// Helper function to send progress updates to UI with a delay for rendering
+async function sendProgress(step: string, percent: number) {
   figma.ui.postMessage({
     type: 'progress',
     step,
     percent
   });
+  // Delay to allow UI to render the update smoothly
+  await new Promise(resolve => setTimeout(resolve, 200));
 }
 
 async function analyzeCoverage(): Promise<CoverageMetrics> {
@@ -4632,7 +4634,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   // Reset alias tracking for this analysis
   aliasResolutions.clear();
 
-  sendProgress('Initializing analysis...', 0);
+  await sendProgress('Initializing analysis...', 0);
 
   // Check if user has made a selection
   if (selection.length === 0) {
@@ -4642,7 +4644,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   console.log(`\n=== ANALYZING SELECTION ===`);
   console.log(`Selected ${selection.length} top-level node(s)`);
 
-  sendProgress('Finding component instances...', 5);
+  await sendProgress('Finding component instances...', 5);
 
   // Find all component instances within the selection
   const componentInstances: InstanceNode[] = [];
@@ -4664,7 +4666,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
 
   console.log(`Found ${componentInstances.length} component instance(s) in selection`);
 
-  sendProgress(`Categorizing ${componentInstances.length} components...`, 15);
+  await sendProgress(`Categorizing ${componentInstances.length} components...`, 15);
 
   let libraryInstances = 0;
   let localInstances = 0;
@@ -4922,7 +4924,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     console.log(`⚠ Limiting detailed analysis to first ${MAX_INSTANCES_TO_ANALYZE} instances for performance`);
   }
 
-  sendProgress(`Analyzing tokens in ${instancesToAnalyze.length} components...`, 30);
+  await sendProgress(`Analyzing tokens in ${instancesToAnalyze.length} components...`, 30);
 
   const variableBoundTotals = {
     colors: 0,
@@ -4932,6 +4934,8 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   };
 
   let processedCount = 0;
+  const updateInterval = Math.max(20, Math.floor(instancesToAnalyze.length / 5)); // Update 5 times max during this phase
+
   for (const instance of instancesToAnalyze) {
     const bound = countVariableBoundPropertiesRecursive(instance);
     variableBoundTotals.colors += bound.colors;
@@ -4940,11 +4944,12 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     variableBoundTotals.radius += bound.radius;
 
     processedCount++;
-    if (processedCount % 100 === 0) {
+    // Update progress at key intervals
+    if (processedCount % updateInterval === 0 || processedCount === instancesToAnalyze.length) {
       console.log(`Processed ${processedCount}/${instancesToAnalyze.length} instances...`);
       // Report progress: 30% to 60% range
       const progressPercent = 30 + (processedCount / instancesToAnalyze.length) * 30;
-      sendProgress(`Analyzing tokens (${processedCount}/${instancesToAnalyze.length})...`, progressPercent);
+      await sendProgress(`Analyzing tokens (${processedCount}/${instancesToAnalyze.length})...`, progressPercent);
     }
   }
 
@@ -4967,6 +4972,8 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   };
 
   processedCount = 0;
+  const updateInterval2 = Math.max(20, Math.floor(instancesToAnalyze.length / 4)); // Update 4 times max during this phase
+
   for (const instance of instancesToAnalyze) {
     const hardcoded = detectHardcodedValuesRecursive(instance);
     hardcodedTotals.colors += hardcoded.colors;
@@ -4975,11 +4982,12 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     hardcodedTotals.radius += hardcoded.radius;
 
     processedCount++;
-    if (processedCount % 100 === 0) {
+    // Update progress at key intervals
+    if (processedCount % updateInterval2 === 0 || processedCount === instancesToAnalyze.length) {
       console.log(`Processed ${processedCount}/${instancesToAnalyze.length} instances...`);
       // Report progress: 60% to 80% range
       const progressPercent = 60 + (processedCount / instancesToAnalyze.length) * 20;
-      sendProgress(`Detecting hardcoded values (${processedCount}/${instancesToAnalyze.length})...`, progressPercent);
+      await sendProgress(`Detecting hardcoded values (${processedCount}/${instancesToAnalyze.length})...`, progressPercent);
     }
   }
 
@@ -4996,7 +5004,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   }
   console.log(`Collected ${orphanDetails.length} orphan details (max 100)`);
 
-  sendProgress('Loading ignored items...', 80);
+  await sendProgress('Loading ignored items...', 85);
 
   // Load ignored components and orphans (but don't filter - let UI handle it)
   const ignoredComponents = await loadIgnoredComponents();
@@ -5020,7 +5028,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   console.log('Total opportunities:', totalOpportunities);
   console.log('ACCURATE Token Adoption:', accurateVariableCoverage.toFixed(1) + '%');
 
-  sendProgress('Finalizing results...', 95);
+  await sendProgress('Finalizing results...', 95);
 
   return {
     componentCoverage,
