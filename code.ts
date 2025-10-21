@@ -11,7 +11,7 @@ interface OrphanDetail {
   nodeId: string;
   nodeName: string;
   nodeType: string;
-  category: 'colors' | 'typography' | 'spacing' | 'radius' | 'borders';
+  category: 'colors' | 'typography' | 'spacing' | 'radius';
   properties: string[];
   values?: string[];
 }
@@ -33,7 +33,6 @@ interface CoverageMetrics {
     typography: number;
     spacing: number;
     radius: number;
-    borders: number;
     totalHardcoded: number;
     totalOpportunities: number;
     details: OrphanDetail[];
@@ -4874,7 +4873,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     typography: 0,
     spacing: 0,
     radius: 0,
-    borders: 0,
   };
 
   let processedCount = 0;
@@ -4884,7 +4882,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     variableBoundTotals.typography += bound.typography;
     variableBoundTotals.spacing += bound.spacing;
     variableBoundTotals.radius += bound.radius;
-    variableBoundTotals.borders += bound.borders;
 
     processedCount++;
     if (processedCount % 100 === 0) {
@@ -4893,13 +4890,12 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   }
 
   const totalVariableBound = variableBoundTotals.colors + variableBoundTotals.typography +
-                             variableBoundTotals.spacing + variableBoundTotals.radius + variableBoundTotals.borders;
+                             variableBoundTotals.spacing + variableBoundTotals.radius;
 
   console.log('Variable-bound colors:', variableBoundTotals.colors);
   console.log('Variable-bound typography:', variableBoundTotals.typography);
   console.log('Variable-bound spacing:', variableBoundTotals.spacing);
   console.log('Variable-bound radius:', variableBoundTotals.radius);
-  console.log('Variable-bound borders:', variableBoundTotals.borders);
   console.log('Total variable-bound properties:', totalVariableBound);
 
   // Detect hardcoded values that should use variables
@@ -4909,7 +4905,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     typography: 0,
     spacing: 0,
     radius: 0,
-    borders: 0,
   };
 
   processedCount = 0;
@@ -4919,7 +4914,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     hardcodedTotals.typography += hardcoded.typography;
     hardcodedTotals.spacing += hardcoded.spacing;
     hardcodedTotals.radius += hardcoded.radius;
-    hardcodedTotals.borders += hardcoded.borders;
 
     processedCount++;
     if (processedCount % 100 === 0) {
@@ -4928,7 +4922,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   }
 
   const totalHardcoded = hardcodedTotals.colors + hardcodedTotals.typography +
-                         hardcodedTotals.spacing + hardcodedTotals.radius + hardcodedTotals.borders;
+                         hardcodedTotals.spacing + hardcodedTotals.radius;
 
   // Collect detailed orphan information (for troubleshooting)
   console.log('\n=== COLLECTING ORPHAN DETAILS ===');
@@ -4953,7 +4947,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   console.log('Hardcoded typography:', hardcodedTotals.typography);
   console.log('Hardcoded spacing:', hardcodedTotals.spacing);
   console.log('Hardcoded radius:', hardcodedTotals.radius);
-  console.log('Hardcoded borders:', hardcodedTotals.borders);
   console.log('Total hardcoded values:', totalHardcoded);
   console.log('Total opportunities:', totalOpportunities);
   console.log('ACCURATE Token Adoption:', accurateVariableCoverage.toFixed(1) + '%');
@@ -4975,7 +4968,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
       typography: hardcodedTotals.typography,
       spacing: hardcodedTotals.spacing,
       radius: hardcodedTotals.radius,
-      borders: hardcodedTotals.borders,
       totalHardcoded,
       totalOpportunities,
       details: orphanDetails,
@@ -5274,16 +5266,15 @@ function countVariableBoundProperties(node: SceneNode): {
   typography: number;
   spacing: number;
   radius: number;
-  borders: number;
 } {
   // Skip hidden layers
   if ('visible' in node && node.visible === false) {
-    return { colors: 0, typography: 0, spacing: 0, radius: 0, borders: 0 };
+    return { colors: 0, typography: 0, spacing: 0, radius: 0 };
   }
 
   // Skip spacer layers
   if (isSpacerNode(node)) {
-    return { colors: 0, typography: 0, spacing: 0, radius: 0, borders: 0 };
+    return { colors: 0, typography: 0, spacing: 0, radius: 0 };
   }
 
   const variableBound = {
@@ -5291,7 +5282,6 @@ function countVariableBoundProperties(node: SceneNode): {
     typography: 0,
     spacing: 0,
     radius: 0,
-    borders: 0,
   };
 
   // Count fills using variables
@@ -5304,18 +5294,15 @@ function countVariableBoundProperties(node: SceneNode): {
     }
   }
 
-  // Count strokes using variables
+  // Count strokes using variables (colors only, not stroke weight)
   if ('strokes' in node && node.strokes) {
     const strokes = node.strokes;
     if (Array.isArray(strokes)) {
       const hasStrokeVariable = node.boundVariables?.strokes && Array.isArray(node.boundVariables.strokes) && node.boundVariables.strokes.length > 0;
-      const hasStrokeWeightVariable = node.boundVariables?.strokeWeight;
       const visibleStrokes = strokes.filter((stroke: any) => stroke.visible !== false);
 
-      if (visibleStrokes.length > 0) {
-        if (hasStrokeVariable) variableBound.colors += visibleStrokes.length;
-        // Only count border width if it's > 0
-        if ('strokeWeight' in node && typeof node.strokeWeight === 'number' && node.strokeWeight > 0 && hasStrokeWeightVariable) variableBound.borders++;
+      if (visibleStrokes.length > 0 && hasStrokeVariable) {
+        variableBound.colors += visibleStrokes.length;
       }
     }
   }
@@ -5371,16 +5358,15 @@ function detectHardcodedValues(node: SceneNode): {
   typography: number;
   spacing: number;
   radius: number;
-  borders: number;
 } {
   // Skip hidden layers
   if ('visible' in node && node.visible === false) {
-    return { colors: 0, typography: 0, spacing: 0, radius: 0, borders: 0 };
+    return { colors: 0, typography: 0, spacing: 0, radius: 0 };
   }
 
   // Skip spacer layers
   if (isSpacerNode(node)) {
-    return { colors: 0, typography: 0, spacing: 0, radius: 0, borders: 0 };
+    return { colors: 0, typography: 0, spacing: 0, radius: 0 };
   }
 
   const hardcoded = {
@@ -5388,7 +5374,6 @@ function detectHardcodedValues(node: SceneNode): {
     typography: 0,
     spacing: 0,
     radius: 0,
-    borders: 0,
   };
 
   // Check for hardcoded fills (colors)
@@ -5403,22 +5388,15 @@ function detectHardcodedValues(node: SceneNode): {
     }
   }
 
-  // Check for hardcoded strokes (borders/colors)
+  // Check for hardcoded strokes (colors only, not stroke weight)
   if ('strokes' in node && node.strokes) {
     const strokes = node.strokes;
     if (Array.isArray(strokes)) {
       const hasStrokeVariable = node.boundVariables?.strokes && Array.isArray(node.boundVariables.strokes) && node.boundVariables.strokes.length > 0;
-      const hasStrokeWeightVariable = node.boundVariables?.strokeWeight;
 
       const visibleStrokes = strokes.filter((stroke: any) => stroke.visible !== false);
-      if (visibleStrokes.length > 0) {
-        if (!hasStrokeVariable) {
-          hardcoded.colors += visibleStrokes.length; // Color
-        }
-        // Only count border width if it's > 0
-        if ('strokeWeight' in node && typeof node.strokeWeight === 'number' && node.strokeWeight > 0 && !hasStrokeWeightVariable) {
-          hardcoded.borders++; // Border width
-        }
+      if (visibleStrokes.length > 0 && !hasStrokeVariable) {
+        hardcoded.colors += visibleStrokes.length; // Color only
       }
     }
   }
@@ -5498,7 +5476,7 @@ function detectHardcodedValuesWithDetails(node: SceneNode): OrphanDetail | null 
 
   const properties: string[] = [];
   const values: string[] = [];
-  let category: 'colors' | 'typography' | 'spacing' | 'radius' | 'borders' | null = null;
+  let category: 'colors' | 'typography' | 'spacing' | 'radius' | null = null;
 
   // Check for hardcoded typography (most common issue)
   if (node.type === 'TEXT') {
@@ -5569,21 +5547,6 @@ function detectHardcodedValuesWithDetails(node: SceneNode): OrphanDetail | null 
     }
   }
 
-  // Check for hardcoded borders
-  if ('strokes' in node && node.strokes) {
-    const strokes = node.strokes;
-    if (Array.isArray(strokes)) {
-      const hasStrokeWeightVariable = node.boundVariables?.strokeWeight;
-      const visibleStrokes = strokes.filter((stroke: any) => stroke.visible !== false);
-
-      if (visibleStrokes.length > 0 && 'strokeWeight' in node && typeof node.strokeWeight === 'number' && node.strokeWeight > 0 && !hasStrokeWeightVariable) {
-        if (!category) category = 'borders';
-        properties.push('strokeWeight');
-        values.push(`${node.strokeWeight}px`);
-      }
-    }
-  }
-
   if (properties.length > 0 && category) {
     return {
       nodeId: node.id,
@@ -5604,7 +5567,6 @@ function countVariableBoundPropertiesRecursive(node: SceneNode, depth: number = 
   typography: number;
   spacing: number;
   radius: number;
-  borders: number;
 } {
   const MAX_DEPTH = 50; // Prevent stack overflow on deeply nested components
   const totals = countVariableBoundProperties(node);
@@ -5621,7 +5583,6 @@ function countVariableBoundPropertiesRecursive(node: SceneNode, depth: number = 
       totals.typography += childBound.typography;
       totals.spacing += childBound.spacing;
       totals.radius += childBound.radius;
-      totals.borders += childBound.borders;
     }
   }
 
@@ -5634,7 +5595,6 @@ function detectHardcodedValuesRecursive(node: SceneNode, depth: number = 0): {
   typography: number;
   spacing: number;
   radius: number;
-  borders: number;
 } {
   const MAX_DEPTH = 50; // Prevent stack overflow on deeply nested components
   const totals = detectHardcodedValues(node);
@@ -5652,7 +5612,6 @@ function detectHardcodedValuesRecursive(node: SceneNode, depth: number = 0): {
       totals.typography += childHardcoded.typography;
       totals.spacing += childHardcoded.spacing;
       totals.radius += childHardcoded.radius;
-      totals.borders += childHardcoded.borders;
     }
   }
 
