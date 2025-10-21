@@ -469,6 +469,8 @@
 
   <script>
     let availableLibraries = [];
+    let currentData = null; // Store current analysis data
+    let ignoredComponentsSet = new Set(); // Track ignored components
 
     function formatPercent(value) {
       return Math.round(value) + '%';
@@ -491,6 +493,12 @@
 
     function displayResults(data) {
       const { componentCoverage, variableCoverage, stats, libraryBreakdown, variableBreakdown, hardcodedValues } = data;
+
+      // Store data for filtering
+      currentData = data;
+      if (hardcodedValues && hardcodedValues.ignoredComponents) {
+        ignoredComponentsSet = new Set(hardcodedValues.ignoredComponents);
+      }
 
       // Foundation-First Weighting (Research-backed formula)
       // Variables (foundation) 55%, Components 45%
@@ -628,10 +636,16 @@
               radius: '#f39c12'
             };
 
-            // Group orphans by parent component
+            // Group orphans by parent component and filter out ignored ones
             const orphansByComponent = new Map();
+            let filteredOrphanCount = 0;
             hv.details.forEach(detail => {
               const compId = detail.parentComponentId;
+
+              // Skip if component is ignored
+              if (ignoredComponentsSet.has(compId)) return;
+
+              filteredOrphanCount++;
               if (!orphansByComponent.has(compId)) {
                 orphansByComponent.set(compId, {
                   name: detail.parentComponentName,
@@ -643,6 +657,7 @@
             });
 
             const detailsList = Array.from(orphansByComponent.values()).map(component => {
+              const isIgnored = ignoredComponentsSet.has(component.id);
               const orphanItems = component.orphans.map(detail => {
                 const color = categoryColors[detail.category] || '#666';
                 const propertiesList = detail.properties.map((prop, i) => {
@@ -672,18 +687,19 @@
               return `
                 <div style="margin-bottom: 12px; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden;">
                   <div style="background: #f5f5f5; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
+                    <div style="flex: 1;">
                       <div style="font-weight: 600; color: #333; font-size: 11px;">${component.name}</div>
                       <div style="font-size: 10px; color: #666; margin-top: 2px;">${component.orphans.length} orphan${component.orphans.length > 1 ? 's' : ''}</div>
                     </div>
-                    <button
-                      onclick="ignoreComponent('${component.id}')"
-                      style="padding: 4px 8px; font-size: 10px; background: #e74c3c; color: white; border: none; border-radius: 3px; cursor: pointer;"
-                      onmouseover="this.style.background='#c0392b'"
-                      onmouseout="this.style.background='#e74c3c'"
-                    >
-                      🚫 Ignore Component
-                    </button>
+                    <label style="display: flex; align-items: center; cursor: pointer; font-size: 10px; color: #666; user-select: none;">
+                      <input
+                        type="checkbox"
+                        ${isIgnored ? 'checked' : ''}
+                        onchange="toggleIgnoreComponent('${component.id}')"
+                        style="margin-right: 6px; cursor: pointer;"
+                      />
+                      <span>Ignore</span>
+                    </label>
                   </div>
                   <div style="padding: 8px; background: #fafafa;">
                     ${orphanItems}
@@ -692,10 +708,14 @@
               `;
             }).join('');
 
+            const countText = filteredOrphanCount < hv.details.length
+              ? `${filteredOrphanCount} nodes (${hv.details.length - filteredOrphanCount} ignored)`
+              : `${filteredOrphanCount} nodes`;
+
             detailsHtml = `
               <div style="margin-top: 12px;">
                 <div onclick="toggleOrphanDetails()" style="cursor: pointer; padding: 8px 12px; background: #f0f0f0; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-size: 11px; font-weight: 600; color: #333;">📋 View Details (${hv.details.length} nodes)</span>
+                  <span style="font-size: 11px; font-weight: 600; color: #333;">📋 View Details (${countText})</span>
                   <span id="orphan-details-arrow" style="font-size: 10px; color: #666;">▼</span>
                 </div>
                 <div id="orphan-details" style="display: none; max-height: 300px; overflow-y: auto; margin-top: 8px; padding: 8px; background: #fafafa; border-radius: 4px;">
@@ -852,18 +872,32 @@
       }, '*');
     }
 
-    function ignoreComponent(componentId) {
-      parent.postMessage({
-        pluginMessage: {
-          type: 'ignore-component',
-          componentId: componentId
-        }
-      }, '*');
+    function toggleIgnoreComponent(componentId) {
+      // Toggle in local set
+      if (ignoredComponentsSet.has(componentId)) {
+        ignoredComponentsSet.delete(componentId);
+        // Send unignore message to backend
+        parent.postMessage({
+          pluginMessage: {
+            type: 'unignore-component',
+            componentId: componentId
+          }
+        }, '*');
+      } else {
+        ignoredComponentsSet.add(componentId);
+        // Send ignore message to backend
+        parent.postMessage({
+          pluginMessage: {
+            type: 'ignore-component',
+            componentId: componentId
+          }
+        }, '*');
+      }
 
-      // Re-analyze after ignoring
-      setTimeout(() => {
-        refresh();
-      }, 500);
+      // Re-render with updated filter (no re-analysis needed)
+      if (currentData) {
+        displayResults(currentData);
+      }
     }
 
     function saveLibraries() {

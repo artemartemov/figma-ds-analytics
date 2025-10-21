@@ -38,6 +38,7 @@ interface CoverageMetrics {
     totalHardcoded: number;
     totalOpportunities: number;
     details: OrphanDetail[];
+    ignoredComponents: string[];
   };
 }
 
@@ -4956,10 +4957,8 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   }
   console.log(`Collected ${orphanDetails.length} orphan details (max 100)`);
 
-  // Filter out orphans from ignored components
+  // Load ignored components (but don't filter - let UI handle it)
   const ignoredComponents = await loadIgnoredComponents();
-  const filteredOrphanDetails = orphanDetails.filter(orphan => !ignoredComponents.has(orphan.parentComponentId));
-  console.log(`Filtered to ${filteredOrphanDetails.length} orphans after removing ignored components`);
 
   // Calculate TRUE total opportunities (variable-bound + hardcoded)
   // This is the research-backed approach: count ALL properties that could use tokens
@@ -4998,7 +4997,8 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
       radius: hardcodedTotals.radius,
       totalHardcoded,
       totalOpportunities,
-      details: filteredOrphanDetails,
+      details: orphanDetails,
+      ignoredComponents: Array.from(ignoredComponents),
     },
   };
 }
