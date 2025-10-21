@@ -7,6 +7,14 @@ interface LibraryBreakdown {
   percentage: number;
 }
 
+interface OrphanDetail {
+  nodeName: string;
+  nodeType: string;
+  category: 'colors' | 'typography' | 'spacing' | 'radius' | 'borders';
+  properties: string[];
+  values?: string[];
+}
+
 interface CoverageMetrics {
   componentCoverage: number;
   variableCoverage: number;
@@ -27,6 +35,7 @@ interface CoverageMetrics {
     borders: number;
     totalHardcoded: number;
     totalOpportunities: number;
+    details: OrphanDetail[];
   };
 }
 
@@ -4920,6 +4929,15 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   const totalHardcoded = hardcodedTotals.colors + hardcodedTotals.typography +
                          hardcodedTotals.spacing + hardcodedTotals.radius + hardcodedTotals.borders;
 
+  // Collect detailed orphan information (for troubleshooting)
+  console.log('\n=== COLLECTING ORPHAN DETAILS ===');
+  const orphanDetails: OrphanDetail[] = [];
+  for (const instance of instancesToAnalyze) {
+    collectOrphanDetails(instance, orphanDetails);
+    if (orphanDetails.length >= 100) break; // Limit to first 100
+  }
+  console.log(`Collected ${orphanDetails.length} orphan details (max 100)`);
+
   // Calculate TRUE total opportunities (variable-bound + hardcoded)
   // This is the research-backed approach: count ALL properties that could use tokens
   const totalOpportunities = totalVariableBound + totalHardcoded;
@@ -4959,6 +4977,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
       borders: hardcodedTotals.borders,
       totalHardcoded,
       totalOpportunities,
+      details: orphanDetails,
     },
   };
 }
@@ -5428,6 +5447,109 @@ function detectHardcodedValues(node: SceneNode): {
   return hardcoded;
 }
 
+// Detect hardcoded values WITH details for troubleshooting
+function detectHardcodedValuesWithDetails(node: SceneNode): OrphanDetail | null {
+  const properties: string[] = [];
+  const values: string[] = [];
+  let category: 'colors' | 'typography' | 'spacing' | 'radius' | 'borders' | null = null;
+
+  // Check for hardcoded typography (most common issue)
+  if (node.type === 'TEXT') {
+    const textNode = node as TextNode;
+    const hasTextStyle = textNode.textStyleId && textNode.textStyleId !== '';
+
+    if (!hasTextStyle) {
+      if (!textNode.boundVariables?.fontSize && textNode.fontSize !== figma.mixed) {
+        properties.push('fontSize');
+        values.push(`${textNode.fontSize}px`);
+      }
+      if (!textNode.boundVariables?.lineHeight && textNode.lineHeight !== figma.mixed) {
+        const lh = textNode.lineHeight;
+        properties.push('lineHeight');
+        values.push(typeof lh === 'object' && 'value' in lh ? `${lh.value}${lh.unit === 'PIXELS' ? 'px' : '%'}` : String(lh));
+      }
+      if (!textNode.boundVariables?.letterSpacing && textNode.letterSpacing !== figma.mixed) {
+        const ls = textNode.letterSpacing;
+        properties.push('letterSpacing');
+        values.push(typeof ls === 'object' && 'value' in ls ? `${ls.value}${ls.unit === 'PIXELS' ? 'px' : '%'}` : String(ls));
+      }
+      if (!textNode.boundVariables?.fontFamily && textNode.fontName !== figma.mixed) {
+        properties.push('fontFamily');
+        values.push(textNode.fontName ? (typeof textNode.fontName === 'object' ? textNode.fontName.family : String(textNode.fontName)) : 'mixed');
+      }
+      if (!textNode.boundVariables?.fontWeight && textNode.fontName !== figma.mixed) {
+        properties.push('fontWeight');
+        values.push(textNode.fontName ? (typeof textNode.fontName === 'object' ? textNode.fontName.style : 'mixed') : 'mixed');
+      }
+
+      if (properties.length > 0) {
+        category = 'typography';
+      }
+    }
+  }
+
+  // Check for hardcoded colors
+  if ('fills' in node && node.fills !== figma.mixed) {
+    const fills = node.fills as readonly Paint[];
+    const hasFillVariable = node.boundVariables?.fills && Array.isArray(node.boundVariables.fills) && node.boundVariables.fills.length > 0;
+    const visibleFills = fills.filter((fill: any) => fill.visible !== false);
+
+    if (visibleFills.length > 0 && !hasFillVariable) {
+      if (!category) category = 'colors';
+      properties.push('fill');
+      visibleFills.forEach((fill: any, i) => {
+        if (fill.type === 'SOLID' && fill.color) {
+          const r = Math.round(fill.color.r * 255);
+          const g = Math.round(fill.color.g * 255);
+          const b = Math.round(fill.color.b * 255);
+          values.push(`rgb(${r}, ${g}, ${b})`);
+        }
+      });
+    }
+  }
+
+  // Check for hardcoded radius
+  if ('cornerRadius' in node && typeof node.cornerRadius === 'number' && node.cornerRadius > 0) {
+    const boundVars = node.boundVariables as any;
+    const hasRadiusVariable = boundVars?.cornerRadius || boundVars?.topLeftRadius ||
+                               boundVars?.topRightRadius || boundVars?.bottomLeftRadius ||
+                               boundVars?.bottomRightRadius;
+
+    if (!hasRadiusVariable) {
+      if (!category) category = 'radius';
+      properties.push('cornerRadius');
+      values.push(`${node.cornerRadius}px`);
+    }
+  }
+
+  // Check for hardcoded borders
+  if ('strokes' in node && node.strokes) {
+    const strokes = node.strokes;
+    if (Array.isArray(strokes)) {
+      const hasStrokeWeightVariable = node.boundVariables?.strokeWeight;
+      const visibleStrokes = strokes.filter((stroke: any) => stroke.visible !== false);
+
+      if (visibleStrokes.length > 0 && 'strokeWeight' in node && typeof node.strokeWeight === 'number' && node.strokeWeight > 0 && !hasStrokeWeightVariable) {
+        if (!category) category = 'borders';
+        properties.push('strokeWeight');
+        values.push(`${node.strokeWeight}px`);
+      }
+    }
+  }
+
+  if (properties.length > 0 && category) {
+    return {
+      nodeName: node.name || 'Unnamed',
+      nodeType: node.type,
+      category,
+      properties,
+      values,
+    };
+  }
+
+  return null;
+}
+
 // Recursively count variable-bound properties
 function countVariableBoundPropertiesRecursive(node: SceneNode, depth: number = 0): {
   colors: number;
@@ -5479,6 +5601,29 @@ function detectHardcodedValuesRecursive(node: SceneNode, depth: number = 0): {
   }
 
   return totals;
+}
+
+// Recursively collect detailed orphan information
+function collectOrphanDetails(node: SceneNode, details: OrphanDetail[], depth: number = 0): void {
+  const MAX_DEPTH = 50;
+  const MAX_DETAILS = 100; // Limit to prevent performance issues
+
+  if (depth >= MAX_DEPTH || details.length >= MAX_DETAILS) return;
+
+  // Check this node for orphans
+  const orphan = detectHardcodedValuesWithDetails(node);
+  if (orphan) {
+    details.push(orphan);
+  }
+
+  // Check children
+  if ('children' in node) {
+    const children = node.children as SceneNode[];
+    for (const child of children) {
+      if (details.length >= MAX_DETAILS) break;
+      collectOrphanDetails(child, details, depth + 1);
+    }
+  }
 }
 
 // Listen for messages from UI
