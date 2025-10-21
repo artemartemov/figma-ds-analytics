@@ -357,7 +357,14 @@
   <p class="subtitle">Select frames/components to analyze • Component instances only</p>
 
   <div id="loading" class="loading">
-    Analyzing selection...
+    <div style="margin-bottom: 16px;">
+      <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">Analyzing selection...</div>
+      <div id="progress-step" style="font-size: 11px; color: #666; margin-bottom: 12px;">Initializing...</div>
+      <div style="width: 100%; height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden;">
+        <div id="progress-bar" style="width: 0%; height: 100%; background: #18A0FB; transition: width 0.3s ease;"></div>
+      </div>
+      <div id="progress-percent" style="font-size: 10px; color: #999; margin-top: 6px; text-align: center;">0%</div>
+    </div>
   </div>
 
   <div id="settings" style="display: none;">
@@ -1113,6 +1120,16 @@
     }
 
     // Listen for messages from plugin code
+    function updateProgress(step, percent) {
+      const stepEl = document.getElementById('progress-step');
+      const barEl = document.getElementById('progress-bar');
+      const percentEl = document.getElementById('progress-percent');
+
+      if (stepEl) stepEl.textContent = step;
+      if (barEl) barEl.style.width = percent + '%';
+      if (percentEl) percentEl.textContent = Math.round(percent) + '%';
+    }
+
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
       if (msg.type === 'results') {
@@ -1123,6 +1140,8 @@
         displaySettings(msg.libraries);
       } else if (msg.type === 'selection-status') {
         handleSelectionStatus(msg.hasSelection, msg.count);
+      } else if (msg.type === 'progress') {
+        updateProgress(msg.step, msg.percent);
       }
     };
   </script>

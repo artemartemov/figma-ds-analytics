@@ -4616,12 +4616,23 @@ figma.on('selectionchange', () => {
 });
 
 // Main analysis function
+// Helper function to send progress updates to UI
+function sendProgress(step: string, percent: number) {
+  figma.ui.postMessage({
+    type: 'progress',
+    step,
+    percent
+  });
+}
+
 async function analyzeCoverage(): Promise<CoverageMetrics> {
   const page = figma.currentPage;
   const selection = page.selection;
 
   // Reset alias tracking for this analysis
   aliasResolutions.clear();
+
+  sendProgress('Initializing analysis...', 0);
 
   // Check if user has made a selection
   if (selection.length === 0) {
@@ -4630,6 +4641,8 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
 
   console.log(`\n=== ANALYZING SELECTION ===`);
   console.log(`Selected ${selection.length} top-level node(s)`);
+
+  sendProgress('Finding component instances...', 5);
 
   // Find all component instances within the selection
   const componentInstances: InstanceNode[] = [];
@@ -4650,6 +4663,8 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   }
 
   console.log(`Found ${componentInstances.length} component instance(s) in selection`);
+
+  sendProgress(`Categorizing ${componentInstances.length} components...`, 15);
 
   let libraryInstances = 0;
   let localInstances = 0;
@@ -4907,6 +4922,8 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     console.log(`⚠ Limiting detailed analysis to first ${MAX_INSTANCES_TO_ANALYZE} instances for performance`);
   }
 
+  sendProgress(`Analyzing tokens in ${instancesToAnalyze.length} components...`, 30);
+
   const variableBoundTotals = {
     colors: 0,
     typography: 0,
@@ -4925,6 +4942,9 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     processedCount++;
     if (processedCount % 100 === 0) {
       console.log(`Processed ${processedCount}/${instancesToAnalyze.length} instances...`);
+      // Report progress: 30% to 60% range
+      const progressPercent = 30 + (processedCount / instancesToAnalyze.length) * 30;
+      sendProgress(`Analyzing tokens (${processedCount}/${instancesToAnalyze.length})...`, progressPercent);
     }
   }
 
@@ -4957,6 +4977,9 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     processedCount++;
     if (processedCount % 100 === 0) {
       console.log(`Processed ${processedCount}/${instancesToAnalyze.length} instances...`);
+      // Report progress: 60% to 80% range
+      const progressPercent = 60 + (processedCount / instancesToAnalyze.length) * 20;
+      sendProgress(`Detecting hardcoded values (${processedCount}/${instancesToAnalyze.length})...`, progressPercent);
     }
   }
 
@@ -4972,6 +4995,8 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     if (orphanDetails.length >= 100) break; // Limit to first 100
   }
   console.log(`Collected ${orphanDetails.length} orphan details (max 100)`);
+
+  sendProgress('Loading ignored items...', 80);
 
   // Load ignored components and orphans (but don't filter - let UI handle it)
   const ignoredComponents = await loadIgnoredComponents();
@@ -4994,6 +5019,8 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   console.log('Total hardcoded values:', totalHardcoded);
   console.log('Total opportunities:', totalOpportunities);
   console.log('ACCURATE Token Adoption:', accurateVariableCoverage.toFixed(1) + '%');
+
+  sendProgress('Finalizing results...', 95);
 
   return {
     componentCoverage,
