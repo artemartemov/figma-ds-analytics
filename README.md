@@ -19,8 +19,8 @@ A Figma plugin that measures design system adoption by analyzing component usage
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/figma-ds-coverage.git
-   cd figma-ds-coverage
+   git clone https://github.com/artemartemov/figma-ds-analytics.git
+   cd figma-ds-analytics
    ```
 
 2. **Install dependencies**
@@ -207,8 +207,8 @@ MIT License - see LICENSE file for details
 
 ## Support
 
-- **Issues:** [GitHub Issues](https://github.com/yourusername/figma-ds-coverage/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/figma-ds-coverage/discussions)
+- **Issues:** [GitHub Issues](https://github.com/artemartemov/figma-ds-analytics/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/artemartemov/figma-ds-analytics/discussions)
 
 ## Acknowledgments
 
