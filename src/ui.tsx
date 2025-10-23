@@ -1143,29 +1143,32 @@ function Plugin() {
             {/* Minimal bar charts */}
             {filtered.libraryBreakdown && filtered.libraryBreakdown.length > 0 && (
               <div style={{ marginBottom: '20px' }}>
-                {filtered.libraryBreakdown.map((lib) => (
-                  <div key={lib.name} style={{ marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                      <Text style={{ fontSize: '11px', fontWeight: '500' }}>{lib.name}</Text>
-                      <Text style={{ color: "#999", fontSize: '11px' }}>
-                        {lib.count} ({formatPercent(lib.percentage)})
-                      </Text>
+                {filtered.libraryBreakdown.map((lib, index) => {
+                  // Assign colors from palette based on index
+                  const colors = ['#fc00e3', '#8c85ff', '#00baff', '#00dbff', '#00f1ff', '#1dffca'];
+                  const startColor = colors[index % colors.length];
+                  const endColor = colors[(index + 1) % colors.length];
+
+                  return (
+                    <div key={lib.name} style={{ marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <Text style={{ fontSize: '11px', fontWeight: '500' }}>{lib.name}</Text>
+                        <Text style={{ color: "#999", fontSize: '11px' }}>
+                          {lib.count} ({formatPercent(lib.percentage)})
+                        </Text>
+                      </div>
+                      <div style={{ width: '100%', height: '8px', background: '#f0f0f0', borderRadius: '20px', overflow: 'hidden' }}>
+                        <div style={{
+                          width: lib.percentage + '%',
+                          height: '100%',
+                          background: `linear-gradient(90deg, ${startColor} 0%, ${endColor} 100%)`,
+                          borderRadius: '20px',
+                          transition: 'width 0.3s ease'
+                        }} />
+                      </div>
                     </div>
-                    <div style={{ width: '100%', height: '8px', background: '#e0e0e0', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{
-                        width: lib.percentage + '%',
-                        height: '100%',
-                        background: lib.name.includes('Atomic Components') ? '#18A0FB'
-                          : lib.name.includes('Design Components') ? '#5B9BD5'
-                          : lib.name.includes('Global Foundations') ? '#4A90E2'
-                          : lib.name.includes('Wrapper') || lib.name.includes('Local (built with DS)') ? '#95a5a6'
-                          : lib.name.includes('Local (standalone)') || lib.name.includes('Local Components') ? '#f39c12'
-                          : '#9b59b6',
-                        transition: 'width 0.3s ease'
-                      }} />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -1183,12 +1186,16 @@ function Plugin() {
             {data.hardcodedValues && data.hardcodedValues.totalHardcoded > 0 ? (
               <Fragment>
                 {[
-                  { label: 'Colors', count: data.hardcodedValues.colors, color: '#e74c3c' },
-                  { label: 'Typography', count: data.hardcodedValues.typography, color: '#3498db' },
-                  { label: 'Spacing', count: data.hardcodedValues.spacing, color: '#2ecc71' },
-                  { label: 'Radius', count: data.hardcodedValues.radius, color: '#f39c12' }
-                ].filter(item => item.count > 0).map((item) => {
+                  { label: 'Colors', count: data.hardcodedValues.colors },
+                  { label: 'Typography', count: data.hardcodedValues.typography },
+                  { label: 'Spacing', count: data.hardcodedValues.spacing },
+                  { label: 'Radius', count: data.hardcodedValues.radius }
+                ].filter(item => item.count > 0).map((item, index) => {
                   const percentage = data.hardcodedValues.totalHardcoded > 0 ? (item.count / data.hardcodedValues.totalHardcoded) * 100 : 0;
+                  const colors = ['#fc00e3', '#8c85ff', '#00baff', '#00dbff', '#00f1ff', '#1dffca'];
+                  const startColor = colors[index % colors.length];
+                  const endColor = colors[(index + 1) % colors.length];
+
                   return (
                     <div key={item.label} style={{ marginBottom: '12px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
@@ -1197,11 +1204,12 @@ function Plugin() {
                           {item.count} ({formatPercent(percentage)})
                         </Text>
                       </div>
-                      <div style={{ width: '100%', height: '8px', background: '#e0e0e0', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: '100%', height: '8px', background: '#f0f0f0', borderRadius: '20px', overflow: 'hidden' }}>
                         <div style={{
                           width: percentage + '%',
                           height: '100%',
-                          background: item.color,
+                          background: `linear-gradient(90deg, ${startColor} 0%, ${endColor} 100%)`,
+                          borderRadius: '20px',
                           transition: 'width 0.3s ease'
                         }} />
                       </div>
@@ -1245,44 +1253,29 @@ function Plugin() {
               </div>
             </div>
             {data.variableBreakdown && data.variableBreakdown.length > 0 ? (
-              data.variableBreakdown.map((lib) => {
-                const isCollapsed = collapsedSections.has(`token-${lib.name}`);
+              data.variableBreakdown.map((lib, index) => {
+                // Assign colors from palette based on index
+                const colors = ['#fc00e3', '#8c85ff', '#00baff', '#00dbff', '#00f1ff', '#1dffca'];
+                const startColor = colors[index % colors.length];
+                const endColor = colors[(index + 1) % colors.length];
+
                 return (
-                  <div key={lib.name} style={{ marginBottom: '16px' }}>
-                    <div
-                      style={{
-                        padding: '8px 0',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        gap: '12px',
-                        cursor: 'pointer',
-                        borderBottom: !isCollapsed ? '1px solid #e0e0e0' : 'none'
-                      }}
-                      onClick={() => handleToggleCollapse(`token-${lib.name}`)}
-                    >
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, color: '#333', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
-                          {lib.name}
-                        </div>
-                        <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
-                          {lib.count} token{lib.count > 1 ? 's' : ''} ({formatPercent(lib.percentage)})
-                        </div>
-                      </div>
+                  <div key={lib.name} style={{ marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <Text style={{ fontSize: '11px', fontWeight: '500' }}>{lib.name}</Text>
+                      <Text style={{ color: "#999", fontSize: '11px' }}>
+                        {lib.count} ({formatPercent(lib.percentage)})
+                      </Text>
                     </div>
-                    {!isCollapsed && (
-                      <div style={{ paddingTop: '8px' }}>
-                        <div style={{ width: '100%', height: '8px', background: '#e0e0e0', borderRadius: '4px', overflow: 'hidden' }}>
-                          <div style={{
-                            width: lib.percentage + '%',
-                            height: '100%',
-                            background: lib.name.includes('Other Library') ? '#f39c12' : '#18A0FB',
-                            transition: 'width 0.3s ease'
-                          }} />
-                        </div>
-                      </div>
-                    )}
+                    <div style={{ width: '100%', height: '8px', background: '#f0f0f0', borderRadius: '20px', overflow: 'hidden' }}>
+                      <div style={{
+                        width: lib.percentage + '%',
+                        height: '100%',
+                        background: `linear-gradient(90deg, ${startColor} 0%, ${endColor} 100%)`,
+                        borderRadius: '20px',
+                        transition: 'width 0.3s ease'
+                      }} />
+                    </div>
                   </div>
                 );
               })
