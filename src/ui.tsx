@@ -1062,8 +1062,8 @@ function Plugin() {
                       {formatPercent(filtered.variableCoverage)}
                     </div>
                   </div>
-                  <div style={{ height: '3px', width: '100%', background: 'rgba(0,0,0,0.08)', borderRadius: '4px' }}>
-                    <div style={{ height: '100%', width: `${filtered.variableCoverage}%`, background: '#222', transition: 'width 0.3s' }} />
+                  <div style={{ height: '2px', width: '100%', background: 'white', borderRadius: '4px' }}>
+                    <div style={{ height: '100%', width: `${filtered.variableCoverage}%`, background: '#222', borderRadius: '4px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
 
@@ -1077,8 +1077,8 @@ function Plugin() {
                       {formatPercent(filtered.componentCoverage)}
                     </div>
                   </div>
-                  <div style={{ height: '3px', width: '100%', background: 'rgba(0,0,0,0.08)', borderRadius: '4px' }}>
-                    <div style={{ height: '100%', width: `${filtered.componentCoverage}%`, background: '#222', transition: 'width 0.3s' }} />
+                  <div style={{ height: '2px', width: '100%', background: 'white', borderRadius: '4px' }}>
+                    <div style={{ height: '100%', width: `${filtered.componentCoverage}%`, background: '#222', borderRadius: '4px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
               </div>
@@ -1130,8 +1130,8 @@ function Plugin() {
                       {formatPercent(filtered.totalInstances > 0 ? (filtered.libraryInstances / filtered.totalInstances) * 100 : 0)}
                     </div>
                   </div>
-                  <div style={{ height: '3px', width: '100%', background: 'rgba(0,0,0,0.08)', borderRadius: '4px' }}>
-                    <div style={{ height: '100%', width: `${filtered.totalInstances > 0 ? (filtered.libraryInstances / filtered.totalInstances) * 100 : 0}%`, background: '#222', transition: 'width 0.3s' }} />
+                  <div style={{ height: '2px', width: '100%', background: 'white', borderRadius: '4px' }}>
+                    <div style={{ height: '100%', width: `${filtered.totalInstances > 0 ? (filtered.libraryInstances / filtered.totalInstances) * 100 : 0}%`, background: '#222', borderRadius: '4px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
 
@@ -1145,8 +1145,8 @@ function Plugin() {
                       {formatPercent(filtered.totalInstances > 0 ? ((filtered.totalInstances - filtered.libraryInstances) / filtered.totalInstances) * 100 : 0)}
                     </div>
                   </div>
-                  <div style={{ height: '3px', width: '100%', background: 'rgba(0,0,0,0.08)', borderRadius: '4px' }}>
-                    <div style={{ height: '100%', width: `${filtered.totalInstances > 0 ? ((filtered.totalInstances - filtered.libraryInstances) / filtered.totalInstances) * 100 : 0}%`, background: '#222', transition: 'width 0.3s' }} />
+                  <div style={{ height: '2px', width: '100%', background: 'white', borderRadius: '4px' }}>
+                    <div style={{ height: '100%', width: `${filtered.totalInstances > 0 ? ((filtered.totalInstances - filtered.libraryInstances) / filtered.totalInstances) * 100 : 0}%`, background: '#222', borderRadius: '4px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
               </div>
@@ -1198,8 +1198,8 @@ function Plugin() {
                       {formatPercent(filtered.totalOpportunities > 0 ? (filtered.tokenBoundCount / filtered.totalOpportunities) * 100 : 0)}
                     </div>
                   </div>
-                  <div style={{ height: '3px', width: '100%', background: 'rgba(0,0,0,0.08)', borderRadius: '4px' }}>
-                    <div style={{ height: '100%', width: `${filtered.totalOpportunities > 0 ? (filtered.tokenBoundCount / filtered.totalOpportunities) * 100 : 0}%`, background: '#222', transition: 'width 0.3s' }} />
+                  <div style={{ height: '2px', width: '100%', background: 'white', borderRadius: '4px' }}>
+                    <div style={{ height: '100%', width: `${filtered.totalOpportunities > 0 ? (filtered.tokenBoundCount / filtered.totalOpportunities) * 100 : 0}%`, background: '#222', borderRadius: '4px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
 
@@ -1213,8 +1213,8 @@ function Plugin() {
                       {formatPercent(filtered.totalOpportunities > 0 ? ((filtered.totalOpportunities - filtered.tokenBoundCount) / filtered.totalOpportunities) * 100 : 0)}
                     </div>
                   </div>
-                  <div style={{ height: '3px', width: '100%', background: 'rgba(0,0,0,0.08)', borderRadius: '4px' }}>
-                    <div style={{ height: '100%', width: `${filtered.totalOpportunities > 0 ? ((filtered.totalOpportunities - filtered.tokenBoundCount) / filtered.totalOpportunities) * 100 : 0}%`, background: '#222', transition: 'width 0.3s' }} />
+                  <div style={{ height: '2px', width: '100%', background: 'white', borderRadius: '4px' }}>
+                    <div style={{ height: '100%', width: `${filtered.totalOpportunities > 0 ? ((filtered.totalOpportunities - filtered.tokenBoundCount) / filtered.totalOpportunities) * 100 : 0}%`, background: '#222', borderRadius: '4px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
               </div>
