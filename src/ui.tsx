@@ -1295,53 +1295,41 @@ function Plugin() {
             </Text>
 
             {/* Mini summary cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div style={{ background: '#F5F5F5', padding: '24px', borderRadius: '4px', border: 'none' }}>
-                <div style={{ fontSize: '10px', color: 'rgba(0,0,0,0.6)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '16px', height: '142px' }}>
+              <div style={{ gridArea: '1 / 1', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'nowrap' }}>
+                <p style={{ fontSize: '16px', color: '#878787', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
                   Components
-                </div>
-                <div style={{ fontSize: '28px', fontWeight: '700', color: '#222', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
+                </p>
+                <p style={{ fontSize: '32px', fontWeight: '700', color: '#222', lineHeight: 'normal', margin: 0, fontFeatureSettings: '"tnum"' }}>
                   {filtered.totalInstances}
-                </div>
-                <div style={{ fontSize: '9px', color: '#999', marginTop: '4px' }}>
-                  analyzed
-                </div>
+                </p>
               </div>
 
-              <div style={{ background: '#F5F5F5', padding: '24px', borderRadius: '4px', border: 'none' }}>
-                <div style={{ fontSize: '10px', color: 'rgba(0,0,0,0.6)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '8px' }}>
+              <div style={{ gridArea: '1 / 2', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'nowrap' }}>
+                <p style={{ fontSize: '16px', color: '#878787', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
                   Design Tokens
-                </div>
-                <div style={{ fontSize: '28px', fontWeight: '700', color: '#222', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
+                </p>
+                <p style={{ fontSize: '32px', fontWeight: '700', color: '#222', lineHeight: 'normal', margin: 0, fontFeatureSettings: '"tnum"' }}>
                   {filtered.totalOpportunities}
-                </div>
-                <div style={{ fontSize: '9px', color: '#999', marginTop: '4px' }}>
-                  properties
-                </div>
+                </p>
               </div>
 
-              <div style={{ background: '#F5F5F5', padding: '24px', borderRadius: '4px', border: 'none' }}>
-                <div style={{ fontSize: '10px', color: 'rgba(0,0,0,0.6)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '8px' }}>
+              <div style={{ gridArea: '2 / 1', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'nowrap' }}>
+                <p style={{ fontSize: '16px', color: '#878787', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
                   Libraries
-                </div>
-                <div style={{ fontSize: '28px', fontWeight: '700', color: '#222', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
+                </p>
+                <p style={{ fontSize: '32px', fontWeight: '700', color: '#222', lineHeight: 'normal', margin: 0, fontFeatureSettings: '"tnum"' }}>
                   {filtered.libraryBreakdown.length}
-                </div>
-                <div style={{ fontSize: '9px', color: '#999', marginTop: '4px' }}>
-                  sources
-                </div>
+                </p>
               </div>
 
-              <div style={{ background: '#F5F5F5', padding: '24px', borderRadius: '4px', border: 'none' }}>
-                <div style={{ fontSize: '10px', color: 'rgba(0,0,0,0.6)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '8px' }}>
+              <div style={{ gridArea: '2 / 2', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'nowrap' }}>
+                <p style={{ fontSize: '16px', color: '#878787', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
                   Orphans
-                </div>
-                <div style={{ fontSize: '28px', fontWeight: '700', color: '#222', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
+                </p>
+                <p style={{ fontSize: '32px', fontWeight: '700', color: '#222', lineHeight: 'normal', margin: 0, fontFeatureSettings: '"tnum"' }}>
                   {filtered.orphanCount}
-                </div>
-                <div style={{ fontSize: '9px', color: '#999', marginTop: '4px' }}>
-                  hardcoded
-                </div>
+                </p>
               </div>
             </div>
           </div>
