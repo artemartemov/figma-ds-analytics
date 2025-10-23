@@ -928,7 +928,7 @@ function Plugin() {
 
           {/* Overall Score Card */}
           <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, #fc00e3 0%, #8c85ff 50%, #00baff 100%)',
             padding: '12px 16px',
             borderRadius: '8px',
             display: 'flex',
@@ -1157,11 +1157,11 @@ function Plugin() {
                           {lib.count} ({formatPercent(lib.percentage)})
                         </Text>
                       </div>
-                      <div style={{ width: '100%', height: '8px', background: '#f0f0f0', borderRadius: '20px', overflow: 'hidden' }}>
+                      <div style={{ width: '100%', height: '4px', background: '#f0f0f0', borderRadius: '20px', overflow: 'hidden' }}>
                         <div style={{
                           width: lib.percentage + '%',
                           height: '100%',
-                          background: `linear-gradient(90deg, ${startColor} 0%, ${endColor} 100%)`,
+                          background: `linear-gradient(90deg, ${startColor} 0%, ${startColor}dd 50%, ${endColor}aa 100%)`,
                           borderRadius: '20px',
                           transition: 'width 0.3s ease'
                         }} />
@@ -1204,11 +1204,11 @@ function Plugin() {
                           {item.count} ({formatPercent(percentage)})
                         </Text>
                       </div>
-                      <div style={{ width: '100%', height: '8px', background: '#f0f0f0', borderRadius: '20px', overflow: 'hidden' }}>
+                      <div style={{ width: '100%', height: '4px', background: '#f0f0f0', borderRadius: '20px', overflow: 'hidden' }}>
                         <div style={{
                           width: percentage + '%',
                           height: '100%',
-                          background: `linear-gradient(90deg, ${startColor} 0%, ${endColor} 100%)`,
+                          background: `linear-gradient(90deg, ${startColor} 0%, ${startColor}dd 50%, ${endColor}aa 100%)`,
                           borderRadius: '20px',
                           transition: 'width 0.3s ease'
                         }} />
@@ -1267,11 +1267,11 @@ function Plugin() {
                         {lib.count} ({formatPercent(lib.percentage)})
                       </Text>
                     </div>
-                    <div style={{ width: '100%', height: '8px', background: '#f0f0f0', borderRadius: '20px', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', height: '4px', background: '#f0f0f0', borderRadius: '20px', overflow: 'hidden' }}>
                       <div style={{
                         width: lib.percentage + '%',
                         height: '100%',
-                        background: `linear-gradient(90deg, ${startColor} 0%, ${endColor} 100%)`,
+                        background: `linear-gradient(90deg, ${startColor} 0%, ${startColor}dd 50%, ${endColor}aa 100%)`,
                         borderRadius: '20px',
                         transition: 'width 0.3s ease'
                       }} />
