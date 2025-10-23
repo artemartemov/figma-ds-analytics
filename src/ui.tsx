@@ -170,6 +170,86 @@ function Tooltip({ content, dark = false }: { content: string; dark?: boolean })
   );
 }
 
+// Donut Chart Component
+interface DonutChartProps {
+  segments: Array<{ value: number; color: string; label?: string }>;
+  size?: number;
+  strokeWidth?: number;
+  centerValue?: string;
+  centerLabel?: string;
+}
+
+function DonutChart({ segments, size = 80, strokeWidth = 8, centerValue, centerLabel }: DonutChartProps) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const center = size / 2;
+
+  // Calculate total value
+  const total = segments.reduce((sum, seg) => sum + seg.value, 0);
+
+  // Generate arcs
+  let currentOffset = 0;
+  const arcs = segments.map((segment, index) => {
+    const percentage = segment.value / total;
+    const strokeLength = circumference * percentage;
+    const offset = currentOffset;
+    currentOffset += strokeLength;
+
+    return (
+      <circle
+        key={index}
+        cx={center}
+        cy={center}
+        r={radius}
+        fill="none"
+        stroke={segment.color}
+        strokeWidth={strokeWidth}
+        strokeDasharray={`${strokeLength} ${circumference}`}
+        strokeDashoffset={-offset}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${center} ${center})`}
+        style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+      />
+    );
+  });
+
+  return (
+    <div style={{ position: 'relative', width: `${size}px`, height: `${size}px` }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(0deg)' }}>
+        {/* Background circle */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="rgba(128, 128, 128, 0.1)"
+          strokeWidth={strokeWidth}
+        />
+        {arcs}
+      </svg>
+      {centerValue && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          textAlign: 'center',
+          pointerEvents: 'none'
+        }}>
+          <div style={{ fontSize: '18px', fontWeight: '700', lineHeight: '1', fontFeatureSettings: '"tnum"' }}>
+            {centerValue}
+          </div>
+          {centerLabel && (
+            <div style={{ fontSize: '8px', marginTop: '2px', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              {centerLabel}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Plugin() {
   // State management
   const [loading, setLoading] = useState(false);
@@ -934,7 +1014,7 @@ function Plugin() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '16px',
+            gap: '20px',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)'
           }}>
             <div style={{ flex: 1 }}>
@@ -948,9 +1028,33 @@ function Plugin() {
                   content={`Foundation-First Formula (55/45 weighting):\n\nToken Adoption: ${formatPercent(filtered.variableCoverage)} × 0.55 = ${formatPercent(filtered.variableCoverage * 0.55)}\nComponent Coverage: ${formatPercent(filtered.componentCoverage)} × 0.45 = ${formatPercent(filtered.componentCoverage * 0.45)}\n\nOverall Adoption: ${formatPercent(filtered.variableCoverage * 0.55)} + ${formatPercent(filtered.componentCoverage * 0.45)} = ${formatPercent(filtered.overallScore)}\n\nWhy 55/45? Research from IBM, Atlassian, and Pinterest shows that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.`}
                 />
               </div>
+              <div style={{ marginTop: '12px', display: 'flex', gap: '12px', fontSize: '9px', color: 'rgba(255,255,255,0.85)' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: '#00b6d2' }} />
+                    <span style={{ opacity: 0.7 }}>Tokens</span>
+                  </div>
+                  <div style={{ fontWeight: '600', fontSize: '11px' }}>{formatPercent(filtered.variableCoverage)}</div>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: '#c900b5' }} />
+                    <span style={{ opacity: 0.7 }}>Components</span>
+                  </div>
+                  <div style={{ fontWeight: '600', fontSize: '11px' }}>{formatPercent(filtered.componentCoverage)}</div>
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#fff', lineHeight: '1', letterSpacing: '-1.5px', fontFeatureSettings: '"tnum"' }}>
-              {formatPercent(filtered.overallScore)}
+            <div style={{ color: '#fff' }}>
+              <DonutChart
+                segments={[
+                  { value: filtered.variableCoverage, color: '#00b6d2' },
+                  { value: filtered.componentCoverage, color: '#c900b5' }
+                ]}
+                size={90}
+                strokeWidth={10}
+                centerValue={formatPercent(filtered.overallScore)}
+              />
             </div>
           </div>
 
@@ -963,22 +1067,40 @@ function Plugin() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '16px',
+            gap: '20px',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)'
           }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '11px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>
                 Component Coverage
               </div>
-              <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
                 {filtered.libraryInstances} of {filtered.totalInstances} components
                 <Tooltip
                   content={`DS Atomic Components: ${filtered.libraryInstances}\nStandalone Local: ${filtered.totalInstances - filtered.libraryInstances}\nTotal: ${filtered.totalInstances}\n\nFormula: DS Atomic ÷ (DS Atomic + Standalone Local)\nCalculation: ${filtered.libraryInstances} ÷ ${filtered.totalInstances} = ${formatPercent(filtered.componentCoverage)}\n\nNote: Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`}
                 />
               </div>
+              <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)' }}>
+                <div style={{ marginBottom: '4px' }}>
+                  <span style={{ color: 'var(--figma-color-text-tertiary)' }}>Library: </span>
+                  <span style={{ fontWeight: '600' }}>{filtered.libraryInstances}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--figma-color-text-tertiary)' }}>Local: </span>
+                  <span style={{ fontWeight: '600' }}>{filtered.totalInstances - filtered.libraryInstances}</span>
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--figma-color-text)', lineHeight: '1', letterSpacing: '-1.5px', fontFeatureSettings: '"tnum"' }}>
-              {formatPercent(filtered.componentCoverage)}
+            <div>
+              <DonutChart
+                segments={[
+                  { value: filtered.libraryInstances, color: '#7b64ef' },
+                  { value: filtered.totalInstances - filtered.libraryInstances, color: 'rgba(128, 128, 128, 0.3)' }
+                ]}
+                size={90}
+                strokeWidth={10}
+                centerValue={formatPercent(filtered.componentCoverage)}
+              />
             </div>
           </div>
 
@@ -991,22 +1113,40 @@ function Plugin() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '16px',
+            gap: '20px',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)'
           }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '11px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>
                 Design Token Adoption
               </div>
-              <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
                 {filtered.tokenBoundCount} of {filtered.totalOpportunities} properties
                 <Tooltip
                   content={`Token-Bound Properties: ${filtered.tokenBoundCount}\nTotal Properties: ${filtered.totalOpportunities}\nCalculation: ${filtered.tokenBoundCount} ÷ ${filtered.totalOpportunities} = ${formatPercent(filtered.variableCoverage)}`}
                 />
               </div>
+              <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)' }}>
+                <div style={{ marginBottom: '4px' }}>
+                  <span style={{ color: 'var(--figma-color-text-tertiary)' }}>Token-Bound: </span>
+                  <span style={{ fontWeight: '600' }}>{filtered.tokenBoundCount}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--figma-color-text-tertiary)' }}>Hardcoded: </span>
+                  <span style={{ fontWeight: '600' }}>{filtered.totalOpportunities - filtered.tokenBoundCount}</span>
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--figma-color-text)', lineHeight: '1', letterSpacing: '-1.5px', fontFeatureSettings: '"tnum"' }}>
-              {formatPercent(filtered.variableCoverage)}
+            <div>
+              <DonutChart
+                segments={[
+                  { value: filtered.tokenBoundCount, color: '#00b6d2' },
+                  { value: filtered.totalOpportunities - filtered.tokenBoundCount, color: 'rgba(128, 128, 128, 0.3)' }
+                ]}
+                size={90}
+                strokeWidth={10}
+                centerValue={formatPercent(filtered.variableCoverage)}
+              />
             </div>
           </div>
         </div>
