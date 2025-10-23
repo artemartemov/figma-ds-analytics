@@ -1290,9 +1290,11 @@ function Plugin() {
         {/* Tab Content */}
         {activeTab === 'overview' && (
           <div>
-            <Text style={{ fontSize: '11px', color: 'var(--figma-color-text-secondary, #999)', marginBottom: '16px' }}>
-              Quick summary of analysis results
-            </Text>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <p style={{ fontSize: '16px', fontWeight: '500', color: '#222', textTransform: 'uppercase', margin: 0, lineHeight: 'normal' }}>
+                Summary
+              </p>
+            </div>
 
             {/* Mini summary cards */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '12px', height: '142px' }}>
