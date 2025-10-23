@@ -595,17 +595,17 @@ function Plugin() {
               alignItems: 'center',
               gap: '12px',
               cursor: 'pointer',
-              borderBottom: !isCollapsed ? '1px solid #e0e0e0' : 'none'
+              borderBottom: !isCollapsed ? '1px solid var(--figma-color-border)' : 'none'
             }}
             onClick={() => handleToggleCollapse(librarySource)}
           >
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, color: '#333', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ fontWeight: 600, color: 'var(--figma-color-text)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
                 {librarySource}
-                {isWrapper && <span style={{ fontSize: '9px', color: '#999', fontWeight: 400 }}>(excluded from metrics)</span>}
+                {isWrapper && <span style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', fontWeight: 400 }}>(excluded from metrics)</span>}
               </div>
-              <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+              <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginTop: '2px' }}>
                 {instances.length} instance{instances.length > 1 ? 's' : ''}
               </div>
             </div>
@@ -617,11 +617,11 @@ function Plugin() {
                 const instanceOpacity = isIgnored ? 0.4 : 1;
 
                 return (
-                  <div key={instance.instanceId} style={{ paddingLeft: '20px', paddingTop: '8px', paddingBottom: '8px', fontSize: '10px', opacity: instanceOpacity, borderBottom: '1px solid #f0f0f0' }}>
+                  <div key={instance.instanceId} style={{ paddingLeft: '20px', paddingTop: '8px', paddingBottom: '8px', fontSize: '10px', opacity: instanceOpacity, borderBottom: '1px solid var(--figma-color-border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, color: '#333', marginBottom: '2px' }}>{instance.instanceName}</div>
-                        <div style={{ color: '#666', fontSize: '9px' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--figma-color-text)', marginBottom: '2px' }}>{instance.instanceName}</div>
+                        <div style={{ color: 'var(--figma-color-text-secondary)', fontSize: '9px' }}>
                           <span style={{ opacity: 0.7 }}>Component:</span> {instance.componentName}
                         </div>
                       </div>
@@ -697,16 +697,16 @@ function Plugin() {
               alignItems: 'center',
               gap: '12px',
               cursor: 'pointer',
-              borderBottom: !isCollapsed ? '1px solid #e0e0e0' : 'none'
+              borderBottom: !isCollapsed ? '1px solid var(--figma-color-border)' : 'none'
             }}
             onClick={() => handleToggleCollapse(`orphan-${component.id}`)}
           >
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, color: '#333', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ fontWeight: 600, color: 'var(--figma-color-text)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
                 {component.name} {isComponentIgnored && '(Ignored)'}
               </div>
-              <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+              <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginTop: '2px' }}>
                 {component.orphans.length} orphan{component.orphans.length > 1 ? 's' : ''}
               </div>
             </div>
@@ -744,14 +744,14 @@ function Plugin() {
               const color = categoryColors[detail.category] || '#666';
 
               return (
-                <div key={detail.nodeId} style={{ paddingLeft: '20px', paddingTop: '8px', paddingBottom: '8px', fontSize: '10px', opacity: orphanOpacity, borderBottom: '1px solid #f0f0f0' }}>
+                <div key={detail.nodeId} style={{ paddingLeft: '20px', paddingTop: '8px', paddingBottom: '8px', fontSize: '10px', opacity: orphanOpacity, borderBottom: '1px solid var(--figma-color-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, color: '#333', marginBottom: '2px' }}>{detail.nodeName}</div>
-                      <div style={{ color: '#666', fontSize: '9px', marginBottom: '2px' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--figma-color-text)', marginBottom: '2px' }}>{detail.nodeName}</div>
+                      <div style={{ color: 'var(--figma-color-text-secondary)', fontSize: '9px', marginBottom: '2px' }}>
                         <span style={{ opacity: 0.7 }}>Type:</span> {detail.nodeType}
                       </div>
-                      <div style={{ color: '#666', fontSize: '9px' }}>
+                      <div style={{ color: 'var(--figma-color-text-secondary)', fontSize: '9px' }}>
                         <span style={{ opacity: 0.7 }}>Hardcoded:</span>{' '}
                         {detail.properties.map((prop, i) => (
                           <span key={i}>
@@ -805,7 +805,7 @@ function Plugin() {
           <strong>{progress.step}</strong>
         </Text>
         <VerticalSpace space="medium" />
-        <div style={{ width: '240px', height: '4px', background: '#e0e0e0', borderRadius: '2px', overflow: 'hidden' }}>
+        <div style={{ width: '240px', height: '4px', background: 'var(--figma-color-bg-tertiary)', borderRadius: '2px', overflow: 'hidden' }}>
           <div style={{ width: progress.percent + '%', height: '100%', background: '#18A0FB', transition: 'width 0.4s ease' }} />
         </div>
         <VerticalSpace space="small" />
@@ -956,10 +956,10 @@ function Plugin() {
 
           {/* Component Coverage Card */}
           <div style={{
-            background: '#f8f9fa',
+            background: 'var(--figma-color-bg-secondary)',
             padding: '16px 20px',
             borderRadius: '12px',
-            border: '1px solid #e8e8e8',
+            border: '1px solid var(--figma-color-border)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -967,27 +967,27 @@ function Plugin() {
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)'
           }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '11px', color: '#666', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>
                 Component Coverage
               </div>
-              <div style={{ fontSize: '9px', color: '#999', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 {filtered.libraryInstances} of {filtered.totalInstances} components
                 <Tooltip
                   content={`DS Atomic Components: ${filtered.libraryInstances}\nStandalone Local: ${filtered.totalInstances - filtered.libraryInstances}\nTotal: ${filtered.totalInstances}\n\nFormula: DS Atomic ÷ (DS Atomic + Standalone Local)\nCalculation: ${filtered.libraryInstances} ÷ ${filtered.totalInstances} = ${formatPercent(filtered.componentCoverage)}\n\nNote: Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`}
                 />
               </div>
             </div>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#333', lineHeight: '1', letterSpacing: '-1.5px', fontFeatureSettings: '"tnum"' }}>
+            <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--figma-color-text)', lineHeight: '1', letterSpacing: '-1.5px', fontFeatureSettings: '"tnum"' }}>
               {formatPercent(filtered.componentCoverage)}
             </div>
           </div>
 
           {/* Design Token Adoption Card */}
           <div style={{
-            background: '#f8f9fa',
+            background: 'var(--figma-color-bg-secondary)',
             padding: '16px 20px',
             borderRadius: '12px',
-            border: '1px solid #e8e8e8',
+            border: '1px solid var(--figma-color-border)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -995,17 +995,17 @@ function Plugin() {
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)'
           }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '11px', color: '#666', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>
                 Design Token Adoption
               </div>
-              <div style={{ fontSize: '9px', color: '#999', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 {filtered.tokenBoundCount} of {filtered.totalOpportunities} properties
                 <Tooltip
                   content={`Token-Bound Properties: ${filtered.tokenBoundCount}\nTotal Properties: ${filtered.totalOpportunities}\nCalculation: ${filtered.tokenBoundCount} ÷ ${filtered.totalOpportunities} = ${formatPercent(filtered.variableCoverage)}`}
                 />
               </div>
             </div>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#333', lineHeight: '1', letterSpacing: '-1.5px', fontFeatureSettings: '"tnum"' }}>
+            <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--figma-color-text)', lineHeight: '1', letterSpacing: '-1.5px', fontFeatureSettings: '"tnum"' }}>
               {formatPercent(filtered.variableCoverage)}
             </div>
           </div>
@@ -1088,50 +1088,50 @@ function Plugin() {
 
             {/* Mini summary cards */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div style={{ background: '#f8f9fa', padding: '14px 16px', borderRadius: '10px', border: '1px solid #e8e8e8', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)' }}>
-                <div style={{ fontSize: '9px', color: '#666', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
+              <div style={{ background: 'var(--figma-color-bg-secondary)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--figma-color-border)', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)' }}>
+                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
                   Components
                 </div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: '#333', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
+                <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--figma-color-text)', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
                   {filtered.totalInstances}
                 </div>
-                <div style={{ fontSize: '9px', color: '#999', marginTop: '4px' }}>
+                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', marginTop: '4px' }}>
                   analyzed
                 </div>
               </div>
 
-              <div style={{ background: '#f8f9fa', padding: '14px 16px', borderRadius: '10px', border: '1px solid #e8e8e8', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)' }}>
-                <div style={{ fontSize: '9px', color: '#666', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
+              <div style={{ background: 'var(--figma-color-bg-secondary)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--figma-color-border)', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)' }}>
+                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
                   Design Tokens
                 </div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: '#333', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
+                <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--figma-color-text)', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
                   {filtered.totalOpportunities}
                 </div>
-                <div style={{ fontSize: '9px', color: '#999', marginTop: '4px' }}>
+                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', marginTop: '4px' }}>
                   properties
                 </div>
               </div>
 
-              <div style={{ background: '#f8f9fa', padding: '14px 16px', borderRadius: '10px', border: '1px solid #e8e8e8', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)' }}>
-                <div style={{ fontSize: '9px', color: '#666', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
+              <div style={{ background: 'var(--figma-color-bg-secondary)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--figma-color-border)', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)' }}>
+                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
                   Libraries
                 </div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: '#333', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
+                <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--figma-color-text)', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
                   {filtered.libraryBreakdown.length}
                 </div>
-                <div style={{ fontSize: '9px', color: '#999', marginTop: '4px' }}>
+                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', marginTop: '4px' }}>
                   sources
                 </div>
               </div>
 
-              <div style={{ background: '#f8f9fa', padding: '14px 16px', borderRadius: '10px', border: '1px solid #e8e8e8', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)' }}>
-                <div style={{ fontSize: '9px', color: '#666', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
+              <div style={{ background: 'var(--figma-color-bg-secondary)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--figma-color-border)', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)' }}>
+                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
                   Orphans
                 </div>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: filtered.orphanRate < 20 ? '#16a34a' : filtered.orphanRate < 40 ? '#f59e0b' : '#dc2626', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
                   {filtered.orphanCount}
                 </div>
-                <div style={{ fontSize: '9px', color: '#999', marginTop: '4px' }}>
+                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', marginTop: '4px' }}>
                   hardcoded
                 </div>
               </div>
@@ -1156,11 +1156,11 @@ function Plugin() {
                     <div key={lib.name} style={{ marginBottom: '12px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                         <Text style={{ fontSize: '11px', fontWeight: '500' }}>{lib.name}</Text>
-                        <Text style={{ color: "#999", fontSize: '11px' }}>
+                        <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>
                           {lib.count} ({formatPercent(lib.percentage)})
                         </Text>
                       </div>
-                      <div style={{ width: '100%', height: '4px', background: '#f0f0f0', borderRadius: '20px', overflow: 'hidden' }}>
+                      <div style={{ width: '100%', height: '4px', background: 'var(--figma-color-bg-tertiary)', borderRadius: '20px', overflow: 'hidden' }}>
                         <div style={{
                           width: lib.percentage + '%',
                           height: '100%',
@@ -1203,11 +1203,11 @@ function Plugin() {
                     <div key={item.label} style={{ marginBottom: '12px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                         <Text style={{ fontSize: '11px', fontWeight: '500' }}>{item.label}</Text>
-                        <Text style={{ color: "#999", fontSize: '11px' }}>
+                        <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>
                           {item.count} ({formatPercent(percentage)})
                         </Text>
                       </div>
-                      <div style={{ width: '100%', height: '4px', background: '#f0f0f0', borderRadius: '20px', overflow: 'hidden' }}>
+                      <div style={{ width: '100%', height: '4px', background: 'var(--figma-color-bg-tertiary)', borderRadius: '20px', overflow: 'hidden' }}>
                         <div style={{
                           width: percentage + '%',
                           height: '100%',
@@ -1221,7 +1221,7 @@ function Plugin() {
                 })}
               </Fragment>
             ) : (
-              <Text style={{ color: "#999", fontSize: '11px', marginBottom: '16px' }}>No hardcoded values detected</Text>
+              <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px', marginBottom: '16px' }}>No hardcoded values detected</Text>
             )}
 
             <VerticalSpace space="medium" />
@@ -1244,7 +1244,7 @@ function Plugin() {
                 <Text style={{
                   fontSize: '10px',
                   fontWeight: '600',
-                  color: '#999',
+                  color: 'var(--figma-color-text-tertiary)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px'
                 }}>Orphan Rate</Text>
@@ -1266,11 +1266,11 @@ function Plugin() {
                   <div key={lib.name} style={{ marginBottom: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <Text style={{ fontSize: '11px', fontWeight: '500' }}>{lib.name}</Text>
-                      <Text style={{ color: "#999", fontSize: '11px' }}>
+                      <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>
                         {lib.count} ({formatPercent(lib.percentage)})
                       </Text>
                     </div>
-                    <div style={{ width: '100%', height: '4px', background: '#f0f0f0', borderRadius: '20px', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', height: '4px', background: 'var(--figma-color-bg-tertiary)', borderRadius: '20px', overflow: 'hidden' }}>
                       <div style={{
                         width: lib.percentage + '%',
                         height: '100%',
@@ -1283,7 +1283,7 @@ function Plugin() {
                 );
               })
             ) : (
-              <Text style={{ color: "#999", fontSize: '11px' }}>No design tokens found</Text>
+              <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>No design tokens found</Text>
             )}
 
             <VerticalSpace space="medium" />
@@ -1300,15 +1300,15 @@ function Plugin() {
               <div style={{
                 padding: '32px',
                 textAlign: 'center',
-                background: '#f8f9fa',
+                background: 'var(--figma-color-bg-secondary)',
                 borderRadius: '8px',
-                border: '2px dashed #e0e0e0'
+                border: '2px dashed var(--figma-color-border)'
               }}>
                 <div style={{ fontSize: '40px', marginBottom: '12px' }}>🎉</div>
-                <Text style={{ fontSize: '13px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>
+                <Text style={{ fontSize: '13px', fontWeight: '600', color: 'var(--figma-color-text)', marginBottom: '4px' }}>
                   No Orphans Found
                 </Text>
-                <Text style={{ fontSize: '11px', color: '#999' }}>
+                <Text style={{ fontSize: '11px', color: 'var(--figma-color-text-tertiary)' }}>
                   All properties are using design tokens
                 </Text>
               </div>
@@ -1323,7 +1323,7 @@ function Plugin() {
             background: '#fff',
             padding: '20px',
             borderRadius: '10px',
-            border: '2px solid #e0e0e0',
+            border: '2px solid var(--figma-color-border)',
             boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
           }}>
             {/* Header with score */}
@@ -1344,8 +1344,8 @@ function Plugin() {
                 {formatPercent(data.componentCoverage)}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '14px', fontWeight: '700', color: '#333', marginBottom: '2px' }}>Component Coverage</div>
-                <div style={{ fontSize: '11px', color: '#999' }}>
+                <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--figma-color-text)', marginBottom: '2px' }}>Component Coverage</div>
+                <div style={{ fontSize: '11px', color: 'var(--figma-color-text-tertiary)' }}>
                   How many components use the design system
                 </div>
               </div>
@@ -1353,10 +1353,10 @@ function Plugin() {
 
             {/* Calculation breakdown */}
             <div style={{
-              background: '#f8f9fa',
+              background: 'var(--figma-color-bg-secondary)',
               padding: '12px',
               borderRadius: '8px',
-              border: '1px solid #e8e8e8'
+              border: '1px solid var(--figma-color-border)'
             }}>
               <div style={{ fontSize: '10px', fontWeight: '600', color: '#667eea', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Calculation
@@ -1364,15 +1364,15 @@ function Plugin() {
 
               {/* Step 1: Raw numbers */}
               <div style={{ marginBottom: '8px' }}>
-                <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>Library Instances</div>
-                <div style={{ fontSize: '18px', fontWeight: '700', color: '#333', fontFamily: 'monospace' }}>
+                <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Library Instances</div>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--figma-color-text)', fontFamily: 'monospace' }}>
                   {data.stats.libraryInstances}
                 </div>
               </div>
 
               <div style={{ marginBottom: '8px' }}>
-                <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>Total Components (Library + Local)</div>
-                <div style={{ fontSize: '18px', fontWeight: '700', color: '#333', fontFamily: 'monospace' }}>
+                <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Total Components (Library + Local)</div>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--figma-color-text)', fontFamily: 'monospace' }}>
                   {data.stats.libraryInstances + data.stats.localInstances}
                 </div>
               </div>
@@ -1381,7 +1381,7 @@ function Plugin() {
 
               {/* Step 2: Percentage */}
               <div style={{ marginBottom: '8px' }}>
-                <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>Coverage Rate</div>
+                <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Coverage Rate</div>
                 <div style={{ fontSize: '18px', fontWeight: '700', color: '#667eea', fontFamily: 'monospace' }}>
                   {formatPercent(data.componentCoverage)}
                 </div>
@@ -1389,8 +1389,8 @@ function Plugin() {
 
               {/* Step 3: Weighted contribution */}
               <div style={{ marginBottom: '4px' }}>
-                <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>Weight Applied (45% of total score - Foundation-First)</div>
-                <div style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
+                <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Weight Applied (45% of total score - Foundation-First)</div>
+                <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--figma-color-text)' }}>
                   {formatPercent(data.componentCoverage)} × 0.45 = <span style={{ color: '#667eea', fontWeight: '700' }}>{formatPercent(data.componentCoverage * 0.45)}</span>
                 </div>
               </div>
@@ -1402,7 +1402,7 @@ function Plugin() {
             background: '#fff',
             padding: '20px',
             borderRadius: '10px',
-            border: '2px solid #e0e0e0',
+            border: '2px solid var(--figma-color-border)',
             boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
           }}>
             {/* Header with score */}
@@ -1423,8 +1423,8 @@ function Plugin() {
                 {formatPercent(filtered.variableCoverage)}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '14px', fontWeight: '700', color: '#333', marginBottom: '2px' }}>Variable Coverage</div>
-                <div style={{ fontSize: '11px', color: '#999' }}>
+                <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--figma-color-text)', marginBottom: '2px' }}>Variable Coverage</div>
+                <div style={{ fontSize: '11px', color: 'var(--figma-color-text-tertiary)' }}>
                   How many properties use design tokens
                 </div>
               </div>
@@ -1432,10 +1432,10 @@ function Plugin() {
 
             {/* Calculation breakdown */}
             <div style={{
-              background: '#f8f9fa',
+              background: 'var(--figma-color-bg-secondary)',
               padding: '12px',
               borderRadius: '8px',
-              border: '1px solid #e8e8e8'
+              border: '1px solid var(--figma-color-border)'
             }}>
               <div style={{ fontSize: '10px', fontWeight: '600', color: '#f5576c', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Calculation
@@ -1446,15 +1446,15 @@ function Plugin() {
                   <Fragment>
                     {/* Step 1: Raw numbers */}
                     <div style={{ marginBottom: '8px' }}>
-                      <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>Token-Bound Properties</div>
-                      <div style={{ fontSize: '18px', fontWeight: '700', color: '#333', fontFamily: 'monospace' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Token-Bound Properties</div>
+                      <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--figma-color-text)', fontFamily: 'monospace' }}>
                         {filtered.tokenBoundCount}
                       </div>
                     </div>
 
                     <div style={{ marginBottom: '8px' }}>
-                      <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>Total Properties (Token-Bound + Hardcoded)</div>
-                      <div style={{ fontSize: '18px', fontWeight: '700', color: '#333', fontFamily: 'monospace' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Total Properties (Token-Bound + Hardcoded)</div>
+                      <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--figma-color-text)', fontFamily: 'monospace' }}>
                         {filtered.totalOpportunities}
                       </div>
                     </div>
@@ -1463,7 +1463,7 @@ function Plugin() {
 
                     {/* Step 2: Percentage */}
                     <div style={{ marginBottom: '8px' }}>
-                      <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>Coverage Rate</div>
+                      <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Coverage Rate</div>
                       <div style={{ fontSize: '18px', fontWeight: '700', color: '#f5576c', fontFamily: 'monospace' }}>
                         {formatPercent(filtered.variableCoverage)}
                       </div>
@@ -1471,8 +1471,8 @@ function Plugin() {
 
                     {/* Step 3: Weighted contribution */}
                     <div style={{ marginBottom: '4px' }}>
-                      <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>Weight Applied (55% of total score - Foundation-First)</div>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Weight Applied (55% of total score - Foundation-First)</div>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--figma-color-text)' }}>
                         {formatPercent(filtered.variableCoverage)} × 0.55 = <span style={{ color: '#f5576c', fontWeight: '700' }}>{formatPercent(filtered.variableCoverage * 0.55)}</span>
                       </div>
                     </div>
