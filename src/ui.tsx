@@ -177,23 +177,28 @@ interface DonutChartProps {
   strokeWidth?: number;
   centerValue?: string;
   centerLabel?: string;
+  gapDegrees?: number;
 }
 
-function DonutChart({ segments, size = 80, strokeWidth = 8, centerValue, centerLabel }: DonutChartProps) {
+function DonutChart({ segments, size = 90, strokeWidth = 14, centerValue, centerLabel, gapDegrees = 4 }: DonutChartProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const center = size / 2;
 
+  // Calculate gap in circumference units
+  const gapLength = (gapDegrees / 360) * circumference;
+
   // Calculate total value
   const total = segments.reduce((sum, seg) => sum + seg.value, 0);
 
-  // Generate arcs
+  // Generate arcs with gaps
   let currentOffset = 0;
   const arcs = segments.map((segment, index) => {
     const percentage = segment.value / total;
-    const strokeLength = circumference * percentage;
+    // Subtract gap from stroke length for visual separation
+    const strokeLength = (circumference * percentage) - gapLength;
     const offset = currentOffset;
-    currentOffset += strokeLength;
+    currentOffset += strokeLength + gapLength; // Add gap after each segment
 
     return (
       <circle
@@ -208,21 +213,33 @@ function DonutChart({ segments, size = 80, strokeWidth = 8, centerValue, centerL
         strokeDashoffset={-offset}
         strokeLinecap="round"
         transform={`rotate(-90 ${center} ${center})`}
-        style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+        style={{
+          transition: 'stroke-dashoffset 0.6s ease',
+          filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))'
+        }}
       />
     );
   });
 
   return (
     <div style={{ position: 'relative', width: `${size}px`, height: `${size}px` }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(0deg)' }}>
-        {/* Background circle */}
+      <svg width={size} height={size} style={{ transform: 'rotate(0deg)', filter: 'drop-shadow(0 0 8px rgba(0, 0, 0, 0.1))' }}>
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        {/* Very subtle background circle */}
         <circle
           cx={center}
           cy={center}
           r={radius}
           fill="none"
-          stroke="rgba(128, 128, 128, 0.1)"
+          stroke="rgba(128, 128, 128, 0.06)"
           strokeWidth={strokeWidth}
         />
         {arcs}
@@ -236,11 +253,11 @@ function DonutChart({ segments, size = 80, strokeWidth = 8, centerValue, centerL
           textAlign: 'center',
           pointerEvents: 'none'
         }}>
-          <div style={{ fontSize: '18px', fontWeight: '700', lineHeight: '1', fontFeatureSettings: '"tnum"' }}>
+          <div style={{ fontSize: '20px', fontWeight: '700', lineHeight: '1', fontFeatureSettings: '"tnum"' }}>
             {centerValue}
           </div>
           {centerLabel && (
-            <div style={{ fontSize: '8px', marginTop: '2px', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div style={{ fontSize: '8px', marginTop: '2px', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               {centerLabel}
             </div>
           )}
@@ -1051,8 +1068,8 @@ function Plugin() {
                   { value: filtered.variableCoverage, color: '#00b6d2' },
                   { value: filtered.componentCoverage, color: '#c900b5' }
                 ]}
-                size={90}
-                strokeWidth={10}
+                size={100}
+                strokeWidth={14}
                 centerValue={formatPercent(filtered.overallScore)}
               />
             </div>
@@ -1095,10 +1112,10 @@ function Plugin() {
               <DonutChart
                 segments={[
                   { value: filtered.libraryInstances, color: '#7b64ef' },
-                  { value: filtered.totalInstances - filtered.libraryInstances, color: 'rgba(128, 128, 128, 0.3)' }
+                  { value: filtered.totalInstances - filtered.libraryInstances, color: 'rgba(128, 128, 128, 0.25)' }
                 ]}
-                size={90}
-                strokeWidth={10}
+                size={100}
+                strokeWidth={14}
                 centerValue={formatPercent(filtered.componentCoverage)}
               />
             </div>
@@ -1141,10 +1158,10 @@ function Plugin() {
               <DonutChart
                 segments={[
                   { value: filtered.tokenBoundCount, color: '#00b6d2' },
-                  { value: filtered.totalOpportunities - filtered.tokenBoundCount, color: 'rgba(128, 128, 128, 0.3)' }
+                  { value: filtered.totalOpportunities - filtered.tokenBoundCount, color: 'rgba(128, 128, 128, 0.25)' }
                 ]}
-                size={90}
-                strokeWidth={10}
+                size={100}
+                strokeWidth={14}
                 centerValue={formatPercent(filtered.variableCoverage)}
               />
             </div>
