@@ -928,7 +928,7 @@ function Plugin() {
 
           {/* Overall Score Card */}
           <div style={{
-            background: 'linear-gradient(135deg, #fc00e3 0%, #8c85ff 50%, #00baff 100%)',
+            background: 'linear-gradient(135deg, #c900b5 0%, #7b64ef 50%, #008cff 100%)',
             padding: '16px 20px',
             borderRadius: '12px',
             display: 'flex',
@@ -1148,7 +1148,7 @@ function Plugin() {
               <div style={{ marginBottom: '20px' }}>
                 {filtered.libraryBreakdown.map((lib, index) => {
                   // Assign colors from palette based on index
-                  const colors = ['#fc00e3', '#8c85ff', '#00baff', '#00dbff', '#00f1ff', '#1dffca'];
+                  const colors = ['#c900b5', '#7b64ef', '#008cff', '#00a5f4', '#00b6d2', '#14c1b0'];
                   const startColor = colors[index % colors.length];
                   const endColor = colors[(index + 1) % colors.length];
 
@@ -1195,7 +1195,7 @@ function Plugin() {
                   { label: 'Radius', count: data.hardcodedValues.radius }
                 ].filter(item => item.count > 0).map((item, index) => {
                   const percentage = data.hardcodedValues.totalHardcoded > 0 ? (item.count / data.hardcodedValues.totalHardcoded) * 100 : 0;
-                  const colors = ['#fc00e3', '#8c85ff', '#00baff', '#00dbff', '#00f1ff', '#1dffca'];
+                  const colors = ['#c900b5', '#7b64ef', '#008cff', '#00a5f4', '#00b6d2', '#14c1b0'];
                   const startColor = colors[index % colors.length];
                   const endColor = colors[(index + 1) % colors.length];
 
@@ -1258,7 +1258,7 @@ function Plugin() {
             {data.variableBreakdown && data.variableBreakdown.length > 0 ? (
               data.variableBreakdown.map((lib, index) => {
                 // Assign colors from palette based on index
-                const colors = ['#fc00e3', '#8c85ff', '#00baff', '#00dbff', '#00f1ff', '#1dffca'];
+                const colors = ['#c900b5', '#7b64ef', '#008cff', '#00a5f4', '#00b6d2', '#14c1b0'];
                 const startColor = colors[index % colors.length];
                 const endColor = colors[(index + 1) % colors.length];
 
