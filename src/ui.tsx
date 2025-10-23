@@ -1235,11 +1235,11 @@ function Plugin() {
         {/* Figma-style Tabs */}
         <div style={{
           background: '#f5f5f5',
-          padding: '4px',
+          padding: '0',
           borderRadius: '4px',
           marginTop: '32px',
           display: 'flex',
-          gap: '4px',
+          gap: '0',
           marginBottom: '24px'
         }}>
           {(['overview', 'components', 'tokens'] as const).map((tab) => {
@@ -1257,14 +1257,14 @@ function Plugin() {
                 style={{
                   flex: 1,
                   padding: '8px 12px',
-                  background: isActive ? '#fff' : 'transparent',
+                  background: isActive ? '#222' : 'transparent',
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '10px',
                   fontWeight: '500',
                   letterSpacing: '0.1em',
-                  color: isActive ? '#000' : 'rgba(0,0,0,0.6)',
+                  color: isActive ? '#fff' : '#222',
                   fontFamily: 'inherit',
                   outline: 'none',
                   transition: 'all 0.15s',
@@ -1277,7 +1277,7 @@ function Plugin() {
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.color = 'rgba(0,0,0,0.6)';
+                    e.currentTarget.style.color = '#222';
                   }
                 }}
               >
