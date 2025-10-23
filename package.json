@@ -3,11 +3,29 @@
   "version": "1.0.0",
   "description": "Quick design system adoption tracking for Figma",
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch"
+    "build": "build-figma-plugin --typecheck",
+    "watch": "build-figma-plugin --typecheck --watch"
+  },
+  "figma-plugin": {
+    "editorType": ["figma"],
+    "id": "ds-coverage-tracker",
+    "name": "Design System Coverage",
+    "main": "src/main.ts",
+    "ui": "src/ui.tsx",
+    "permissions": ["teamlibrary"],
+    "networkAccess": {
+      "allowedDomains": ["https://api.figma.com"]
+    }
   },
   "devDependencies": {
+    "@create-figma-plugin/build": "^4.0.3",
+    "@create-figma-plugin/tsconfig": "^4.0.3",
     "@figma/plugin-typings": "^1.99.0",
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@create-figma-plugin/ui": "^4.0.3",
+    "@create-figma-plugin/utilities": "^4.0.3",
+    "preact": "^10.27.2"
   }
 }
