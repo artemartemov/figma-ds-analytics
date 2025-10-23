@@ -1295,7 +1295,7 @@ function Plugin() {
             </Text>
 
             {/* Mini summary cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '16px', height: '142px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '12px', height: '142px' }}>
               <div style={{ gridArea: '1 / 1', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'nowrap' }}>
                 <p style={{ fontSize: '16px', color: '#878787', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
                   Components
