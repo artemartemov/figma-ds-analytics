@@ -9,7 +9,9 @@ import {
   Checkbox,
   Divider,
   Banner,
-  IconButton
+  IconButton,
+  IconChevronDown16,
+  IconChevronRight16
 } from '@create-figma-plugin/ui';
 import { emit, on } from '@create-figma-plugin/utilities';
 
@@ -599,7 +601,7 @@ function Plugin() {
           >
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, color: '#333', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>{isCollapsed ? '▶' : '▼'}</span>
+                {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
                 {librarySource}
                 {isWrapper && <span style={{ fontSize: '9px', color: '#999', fontWeight: 400 }}>(excluded from metrics)</span>}
               </div>
@@ -683,12 +685,25 @@ function Plugin() {
     return Array.from(orphansByComponent.values()).map(component => {
       const isComponentIgnored = ignoredComponents.has(component.id);
       const opacityStyle = isComponentIgnored ? 0.5 : 1;
+      const isCollapsed = collapsedSections.has(`orphan-${component.id}`);
 
       return (
         <div key={component.id} style={{ marginBottom: '16px', opacity: opacityStyle }}>
-          <div style={{ padding: '8px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', borderBottom: '1px solid #e0e0e0' }}>
+          <div
+            style={{
+              padding: '8px 0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '12px',
+              cursor: 'pointer',
+              borderBottom: !isCollapsed ? '1px solid #e0e0e0' : 'none'
+            }}
+            onClick={() => handleToggleCollapse(`orphan-${component.id}`)}
+          >
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, color: '#333', fontSize: '11px' }}>
+              <div style={{ fontWeight: 600, color: '#333', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
                 {component.name} {isComponentIgnored && '(Ignored)'}
               </div>
               <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
@@ -721,8 +736,9 @@ function Plugin() {
               </button>
             </div>
           </div>
-          <div style={{ paddingTop: '8px' }}>
-            {component.orphans.map(detail => {
+          {!isCollapsed && (
+            <div style={{ paddingTop: '8px' }}>
+              {component.orphans.map(detail => {
               const isOrphanIgnored = ignoredOrphans.has(detail.nodeId);
               const orphanOpacity = isOrphanIgnored ? 0.4 : 1;
               const color = categoryColors[detail.category] || '#666';
@@ -775,6 +791,7 @@ function Plugin() {
               );
             })}
           </div>
+          )}
         </div>
       );
     });
@@ -1161,37 +1178,6 @@ function Plugin() {
 
         {activeTab === 'tokens' && (
           <div>
-            {/* Orphan Rate Card */}
-            <div style={{
-              background: filtered.orphanRate < 20 ? '#f0fdf4' : filtered.orphanRate < 40 ? '#fef3c7' : '#fef2f2',
-              padding: '20px',
-              borderRadius: '12px',
-              border: `1px solid ${filtered.orphanRate < 20 ? '#bbf7d0' : filtered.orphanRate < 40 ? '#fde68a' : '#fecaca'}`,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '20px',
-              marginBottom: '16px'
-            }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '11px', color: '#666', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                  Orphan Rate {filtered.orphanRate < 20 ? '✓' : filtered.orphanRate < 40 ? '⚠' : '✗'}
-                </div>
-                <div style={{ fontSize: '10px', color: '#999', lineHeight: '1.4' }}>
-                  {filtered.totalHardcoded} hardcoded properties (Target: &lt;20%)
-                </div>
-              </div>
-              <div style={{
-                fontSize: '36px',
-                fontWeight: '700',
-                color: filtered.orphanRate < 20 ? '#16a34a' : filtered.orphanRate < 40 ? '#f59e0b' : '#dc2626',
-                lineHeight: '1',
-                letterSpacing: '-1px'
-              }}>
-                {formatPercent(filtered.orphanRate)}
-              </div>
-            </div>
-
             {/* Hardcoded Values Breakdown */}
             <Text style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px' }}>Hardcoded by Type</Text>
             {data.hardcodedValues && data.hardcodedValues.totalHardcoded > 0 ? (
@@ -1231,27 +1217,75 @@ function Plugin() {
             <Divider />
             <VerticalSpace space="medium" />
 
-            {/* Token Sources */}
-            <Text style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px' }}>Token Sources</Text>
+            {/* Token Sources with Orphan Rate Badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Text style={{ fontSize: '12px', fontWeight: '600' }}>Token Sources</Text>
+              {/* Orphan Rate Badge */}
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                background: filtered.orphanRate < 20 ? '#f0fdf4' : filtered.orphanRate < 40 ? '#fef3c7' : '#fef2f2',
+                border: `1px solid ${filtered.orphanRate < 20 ? '#bbf7d0' : filtered.orphanRate < 40 ? '#fde68a' : '#fecaca'}`
+              }}>
+                <Text style={{
+                  fontSize: '10px',
+                  fontWeight: '600',
+                  color: '#999',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}>Orphan Rate</Text>
+                <Text style={{
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  color: filtered.orphanRate < 20 ? '#16a34a' : filtered.orphanRate < 40 ? '#f59e0b' : '#dc2626'
+                }}>{formatPercent(filtered.orphanRate)}</Text>
+              </div>
+            </div>
             {data.variableBreakdown && data.variableBreakdown.length > 0 ? (
-              data.variableBreakdown.map((lib) => (
-                <div key={lib.name} style={{ marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <Text style={{ fontSize: '11px', fontWeight: '500' }}>{lib.name}</Text>
-                    <Text style={{ color: "#999", fontSize: '11px' }}>
-                      {lib.count} ({formatPercent(lib.percentage)})
-                    </Text>
+              data.variableBreakdown.map((lib) => {
+                const isCollapsed = collapsedSections.has(`token-${lib.name}`);
+                return (
+                  <div key={lib.name} style={{ marginBottom: '16px' }}>
+                    <div
+                      style={{
+                        padding: '8px 0',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        borderBottom: !isCollapsed ? '1px solid #e0e0e0' : 'none'
+                      }}
+                      onClick={() => handleToggleCollapse(`token-${lib.name}`)}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600, color: '#333', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
+                          {lib.name}
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+                          {lib.count} token{lib.count > 1 ? 's' : ''} ({formatPercent(lib.percentage)})
+                        </div>
+                      </div>
+                    </div>
+                    {!isCollapsed && (
+                      <div style={{ paddingTop: '8px' }}>
+                        <div style={{ width: '100%', height: '8px', background: '#e0e0e0', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{
+                            width: lib.percentage + '%',
+                            height: '100%',
+                            background: lib.name.includes('Other Library') ? '#f39c12' : '#18A0FB',
+                            transition: 'width 0.3s ease'
+                          }} />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div style={{ width: '100%', height: '8px', background: '#e0e0e0', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{
-                      width: lib.percentage + '%',
-                      height: '100%',
-                      background: lib.name.includes('Other Library') ? '#f39c12' : '#18A0FB',
-                      transition: 'width 0.3s ease'
-                    }} />
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <Text style={{ color: "#999", fontSize: '11px' }}>No design tokens found</Text>
             )}
