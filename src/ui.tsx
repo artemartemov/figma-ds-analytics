@@ -622,7 +622,7 @@ function Plugin() {
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 600, color: 'var(--figma-color-text)', marginBottom: '2px' }}>{instance.instanceName}</div>
                         <div style={{ color: 'var(--figma-color-text-secondary)', fontSize: '9px' }}>
-                          <span style={{ opacity: 0.7 }}>Component:</span> {instance.componentName}
+                          <span style={{ color: 'var(--figma-color-text-tertiary)' }}>Component:</span> {instance.componentName}
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -749,10 +749,10 @@ function Plugin() {
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 600, color: 'var(--figma-color-text)', marginBottom: '2px' }}>{detail.nodeName}</div>
                       <div style={{ color: 'var(--figma-color-text-secondary)', fontSize: '9px', marginBottom: '2px' }}>
-                        <span style={{ opacity: 0.7 }}>Type:</span> {detail.nodeType}
+                        <span style={{ color: 'var(--figma-color-text-tertiary)' }}>Type:</span> {detail.nodeType}
                       </div>
                       <div style={{ color: 'var(--figma-color-text-secondary)', fontSize: '9px' }}>
-                        <span style={{ opacity: 0.7 }}>Hardcoded:</span>{' '}
+                        <span style={{ color: 'var(--figma-color-text-tertiary)' }}>Hardcoded:</span>{' '}
                         {detail.properties.map((prop, i) => (
                           <span key={i}>
                             <span style={{ color, fontWeight: 500 }}>{prop}</span>
