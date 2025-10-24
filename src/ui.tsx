@@ -674,13 +674,25 @@ function Plugin() {
   const [ignoredComponents, setIgnoredComponents] = useState<Set<string>>(
     new Set()
   );
-  const [ignoredOrphans, setIgnoredOrphans] = useState<Set<string>>(new Set());
+  // Track orphan instances by composite key: orphanNodeId:componentId
+  // This allows ignoring an orphan in specific components or everywhere
+  const [ignoredOrphanInstances, setIgnoredOrphanInstances] = useState<Set<string>>(new Set());
   const [ignoredInstances, setIgnoredInstances] = useState<Set<string>>(
     new Set()
   );
   const [ignoredLibraries, setIgnoredLibraries] = useState<Set<string>>(
     new Set()
   );
+
+  // Helper functions for orphan instance tracking
+  const getOrphanInstanceKey = (orphanNodeId: string, componentId: string) => 
+    `${orphanNodeId}:${componentId}`;
+  
+  const isOrphanIgnoredInComponent = (orphanNodeId: string, componentId: string) =>
+    ignoredOrphanInstances.has(getOrphanInstanceKey(orphanNodeId, componentId));
+  
+  const isOrphanIgnoredEverywhere = (orphanNodeId: string, componentIds: string[]) =>
+    componentIds.every(compId => isOrphanIgnoredInComponent(orphanNodeId, compId));
 
   // Listen for messages from plugin backend
   useEffect(() => {
@@ -694,9 +706,22 @@ function Plugin() {
         setIgnoredComponents(
           new Set(results.hardcodedValues.ignoredComponents || [])
         );
-        setIgnoredOrphans(
-          new Set(results.hardcodedValues.ignoredOrphans || [])
-        );
+        // Convert old ignoredOrphans format to new composite key format
+        // Old format: Set<orphanNodeId>
+        // New format: Set<orphanNodeId:componentId>
+        const orphanInstances = new Set<string>();
+        if (results.hardcodedValues.ignoredOrphans) {
+          results.hardcodedValues.ignoredOrphans.forEach(orphanId => {
+            // For backwards compatibility, if we have orphan IDs without component context,
+            // we need to mark them as ignored in all components
+            results.hardcodedValues.details?.forEach(detail => {
+              if (detail.nodeId === orphanId) {
+                orphanInstances.add(getOrphanInstanceKey(orphanId, detail.parentComponentId));
+              }
+            });
+          });
+        }
+        setIgnoredOrphanInstances(orphanInstances);
       }
       setIgnoredInstances(new Set(results.ignoredInstances || []));
 
@@ -775,15 +800,43 @@ function Plugin() {
   };
 
   const handleToggleIgnoreComponent = (componentId: string) => {
-    const newSet = new Set(ignoredComponents);
-    if (newSet.has(componentId)) {
-      newSet.delete(componentId);
+    const newIgnoredComponents = new Set(ignoredComponents);
+    const newIgnoredOrphanInstances = new Set(ignoredOrphanInstances);
+
+    // Find all orphans for this component
+    const componentOrphans = data?.hardcodedValues?.details?.filter(
+      detail => detail.parentComponentId === componentId
+    ) || [];
+
+    // Check if we should ignore or unignore based on the actual stored state
+    const isCurrentlyIgnored = ignoredComponents.has(componentId);
+
+    if (isCurrentlyIgnored) {
+      // Unignore the component and all its orphan instances
+      newIgnoredComponents.delete(componentId);
       emit('UNIGNORE_COMPONENT', componentId);
+      componentOrphans.forEach(orphan => {
+        const key = getOrphanInstanceKey(orphan.nodeId, componentId);
+        if (newIgnoredOrphanInstances.has(key)) {
+          newIgnoredOrphanInstances.delete(key);
+          emit('UNIGNORE_ORPHAN', orphan.nodeId);
+        }
+      });
     } else {
-      newSet.add(componentId);
+      // Ignore the component and all its orphan instances
+      newIgnoredComponents.add(componentId);
       emit('IGNORE_COMPONENT', componentId);
+      componentOrphans.forEach(orphan => {
+        const key = getOrphanInstanceKey(orphan.nodeId, componentId);
+        if (!newIgnoredOrphanInstances.has(key)) {
+          newIgnoredOrphanInstances.add(key);
+          emit('IGNORE_ORPHAN', orphan.nodeId);
+        }
+      });
     }
-    setIgnoredComponents(newSet);
+
+    setIgnoredComponents(newIgnoredComponents);
+    setIgnoredOrphanInstances(newIgnoredOrphanInstances);
 
     // Trigger re-render with updated ignore state
     if (data) {
@@ -791,16 +844,47 @@ function Plugin() {
     }
   };
 
-  const handleToggleIgnoreOrphan = (nodeId: string) => {
-    const newSet = new Set(ignoredOrphans);
-    if (newSet.has(nodeId)) {
-      newSet.delete(nodeId);
-      emit('UNIGNORE_ORPHAN', nodeId);
+  // Toggle ignore for an orphan in ALL components
+  const handleToggleIgnoreOrphanEverywhere = (orphanNodeId: string, componentIds: string[]) => {
+    const newSet = new Set(ignoredOrphanInstances);
+    const isCurrentlyIgnoredEverywhere = isOrphanIgnoredEverywhere(orphanNodeId, componentIds);
+
+    if (isCurrentlyIgnoredEverywhere) {
+      // Unignore in all components
+      componentIds.forEach(compId => {
+        const key = getOrphanInstanceKey(orphanNodeId, compId);
+        newSet.delete(key);
+      });
+      emit('UNIGNORE_ORPHAN', orphanNodeId);
     } else {
-      newSet.add(nodeId);
-      emit('IGNORE_ORPHAN', nodeId);
+      // Ignore in all components
+      componentIds.forEach(compId => {
+        const key = getOrphanInstanceKey(orphanNodeId, compId);
+        newSet.add(key);
+      });
+      emit('IGNORE_ORPHAN', orphanNodeId);
     }
-    setIgnoredOrphans(newSet);
+    setIgnoredOrphanInstances(newSet);
+
+    // Trigger re-render
+    if (data) {
+      setData({ ...data });
+    }
+  };
+
+  // Toggle ignore for an orphan in a SPECIFIC component
+  const handleToggleIgnoreOrphanInComponent = (orphanNodeId: string, componentId: string) => {
+    const newSet = new Set(ignoredOrphanInstances);
+    const key = getOrphanInstanceKey(orphanNodeId, componentId);
+
+    if (newSet.has(key)) {
+      newSet.delete(key);
+      emit('UNIGNORE_ORPHAN', orphanNodeId);
+    } else {
+      newSet.add(key);
+      emit('IGNORE_ORPHAN', orphanNodeId);
+    }
+    setIgnoredOrphanInstances(newSet);
 
     // Trigger re-render
     if (data) {
@@ -878,7 +962,7 @@ function Plugin() {
     const hasActiveFilters =
       ignoredInstances.size > 0 ||
       ignoredComponents.size > 0 ||
-      ignoredOrphans.size > 0;
+      ignoredOrphanInstances.size > 0;
 
     // If no filters active, use accurate backend totals (calculated from ALL instances)
     if (!hasActiveFilters) {
@@ -965,7 +1049,7 @@ function Plugin() {
       const isComponentIgnored = ignoredComponents.has(
         detail.parentComponentId
       );
-      const isOrphanIgnored = ignoredOrphans.has(detail.nodeId);
+      const isOrphanIgnored = isOrphanIgnoredInComponent(detail.nodeId, detail.parentComponentId);
       const isInstanceIgnored = ignoredInstances.has(detail.parentInstanceId);
 
       // Only count if NOT ignored at any level
@@ -1153,8 +1237,10 @@ function Plugin() {
           librarySource.includes('Local (built with DS)');
         const isCollapsed = collapsedSections.has(librarySource);
 
-        const isLibraryIgnored = ignoredLibraries.has(librarySource);
         const instanceIds = instances.map(i => i.instanceId);
+        // Check if library is ignored OR if all instances are manually ignored
+        const allInstancesIgnored = !isWrapper && instanceIds.length > 0 && instanceIds.every(id => ignoredInstances.has(id));
+        const isLibraryIgnored = ignoredLibraries.has(librarySource) || allInstancesIgnored;
 
         return (
           <div
@@ -1174,7 +1260,7 @@ function Plugin() {
               }}
             >
               <div
-                style={{ flex: 1, cursor: 'pointer' }}
+                style={{ flex: 1, cursor: 'pointer', opacity: isLibraryIgnored ? 0.5 : 1, minWidth: 0 }}
                 onClick={() => handleToggleCollapse(librarySource)}
               >
                 <div
@@ -1186,6 +1272,7 @@ function Plugin() {
                     alignItems: 'center',
                     gap: '6px',
                     textTransform: 'uppercase',
+                    textDecoration: isLibraryIgnored ? 'line-through' : 'none',
                   }}
                 >
                   {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
@@ -1219,6 +1306,7 @@ function Plugin() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
+                    flexShrink: 0,
                   }}
                 >
                   <CustomCheckbox
@@ -1232,7 +1320,8 @@ function Plugin() {
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
                       fontWeight: '500',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1258,7 +1347,6 @@ function Plugin() {
                         paddingTop: '8px',
                         paddingBottom: '8px',
                         fontSize: '10px',
-                        opacity: instanceOpacity,
                         borderBottom: '1px solid var(--figma-color-border)',
                       }}
                     >
@@ -1278,12 +1366,13 @@ function Plugin() {
                             }
                           />
                         )}
-                        <div style={{ flex: 1 }}>
+                        <div style={{ flex: 1, opacity: instanceOpacity }}>
                           <div
                             style={{
                               fontWeight: 600,
                               color: 'var(--figma-color-text)',
                               marginBottom: '2px',
+                              textDecoration: isIgnored ? 'line-through' : 'none',
                             }}
                           >
                             {instance.instanceName}
@@ -1345,39 +1434,50 @@ function Plugin() {
     );
   };
 
-  // Render orphan details grouped by component
+  // Render orphan details grouped by unique orphan nodes
   const renderOrphanDetails = () => {
     if (!data || !data.hardcodedValues || !data.hardcodedValues.details)
       return null;
 
-    // Group orphans by parent component
-    const orphansByComponent = new Map<
+    // Group by unique orphan nodeId, tracking which components contain each orphan
+    const orphanGroups = new Map<
       string,
-      { name: string; id: string; orphans: OrphanDetail[] }
+      {
+        orphan: OrphanDetail;
+        components: Array<{ id: string; name: string }>;
+      }
     >();
 
     data.hardcodedValues.details.forEach((detail) => {
-      const compId = detail.parentComponentId;
-      if (!orphansByComponent.has(compId)) {
-        orphansByComponent.set(compId, {
-          name: detail.parentComponentName,
-          id: compId,
-          orphans: [],
+      if (!orphanGroups.has(detail.nodeId)) {
+        orphanGroups.set(detail.nodeId, {
+          orphan: detail,
+          components: [],
         });
       }
-      orphansByComponent.get(compId)!.orphans.push(detail);
+      const group = orphanGroups.get(detail.nodeId)!;
+      // Only add component if not already in the list
+      if (!group.components.some(c => c.id === detail.parentComponentId)) {
+        group.components.push({
+          id: detail.parentComponentId,
+          name: detail.parentComponentName,
+        });
+      }
     });
 
-    return Array.from(orphansByComponent.values()).map((component) => {
-      const isComponentIgnored = ignoredComponents.has(component.id);
-      const opacityStyle = isComponentIgnored ? 0.5 : 1;
-      const isCollapsed = collapsedSections.has(`orphan-${component.id}`);
+    return Array.from(orphanGroups.values()).map((group) => {
+      const componentIds = group.components.map(c => c.id);
+      const isIgnoredEverywhere = isOrphanIgnoredEverywhere(group.orphan.nodeId, componentIds);
+      const orphanOpacity = isIgnoredEverywhere ? 0.4 : 1;
+      const isCollapsed = collapsedSections.has(`orphan-${group.orphan.nodeId}`);
+      const color = categoryColors[group.orphan.category] || '#666';
 
       return (
         <div
-          key={component.id}
-          style={{ marginBottom: '16px', opacity: opacityStyle }}
+          key={group.orphan.nodeId}
+          style={{ marginBottom: '16px' }}
         >
+          {/* Orphan header with "Ignore All" checkbox */}
           <div
             style={{
               padding: '8px 0',
@@ -1390,8 +1490,8 @@ function Plugin() {
             }}
           >
             <div
-              style={{ flex: 1, cursor: 'pointer' }}
-              onClick={() => handleToggleCollapse(`orphan-${component.id}`)}
+              style={{ flex: 1, cursor: 'pointer', opacity: orphanOpacity, minWidth: 0 }}
+              onClick={() => handleToggleCollapse(`orphan-${group.orphan.nodeId}`)}
             >
               <div
                 style={{
@@ -1402,20 +1502,41 @@ function Plugin() {
                   alignItems: 'center',
                   gap: '6px',
                   textTransform: 'uppercase',
+                  textDecoration: isIgnoredEverywhere ? 'line-through' : 'none',
+                  overflow: 'hidden',
                 }}
               >
                 {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
-                {component.name} {isComponentIgnored && '(Ignored)'}
+                <span
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {group.orphan.nodeName}
+                </span>
               </div>
               <div
                 style={{
                   fontSize: '10px',
                   color: 'var(--figma-color-text-secondary)',
                   marginTop: '2px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                {component.orphans.length} orphan
-                {component.orphans.length > 1 ? 's' : ''}
+                <span style={{ textTransform: 'uppercase', fontSize: '9px', color: 'var(--figma-color-text-tertiary)' }}>TYPE:</span>{' '}
+                <span style={{ textTransform: 'capitalize' }}>{group.orphan.nodeType.toLowerCase()}</span>
+                {' • '}
+                <span style={{ textTransform: 'uppercase', fontSize: '9px', color: 'var(--figma-color-text-tertiary)' }}>HARDCODED:</span>{' '}
+                {group.orphan.properties.map((prop, i) => (
+                  <span key={i}>
+                    <span style={{ color, fontWeight: 500 }}>{prop}</span>
+                    {i < group.orphan.properties.length - 1 && ', '}
+                  </span>
+                ))}
               </div>
             </div>
             <div
@@ -1423,11 +1544,12 @@ function Plugin() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
+                flexShrink: 0,
               }}
             >
               <CustomCheckbox
-                checked={isComponentIgnored}
-                onChange={() => handleToggleIgnoreComponent(component.id)}
+                checked={isIgnoredEverywhere}
+                onChange={() => handleToggleIgnoreOrphanEverywhere(group.orphan.nodeId, componentIds)}
               />
               <span
                 style={{
@@ -1436,33 +1558,34 @@ function Plugin() {
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                   fontWeight: '500',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleToggleIgnoreComponent(component.id);
+                  handleToggleIgnoreOrphanEverywhere(group.orphan.nodeId, componentIds);
                 }}
               >
                 Ignore All
               </span>
             </div>
           </div>
+
+          {/* Expanded: Show each component as a selectable child */}
           {!isCollapsed && (
             <div style={{ paddingTop: '8px' }}>
-              {component.orphans.map((detail) => {
-                const isOrphanIgnored = ignoredOrphans.has(detail.nodeId);
-                const orphanOpacity = isOrphanIgnored ? 0.4 : 1;
-                const color = categoryColors[detail.category] || '#666';
+              {group.components.map((comp) => {
+                const isIgnoredInThisComponent = isOrphanIgnoredInComponent(group.orphan.nodeId, comp.id);
+                const componentOpacity = isIgnoredInThisComponent ? 0.4 : 1;
 
                 return (
                   <div
-                    key={detail.nodeId}
+                    key={comp.id}
                     style={{
                       paddingLeft: '0px',
                       paddingTop: '8px',
                       paddingBottom: '8px',
                       fontSize: '10px',
-                      opacity: orphanOpacity,
                       borderBottom: '1px solid var(--figma-color-border)',
                     }}
                   >
@@ -1475,26 +1598,24 @@ function Plugin() {
                       }}
                     >
                       <CustomCheckbox
-                        checked={isOrphanIgnored}
-                        onChange={() =>
-                          handleToggleIgnoreOrphan(detail.nodeId)
-                        }
+                        checked={isIgnoredInThisComponent}
+                        onChange={() => handleToggleIgnoreOrphanInComponent(group.orphan.nodeId, comp.id)}
                       />
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1, opacity: componentOpacity }}>
                         <div
                           style={{
                             fontWeight: 600,
                             color: 'var(--figma-color-text)',
                             marginBottom: '2px',
+                            textDecoration: isIgnoredInThisComponent ? 'line-through' : 'none',
                           }}
                         >
-                          {detail.nodeName}
+                          {comp.name}
                         </div>
                         <div
                           style={{
-                            color: 'var(--figma-color-text-secondary)',
                             fontSize: '9px',
-                            marginBottom: '2px',
+                            color: 'var(--figma-color-text-secondary)',
                           }}
                         >
                           <span
@@ -1502,35 +1623,12 @@ function Plugin() {
                               color: 'var(--figma-color-text-tertiary)',
                             }}
                           >
-                            Type:
-                          </span>{' '}
-                          {detail.nodeType}
-                        </div>
-                        <div
-                          style={{
-                            color: 'var(--figma-color-text-secondary)',
-                            fontSize: '9px',
-                          }}
-                        >
-                          <span
-                            style={{
-                              color: 'var(--figma-color-text-tertiary)',
-                            }}
-                          >
-                            Hardcoded:
-                          </span>{' '}
-                          {detail.properties.map((prop, i) => (
-                            <span key={i}>
-                              <span style={{ color, fontWeight: 500 }}>
-                                {prop}
-                              </span>
-                              {i < detail.properties.length - 1 && ', '}
-                            </span>
-                          ))}
+                            Component variant
+                          </span>
                         </div>
                       </div>
                       <button
-                        onClick={() => handleSelectNode(detail.nodeId)}
+                        onClick={() => handleSelectNode(group.orphan.nodeId)}
                         title="View in canvas"
                         style={{
                           width: '20px',
@@ -1547,8 +1645,7 @@ function Plugin() {
                           transition: 'background 0.15s ease',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background =
-                            'var(--figma-color-bg-hover)';
+                          e.currentTarget.style.background = 'var(--figma-color-bg-hover)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = 'transparent';
