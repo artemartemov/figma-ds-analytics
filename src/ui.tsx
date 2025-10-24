@@ -1185,6 +1185,7 @@ function Plugin() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
+                    textTransform: 'uppercase',
                   }}
                 >
                   {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
@@ -1195,6 +1196,7 @@ function Plugin() {
                         fontSize: '9px',
                         color: 'var(--figma-color-text-tertiary)',
                         fontWeight: 400,
+                        textTransform: 'lowercase',
                       }}
                     >
                       (excluded from metrics)
@@ -1399,6 +1401,7 @@ function Plugin() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
+                  textTransform: 'uppercase',
                 }}
               >
                 {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
