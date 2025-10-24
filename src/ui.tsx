@@ -13,6 +13,8 @@ import {
   IconChevronRight16,
 } from '@create-figma-plugin/ui';
 import { emit, on } from '@create-figma-plugin/utilities';
+import { Tooltip, Checkbox, DonutChart } from './components/common';
+import { useAnimatedCounter } from './hooks/useAnimatedCounter';
 
 // TypeScript interfaces
 interface CoverageMetrics {
@@ -84,107 +86,6 @@ interface ComponentInstanceDetail {
 interface ProgressMessage {
   step: string;
   percent: number;
-}
-
-// Custom Tooltip component
-function Tooltip({
-  content,
-  dark = false,
-  position = 'right',
-}: {
-  content: string;
-  dark?: boolean;
-  position?: 'right' | 'bottom';
-}) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  // Positioning styles based on position prop
-  const tooltipStyles =
-    position === 'bottom'
-      ? {
-          top: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-        }
-      : {
-          top: '50%',
-          left: '20px',
-          transform: 'translateY(-50%)',
-        };
-
-  const arrowStyles =
-    position === 'bottom'
-      ? {
-          left: '50%',
-          top: '-4px',
-          transform: 'translateX(-50%) rotate(45deg)',
-        }
-      : {
-          left: '-4px',
-          top: '50%',
-          transform: 'translateY(-50%) rotate(45deg)',
-        };
-
-  return (
-    <div
-      style={{
-        position: 'relative',
-        display: 'inline-flex',
-        alignItems: 'center',
-      }}
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
-    >
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '12px',
-          height: '12px',
-          borderRadius: '50%',
-          background: dark ? 'rgba(255,255,255,0.2)' : '#e8e8e8',
-          color: dark ? 'rgba(255,255,255,0.9)' : '#666',
-          fontSize: '8px',
-          fontWeight: '600',
-          cursor: 'help',
-          flexShrink: 0,
-        }}
-      >
-        ?
-      </span>
-      {isVisible && (
-        <div
-          style={{
-            position: 'absolute',
-            ...tooltipStyles,
-            background: 'rgba(0,0,0,0.9)',
-            color: '#f0f0f0ff',
-            padding: '12px 16px',
-            borderRadius: '8px',
-            fontSize: '11px',
-            whiteSpace: 'pre-line',
-            zIndex: 1000,
-            minWidth: '250px',
-            maxWidth: '320px',
-            lineHeight: '1.6',
-            pointerEvents: 'none',
-          }}
-        >
-          {content}
-          <div
-            style={{
-              position: 'absolute',
-              ...arrowStyles,
-              width: '8px',
-              height: '8px',
-              background: 'rgba(0,0,0,0.9)',
-            }}
-          />
-        </div>
-      )}
-    </div>
-  );
 }
 
 // Modal Component
@@ -1081,233 +982,6 @@ function HelpModal({ isOpen, onClose }: HelpModalProps) {
 }
 
 // Custom Checkbox Component
-interface CustomCheckboxProps {
-  checked: boolean;
-  onChange: () => void;
-}
-
-function CustomCheckbox({ checked, onChange }: CustomCheckboxProps) {
-  return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-        onChange();
-      }}
-      style={{
-        width: '14px',
-        height: '14px',
-        minWidth: '14px',
-        minHeight: '14px',
-        borderRadius: '3px',
-        background: checked ? '#000000' : '#E5E5E5',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-      }}
-    >
-      {checked && (
-        <svg
-          width="10"
-          height="8"
-          viewBox="0 0 10 8"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M1 4L3.5 6.5L9 1"
-            stroke="white"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      )}
-    </div>
-  );
-}
-
-// Donut Chart Component
-interface DonutChartProps {
-  segments: Array<{ value: number; color: string; label?: string }>;
-  size?: number;
-  strokeWidth?: number;
-  centerValue?: string;
-  centerLabel?: string;
-  gapDegrees?: number;
-  onClick?: () => void;
-  trackColor?: 'card' | 'tab';
-}
-
-// Animated Counter Hook
-function useAnimatedCounter(target: number, duration: number = 800) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    let startTime: number | null = null;
-    let animationFrame: number;
-
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-
-      // Ease out cubic
-      const easeProgress = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.round(target * easeProgress));
-
-      if (progress < 1) {
-        animationFrame = requestAnimationFrame(animate);
-      }
-    };
-
-    animationFrame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [target, duration]);
-
-  return count;
-}
-
-function DonutChart({
-  segments,
-  size = 64,
-  strokeWidth = 3,
-  centerValue,
-  centerLabel,
-  gapDegrees = 0,
-  onClick,
-  trackColor = 'card',
-}: DonutChartProps) {
-  // Parse and animate percentage values
-  const isPercentage = centerValue?.includes('%');
-  const numericValue = isPercentage
-    ? parseFloat(centerValue?.replace('%', '') || '0')
-    : 0;
-  const animatedValue = useAnimatedCounter(numericValue, 800);
-  const displayValue = isPercentage ? `${animatedValue}%` : centerValue;
-
-  // Chart dimensions
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const center = size / 2;
-
-  // Calculate gap between segments
-  const gapLength = (gapDegrees / 360) * circumference;
-
-  // Calculate total value for percentage calculations
-  const total = segments.reduce((sum, seg) => sum + (seg.value || 0), 0);
-
-  // Generate progress arcs
-  // Note: These use stroke-dasharray for animation-ready rendering
-  let currentOffset = 0;
-  const progressArcs = segments
-    .filter(segment => segment.value > 0) // Only render segments with positive values
-    .map((segment, index) => {
-      // Safety checks to prevent NaN
-      const safeValue = segment.value || 0;
-      const safeTotal = total || 1; // Prevent division by zero
-      const percentage = safeValue / safeTotal;
-      const strokeLength = Math.max(0, circumference * percentage - gapLength); // Ensure non-negative
-      const offset = currentOffset;
-      currentOffset += strokeLength + gapLength;
-
-      return (
-        <circle
-          key={`progress-${index}`}
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          stroke={segment.color}
-          strokeWidth={strokeWidth}
-          strokeDasharray={`${strokeLength} ${circumference}`}
-          strokeDashoffset={-offset}
-          strokeLinecap="round"
-          transform={`rotate(-90 ${center} ${center})`}
-          style={{
-            ['--stroke-length' as any]: strokeLength,
-            animation: 'donutFill 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-            animationDelay: `${index * 0.1}s`,
-          }}
-        />
-      );
-    });
-
-  return (
-    <div
-      style={{
-        position: 'relative',
-        width: `${size}px`,
-        height: `${size}px`,
-        cursor: onClick ? 'help' : 'default',
-      }}
-      onClick={onClick}
-    >
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        style={{ display: 'block' }}
-      >
-        {/* Background track circle - adapts to theme */}
-        <circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          style={{
-            stroke: trackColor === 'card' ? 'var(--track-bg-card)' : 'var(--track-bg-tab)',
-            strokeWidth: `${strokeWidth}px`,
-          }}
-        />
-
-        {/* Progress segments group - rendered on top */}
-        <g>{progressArcs}</g>
-      </svg>
-
-      {/* Center value display */}
-      {centerValue && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            pointerEvents: 'none',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '14px',
-              fontWeight: '900',
-              lineHeight: '1',
-              fontFeatureSettings: '"tnum"',
-              color: 'var(--text-primary)',
-            }}
-          >
-            {displayValue}
-          </div>
-          {centerLabel && (
-            <div
-              style={{
-                fontSize: '7px',
-                marginTop: '2px',
-                opacity: 0.6,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                color: 'var(--text-primary)',
-              }}
-            >
-              {centerLabel}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function Plugin() {
   // State management
   const [loading, setLoading] = useState(false);
@@ -2130,7 +1804,7 @@ function Plugin() {
                     flexShrink: 0,
                   }}
                 >
-                  <CustomCheckbox
+                  <Checkbox
                     checked={isLibraryIgnored}
                     onChange={() =>
                       handleToggleIgnoreLibrary(librarySource, instanceIds)
@@ -2182,7 +1856,7 @@ function Plugin() {
                         }}
                       >
                         {!isWrapper && (
-                          <CustomCheckbox
+                          <Checkbox
                             checked={isIgnored}
                             onChange={() =>
                               handleToggleIgnoreInstance(instance.instanceId)
@@ -2400,7 +2074,7 @@ function Plugin() {
                 flexShrink: 0,
               }}
             >
-              <CustomCheckbox
+              <Checkbox
                 checked={isIgnoredEverywhere}
                 onChange={() =>
                   handleToggleIgnoreOrphanEverywhere(
@@ -2461,7 +2135,7 @@ function Plugin() {
                         marginBottom: '4px',
                       }}
                     >
-                      <CustomCheckbox
+                      <Checkbox
                         checked={isIgnoredInThisComponent}
                         onChange={() =>
                           handleToggleIgnoreOrphanInComponent(
