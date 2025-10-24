@@ -188,6 +188,173 @@ function Tooltip({
   );
 }
 
+// Modal Component
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  content: string;
+}
+
+function Modal({ isOpen, onClose, title, content }: ModalProps) {
+  if (!isOpen) return null;
+
+  // Parse and format content with styling
+  const formatContent = (text: string) => {
+    const lines = text.split('\n');
+    return lines.map((line, index) => {
+      // Check if line is all caps (this is a label)
+      if (
+        line === line.toUpperCase() &&
+        line.trim() !== '' &&
+        line.length < 50 &&
+        /^[A-Z\s]+$/.test(line)
+      ) {
+        return (
+          <div
+            key={index}
+            style={{
+              marginTop: index === 0 ? '0' : '16px',
+              marginBottom: '6px',
+              fontSize: '10px',
+            }}
+          >
+            <span
+              style={{
+                color: 'var(--text-secondary)',
+                fontWeight: '500',
+                letterSpacing: '0.05em',
+              }}
+            >
+              {line}
+            </span>
+          </div>
+        );
+      }
+
+      // Check if line is a calculation (contains ×, ÷, or =)
+      if (line.includes('×') || line.includes('÷') || line.includes('=')) {
+        return (
+          <div
+            key={index}
+            style={{
+              marginBottom: '4px',
+              color: 'var(--text-primary)',
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '10px',
+            }}
+          >
+            {line}
+          </div>
+        );
+      }
+
+      // Empty lines
+      if (line.trim() === '') {
+        return (
+          <div
+            key={index}
+            style={{ height: '8px' }}
+          />
+        );
+      }
+
+      // Regular text
+      return (
+        <div
+          key={index}
+          style={{
+            marginBottom: '4px',
+            color: 'var(--text-secondary)',
+            fontSize: '11px',
+          }}
+        >
+          {line}
+        </div>
+      );
+    });
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.75)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '20px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--figma-color-bg)',
+          borderRadius: '8px',
+          padding: '24px',
+          maxWidth: '400px',
+          width: '100%',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          position: 'relative',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          style={{
+            fontSize: '14px',
+            fontWeight: '600',
+            color: 'var(--text-primary)',
+            marginBottom: '16px',
+            paddingRight: '24px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          {title}
+        </div>
+
+        <div
+          style={{
+            fontSize: '12px',
+            lineHeight: '1.6',
+          }}
+        >
+          {formatContent(content)}
+        </div>
+
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            background: dark ? 'rgba(255,255,255,0.2)' : '#e8e8e8',
+            color: dark ? 'rgba(255,255,255,0.9)' : '#666',
+            fontWeight: '600',
+            cursor: 'pointer',
+            fontSize: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+          }}
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Donut Chart Component
 interface DonutChartProps {
   segments: Array<{ value: number; color: string; label?: string }>;
@@ -196,7 +363,7 @@ interface DonutChartProps {
   centerValue?: string;
   centerLabel?: string;
   gapDegrees?: number;
-  tooltipContent?: string;
+  onClick?: () => void;
 }
 
 function DonutChart({
@@ -206,9 +373,8 @@ function DonutChart({
   centerValue,
   centerLabel,
   gapDegrees = 0,
-  tooltipContent,
+  onClick,
 }: DonutChartProps) {
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   // Chart dimensions
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -252,10 +418,9 @@ function DonutChart({
         position: 'relative',
         width: `${size}px`,
         height: `${size}px`,
-        cursor: tooltipContent ? 'help' : 'default',
+        cursor: onClick ? 'help' : 'default',
       }}
-      onMouseEnter={() => tooltipContent && setIsTooltipVisible(true)}
-      onMouseLeave={() => tooltipContent && setIsTooltipVisible(false)}
+      onClick={onClick}
     >
       <svg
         width={size}
@@ -318,42 +483,6 @@ function DonutChart({
           )}
         </div>
       )}
-
-      {/* Tooltip */}
-      {tooltipContent && isTooltipVisible && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            right: '100%',
-            transform: 'translateY(-50%)',
-            marginRight: '12px',
-            background: 'rgba(0,0,0,0.9)',
-            color: '#f0f0f0ff',
-            padding: '12px 16px',
-            borderRadius: '8px',
-            fontSize: '11px',
-            whiteSpace: 'pre-line',
-            zIndex: 1000,
-            width: '320px',
-            lineHeight: '1.6',
-            pointerEvents: 'none',
-          }}
-        >
-          {tooltipContent}
-          <div
-            style={{
-              position: 'absolute',
-              right: '-4px',
-              top: '50%',
-              transform: 'translateY(-50%) rotate(45deg)',
-              width: '8px',
-              height: '8px',
-              background: 'rgba(0,0,0,0.9)',
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 }
@@ -369,6 +498,12 @@ function Plugin() {
     step: 'Initializing...',
     percent: 0,
   });
+
+  // Modal state
+  const [modalContent, setModalContent] = useState<{
+    title: string;
+    content: string;
+  } | null>(null);
 
   // Theme-aware CSS using Figma's native CSS variables
   const themeStyles = `
@@ -1949,21 +2084,31 @@ function Plugin() {
                           },
                         ]}
                         centerValue={formatPercent(filtered.overallScore)}
-                        tooltipContent={`Foundation-First Formula (55/45 weighting):\n\nToken Adoption: ${formatPercent(
-                          filtered.variableCoverage
-                        )} × 0.55 = ${formatPercent(
-                          filtered.variableCoverage * 0.55
-                        )}\nComponent Coverage: ${formatPercent(
-                          filtered.componentCoverage
-                        )} × 0.45 = ${formatPercent(
-                          filtered.componentCoverage * 0.45
-                        )}\n\nOverall Adoption: ${formatPercent(
-                          filtered.variableCoverage * 0.55
-                        )} + ${formatPercent(
-                          filtered.componentCoverage * 0.45
-                        )} = ${formatPercent(
-                          filtered.overallScore
-                        )}\n\nWhy 55/45? Research from IBM, Atlassian, and Pinterest shows that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.`}
+                        onClick={() =>
+                          setModalContent({
+                            title: 'Overall Adoption Score',
+                            content: `FOUNDATION FIRST FORMULA
+(55/45 weighting)
+
+TOKEN ADOPTION
+${formatPercent(filtered.variableCoverage)} × 0.55 = ${formatPercent(
+                              filtered.variableCoverage * 0.55
+                            )}
+
+COMPONENT COVERAGE
+${formatPercent(filtered.componentCoverage)} × 0.45 = ${formatPercent(
+                              filtered.componentCoverage * 0.45
+                            )}
+
+OVERALL ADOPTION
+${formatPercent(filtered.variableCoverage * 0.55)} + ${formatPercent(
+                              filtered.componentCoverage * 0.45
+                            )} = ${formatPercent(filtered.overallScore)}
+
+WHY 55/45
+Research from IBM, Atlassian, and Pinterest shows that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.`,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -2187,15 +2332,30 @@ function Plugin() {
                           },
                         ]}
                         centerValue={formatPercent(filtered.componentCoverage)}
-                        tooltipContent={`Formula: Library Components ÷ Total Components\n\nLibrary Components: ${
-                          filtered.libraryInstances
-                        }\nLocal Components: ${
-                          filtered.totalInstances - filtered.libraryInstances
-                        }\nTotal: ${filtered.totalInstances}\n\nCalculation: ${
-                          filtered.libraryInstances
-                        } ÷ ${filtered.totalInstances} = ${formatPercent(
-                          filtered.componentCoverage
-                        )}\n\nNote: Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`}
+                        onClick={() =>
+                          setModalContent({
+                            title: 'Component Coverage',
+                            content: `FORMULA
+Library Components ÷ Total Components
+
+LIBRARY COMPONENTS
+${filtered.libraryInstances}
+
+LOCAL COMPONENTS
+${filtered.totalInstances - filtered.libraryInstances}
+
+TOTAL
+${filtered.totalInstances}
+
+CALCULATION
+${filtered.libraryInstances} ÷ ${filtered.totalInstances} = ${formatPercent(
+                              filtered.componentCoverage
+                            )}
+
+NOTE
+Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -2421,17 +2581,30 @@ function Plugin() {
                           },
                         ]}
                         centerValue={formatPercent(filtered.variableCoverage)}
-                        tooltipContent={`Formula: Token-Bound Properties ÷ Total Properties\n\nToken-Bound Properties: ${
-                          filtered.tokenBoundCount
-                        }\nHardcoded Properties: ${
-                          filtered.totalOpportunities - filtered.tokenBoundCount
-                        }\nTotal Properties: ${
-                          filtered.totalOpportunities
-                        }\n\nCalculation: ${filtered.tokenBoundCount} ÷ ${
-                          filtered.totalOpportunities
-                        } = ${formatPercent(
-                          filtered.variableCoverage
-                        )}\n\nNote: This measures token adoption at the property level, not component level. Each component has multiple properties (fills, strokes, typography, radius, borders) and we count how many individual properties use design tokens.`}
+                        onClick={() =>
+                          setModalContent({
+                            title: 'Design Token Adoption',
+                            content: `FORMULA
+Token-Bound Properties ÷ Total Properties
+
+TOKEN BOUND PROPERTIES
+${filtered.tokenBoundCount}
+
+HARDCODED PROPERTIES
+${filtered.totalOpportunities - filtered.tokenBoundCount}
+
+TOTAL PROPERTIES
+${filtered.totalOpportunities}
+
+CALCULATION
+${filtered.tokenBoundCount} ÷ ${filtered.totalOpportunities} = ${formatPercent(
+                              filtered.variableCoverage
+                            )}
+
+NOTE
+This measures token adoption at the property level, not component level. Each component has multiple properties (fills, strokes, typography, radius, borders) and we count how many individual properties use design tokens.`,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -3501,6 +3674,14 @@ function Plugin() {
             </button>
           </div>
         </div>
+
+        {/* Modal */}
+        <Modal
+          isOpen={modalContent !== null}
+          onClose={() => setModalContent(null)}
+          title={modalContent?.title || ''}
+          content={modalContent?.content || ''}
+        />
       </Fragment>
     );
   }
@@ -3582,6 +3763,14 @@ function Plugin() {
           </button>
         </div>
       </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={modalContent !== null}
+        onClose={() => setModalContent(null)}
+        title={modalContent?.title || ''}
+        content={modalContent?.content || ''}
+      />
     </Fragment>
   );
 }
