@@ -4887,10 +4887,7 @@ async function getAvailableLibraries(): Promise<TeamLibrary[]> {
     // Get all available variable collections from team libraries
     const variableCollections = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
 
-    console.log('=== DEBUG: Variable Collections from Team Libraries ===');
-    console.log('Total collections:', variableCollections.length);
-
-    for (const collection of variableCollections) {
+for (const collection of variableCollections) {
       // Log all available properties to understand the API
       console.log('\nCollection:', {
         key: collection.key,
@@ -5112,7 +5109,7 @@ import { showUI, on, emit } from '@create-figma-plugin/utilities';
 let analysisCancelled = false;
 
 export default function () {
-  showUI({ width: 440, height: 720 });
+  showUI({ width: 440, height: 840 });
 
   // Send initial selection status to UI
   function checkAndSendSelectionStatus() {
@@ -5261,12 +5258,12 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   // Reset alias tracking for this analysis
   aliasResolutions.clear();
 
-  await sendProgress('Initializing analysis...', 0);
-
-  // Check if user has made a selection
+  // Check if user has made a selection FIRST, before sending any progress
   if (selection.length === 0) {
     throw new Error('Please select frames, components, or sections to analyze');
   }
+
+  await sendProgress('Initializing analysis...', 0);
 
   console.log(`\n=== ANALYZING SELECTION ===`);
   console.log(`Selected ${selection.length} top-level node(s)`);

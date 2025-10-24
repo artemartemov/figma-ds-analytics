@@ -6,12 +6,11 @@ import {
   Text,
   Button,
   VerticalSpace,
-  Checkbox,
   Divider,
   Banner,
   IconButton,
   IconChevronDown16,
-  IconChevronRight16
+  IconChevronRight16,
 } from '@create-figma-plugin/ui';
 import { emit, on } from '@create-figma-plugin/utilities';
 
@@ -87,29 +86,52 @@ interface ProgressMessage {
   percent: number;
 }
 
-// Centered layout wrapper for consistent states
-function CenteredLayout({ children }: { children: any }) {
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '80px 20px',
-      minHeight: '400px'
-    }}>
-      {children}
-    </div>
-  );
-}
-
 // Custom Tooltip component
-function Tooltip({ content, dark = false }: { content: string; dark?: boolean }) {
+function Tooltip({
+  content,
+  dark = false,
+  position = 'right',
+}: {
+  content: string;
+  dark?: boolean;
+  position?: 'right' | 'bottom';
+}) {
   const [isVisible, setIsVisible] = useState(false);
+
+  // Positioning styles based on position prop
+  const tooltipStyles =
+    position === 'bottom'
+      ? {
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+        }
+      : {
+          top: '50%',
+          left: '20px',
+          transform: 'translateY(-50%)',
+        };
+
+  const arrowStyles =
+    position === 'bottom'
+      ? {
+          left: '50%',
+          top: '-4px',
+          transform: 'translateX(-50%) rotate(45deg)',
+        }
+      : {
+          left: '-4px',
+          top: '50%',
+          transform: 'translateY(-50%) rotate(45deg)',
+        };
 
   return (
     <div
-      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+      }}
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}
     >
@@ -126,44 +148,421 @@ function Tooltip({ content, dark = false }: { content: string; dark?: boolean })
           fontSize: '8px',
           fontWeight: '600',
           cursor: 'help',
-          flexShrink: 0
+          flexShrink: 0,
         }}
       >
-        i
+        ?
       </span>
       {isVisible && (
         <div
           style={{
             position: 'absolute',
-            top: '50%',
-            left: '20px',
-            transform: 'translateY(-50%)',
+            ...tooltipStyles,
             background: 'rgba(0,0,0,0.9)',
-            color: '#fff',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            fontSize: '10px',
+            color: '#f0f0f0ff',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            fontSize: '11px',
             whiteSpace: 'pre-line',
             zIndex: 1000,
-            minWidth: '200px',
-            maxWidth: '280px',
-            lineHeight: '1.4',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            pointerEvents: 'none'
+            minWidth: '250px',
+            maxWidth: '320px',
+            lineHeight: '1.6',
+            pointerEvents: 'none',
           }}
         >
           {content}
           <div
             style={{
               position: 'absolute',
-              left: '-4px',
-              top: '50%',
+              ...arrowStyles,
               width: '8px',
               height: '8px',
               background: 'rgba(0,0,0,0.9)',
-              transform: 'translateY(-50%) rotate(45deg)'
             }}
           />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Modal Component
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  content: string;
+}
+
+function Modal({ isOpen, onClose, title, content }: ModalProps) {
+  if (!isOpen) return null;
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
+  // Parse and format content with styling
+  const formatContent = (text: string) => {
+    const lines = text.split('\n');
+    return lines.map((line, index) => {
+      // Check if line is all caps (this is a label)
+      if (
+        line === line.toUpperCase() &&
+        line.trim() !== '' &&
+        line.length < 50 &&
+        /^[A-Z\s]+$/.test(line)
+      ) {
+        return (
+          <div
+            key={index}
+            style={{
+              marginTop: index === 0 ? '0' : '12px',
+              marginBottom: '6px',
+              fontSize: '10px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span
+              style={{
+                color: 'var(--text-secondary)',
+                fontWeight: '500',
+                letterSpacing: '0.05em',
+              }}
+            >
+              {line}
+            </span>
+          </div>
+        );
+      }
+
+      // Check if line is a calculation (contains ×, ÷, or =)
+      if (line.includes('×') || line.includes('÷') || line.includes('=')) {
+        return (
+          <div
+            key={index}
+            style={{
+              marginBottom: '4px',
+              color: 'var(--text-primary)',
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '10px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {line}
+          </div>
+        );
+      }
+
+      // Empty lines
+      if (line.trim() === '') {
+        return (
+          <div
+            key={index}
+            style={{ height: '8px' }}
+          />
+        );
+      }
+
+      // Check if line is a number (primary color)
+      if (/^\d+$/.test(line.trim())) {
+        return (
+          <div
+            key={index}
+            style={{
+              marginBottom: '4px',
+              color: 'var(--text-primary)',
+              fontSize: '10px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {line}
+          </div>
+        );
+      }
+
+      // Check if line is part of a longer paragraph (allow wrapping)
+      const isLongText = line.length > 80 || line.includes('Wrapper') || line.includes('Research') || line.includes('property');
+
+      // Regular text - paragraphs in primary color, short text in secondary
+      return (
+        <div
+          key={index}
+          style={{
+            marginBottom: '4px',
+            color: isLongText ? 'var(--text-primary)' : 'var(--text-secondary)',
+            fontSize: '10px',
+            whiteSpace: isLongText ? 'normal' : 'nowrap',
+          }}
+        >
+          {line}
+        </div>
+      );
+    });
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.75)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '20px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--figma-color-bg)',
+          borderRadius: '8px',
+          padding: '24px',
+          maxWidth: '400px',
+          width: '100%',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          position: 'relative',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          style={{
+            fontSize: '14px',
+            fontWeight: '600',
+            color: 'var(--text-primary)',
+            marginBottom: '16px',
+            paddingRight: '24px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          {title}
+        </div>
+
+        <div
+          style={{
+            fontSize: '12px',
+            lineHeight: '1.6',
+          }}
+        >
+          {formatContent(content)}
+        </div>
+
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--text-secondary)',
+            fontWeight: '600',
+            cursor: 'pointer',
+            fontSize: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+          }}
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Custom Checkbox Component
+interface CustomCheckboxProps {
+  checked: boolean;
+  onChange: () => void;
+}
+
+function CustomCheckbox({ checked, onChange }: CustomCheckboxProps) {
+  return (
+    <div
+      onClick={onChange}
+      style={{
+        width: '14px',
+        height: '14px',
+        minWidth: '14px',
+        minHeight: '14px',
+        borderRadius: '3px',
+        background: checked ? '#000000' : '#E5E5E5',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+      }}
+    >
+      {checked && (
+        <svg
+          width="10"
+          height="8"
+          viewBox="0 0 10 8"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M1 4L3.5 6.5L9 1"
+            stroke="white"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+// Donut Chart Component
+interface DonutChartProps {
+  segments: Array<{ value: number; color: string; label?: string }>;
+  size?: number;
+  strokeWidth?: number;
+  centerValue?: string;
+  centerLabel?: string;
+  gapDegrees?: number;
+  onClick?: () => void;
+}
+
+function DonutChart({
+  segments,
+  size = 64,
+  strokeWidth = 4,
+  centerValue,
+  centerLabel,
+  gapDegrees = 0,
+  onClick,
+}: DonutChartProps) {
+  // Chart dimensions
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const center = size / 2;
+
+  // Calculate gap between segments
+  const gapLength = (gapDegrees / 360) * circumference;
+
+  // Calculate total value for percentage calculations
+  const total = segments.reduce((sum, seg) => sum + seg.value, 0);
+
+  // Generate progress arcs
+  // Note: These use stroke-dasharray for animation-ready rendering
+  let currentOffset = 0;
+  const progressArcs = segments.map((segment, index) => {
+    const percentage = segment.value / total;
+    const strokeLength = circumference * percentage - gapLength;
+    const offset = currentOffset;
+    currentOffset += strokeLength + gapLength;
+
+    return (
+      <circle
+        key={`progress-${index}`}
+        cx={center}
+        cy={center}
+        r={radius}
+        fill="none"
+        stroke={segment.color}
+        strokeWidth={strokeWidth}
+        strokeDasharray={`${strokeLength} ${circumference}`}
+        strokeDashoffset={-offset}
+        strokeLinecap="butt"
+        transform={`rotate(-90 ${center} ${center})`}
+      />
+    );
+  });
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        width: `${size}px`,
+        height: `${size}px`,
+        cursor: onClick ? 'help' : 'default',
+      }}
+      onClick={onClick}
+    >
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        style={{ display: 'block' }}
+      >
+        {/* Background track circle - adapts to theme */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          style={{
+            stroke: 'var(--track-bg)',
+            strokeWidth: `${strokeWidth}px`,
+          }}
+        />
+
+        {/* Progress segments group - rendered on top */}
+        <g>{progressArcs}</g>
+      </svg>
+
+      {/* Center value display */}
+      {centerValue && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center',
+            pointerEvents: 'none',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '18px',
+              fontWeight: '700',
+              lineHeight: '1',
+              fontFeatureSettings: '"tnum"',
+              color: 'var(--text-primary)',
+            }}
+          >
+            {centerValue}
+          </div>
+          {centerLabel && (
+            <div
+              style={{
+                fontSize: '7px',
+                marginTop: '2px',
+                opacity: 0.6,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                color: 'var(--text-primary)',
+              }}
+            >
+              {centerLabel}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -177,18 +576,105 @@ function Plugin() {
   const [data, setData] = useState<CoverageMetrics | null>(null);
   const [hasSelection, setHasSelection] = useState(false);
   const [selectionCount, setSelectionCount] = useState(0);
-  const [progress, setProgress] = useState({ step: 'Initializing...', percent: 0 });
+  const [progress, setProgress] = useState({
+    step: 'Initializing...',
+    percent: 0,
+  });
+
+  // Modal state
+  const [modalContent, setModalContent] = useState<{
+    title: string;
+    content: string;
+  } | null>(null);
+
+  // Theme-aware CSS using Figma's native CSS variables
+  const themeStyles = `
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    /* Normalize plugin header spacing */
+    * {
+      box-sizing: border-box;
+    }
+
+    body, html {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    #app {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    :root {
+      /* Use Figma's native theme variables and add our custom ones */
+      --text-primary: var(--figma-color-text);
+      --text-secondary: var(--figma-color-text-secondary);
+      --text-tertiary: var(--figma-color-text-tertiary);
+      --card-bg: var(--figma-color-bg-secondary);
+      --border-color: var(--figma-color-border);
+    }
+
+    /* Light mode specific overrides */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --track-bg: #ffffff;
+        --progress-fill: #222222;
+        --progress-fill-secondary: #52525B;
+      }
+    }
+
+    /* Dark mode specific overrides */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --track-bg: #505050;
+        --progress-fill: #FFFFFF;
+        --progress-fill-secondary: #B8B8B8;
+        --button-bg: #FFFFFF;
+        --button-text: #222222;
+        --button-disabled-bg: rgba(255,255,255,0.1);
+        --button-disabled-text: rgba(255,255,255,0.3);
+        --tab-inactive-text: #B8B8B8;
+        --tab-container-bg: #242424;
+      }
+    }
+
+    /* Light mode button colors */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --button-bg: #222222;
+        --button-text: #ffffff;
+        --button-disabled-bg: rgba(0,0,0,0.1);
+        --button-disabled-text: rgba(0,0,0,0.3);
+        --tab-inactive-text: #222222;
+        --tab-container-bg: #F5F5F5;
+      }
+    }
+
+
+    * {
+      font-family: 'JetBrains Mono', 'Monaco', 'Courier New', monospace !important;
+    }
+  `;
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'overview' | 'components' | 'tokens'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    'overview' | 'components' | 'tokens'
+  >('overview');
 
   // Track collapsed sections (wrappers start collapsed)
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+    new Set()
+  );
 
   // Ignored items (used for orphans and components, but not wrappers)
-  const [ignoredComponents, setIgnoredComponents] = useState<Set<string>>(new Set());
+  const [ignoredComponents, setIgnoredComponents] = useState<Set<string>>(
+    new Set()
+  );
   const [ignoredOrphans, setIgnoredOrphans] = useState<Set<string>>(new Set());
-  const [ignoredInstances, setIgnoredInstances] = useState<Set<string>>(new Set());
+  const [ignoredInstances, setIgnoredInstances] = useState<Set<string>>(
+    new Set()
+  );
 
   // Listen for messages from plugin backend
   useEffect(() => {
@@ -199,15 +685,22 @@ function Plugin() {
 
       // Load ignored items from backend
       if (results.hardcodedValues) {
-        setIgnoredComponents(new Set(results.hardcodedValues.ignoredComponents || []));
-        setIgnoredOrphans(new Set(results.hardcodedValues.ignoredOrphans || []));
+        setIgnoredComponents(
+          new Set(results.hardcodedValues.ignoredComponents || [])
+        );
+        setIgnoredOrphans(
+          new Set(results.hardcodedValues.ignoredOrphans || [])
+        );
       }
       setIgnoredInstances(new Set(results.ignoredInstances || []));
 
       // Auto-collapse wrapper sections (they're excluded from metrics)
       const wrapperSections = new Set<string>();
-      results.componentDetails.forEach(instance => {
-        if (instance.librarySource.includes('Wrapper') || instance.librarySource.includes('Local (built with DS)')) {
+      results.componentDetails.forEach((instance) => {
+        if (
+          instance.librarySource.includes('Wrapper') ||
+          instance.librarySource.includes('Local (built with DS)')
+        ) {
           wrapperSections.add(instance.librarySource);
         }
       });
@@ -226,8 +719,13 @@ function Plugin() {
 
     on('PROGRESS', (data: { step: string; percent: number }) => {
       setProgress({ step: data.step, percent: data.percent });
+      // When we receive progress, we know analysis has started AND there's a selection
+      if (!loading) {
+        setLoading(true);
+        setHasSelection(true);
+      }
     });
-  }, []);
+  }, [loading]);
 
   // Helper functions
   const formatPercent = (value: number) => Math.round(value) + '%';
@@ -242,7 +740,7 @@ function Plugin() {
     } else if (score < 95) {
       return 'Mature success (Industry: 80-95%). Focus on sustainability, continuous improvement, and quality metrics beyond adoption.';
     } else {
-      return 'Exceptional achievement (>95%)! You\'re at industry-leading adoption levels. Note: 100% adoption is neither realistic nor desirable.';
+      return "Exceptional achievement (>95%)! You're at industry-leading adoption levels. Note: 100% adoption is neither realistic nor desirable.";
     }
   };
 
@@ -346,58 +844,63 @@ function Plugin() {
     // If no filters active, use accurate backend totals (calculated from ALL instances)
     if (!hasActiveFilters) {
       const backendTokenBound = hv.totalOpportunities - hv.totalHardcoded;
-      console.log('Using backend totals (no filters active):');
-      console.log('  Token-bound:', backendTokenBound);
-      console.log('  Hardcoded:', hv.totalHardcoded);
-      console.log('  Total Opportunities:', hv.totalOpportunities);
-      console.log('  Coverage:', (backendTokenBound / hv.totalOpportunities * 100).toFixed(2) + '%');
+      const variableCoverage =
+        hv.totalOpportunities > 0
+          ? (backendTokenBound / hv.totalOpportunities) * 100
+          : 0;
 
-      const variableCoverage = hv.totalOpportunities > 0
-        ? (backendTokenBound / hv.totalOpportunities) * 100
-        : 0;
-
-      const orphanRate = hv.totalOpportunities > 0
-        ? (hv.totalHardcoded / hv.totalOpportunities) * 100
-        : 0;
+      const orphanRate =
+        hv.totalOpportunities > 0
+          ? (hv.totalHardcoded / hv.totalOpportunities) * 100
+          : 0;
 
       // Count orphans from details for display
       const orphanCount = hv.details.length;
 
       // Filter component instances (still need this for component coverage)
       const filteredInstances = data.componentDetails.filter(
-        instance => !ignoredInstances.has(instance.instanceId)
+        (instance) => !ignoredInstances.has(instance.instanceId)
       );
 
       let filteredLibraryInstances = 0;
       let filteredTotalInstances = filteredInstances.length;
 
-      filteredInstances.forEach(instance => {
-        const isWrapper = instance.librarySource.includes('Wrapper') ||
-                          instance.librarySource.includes('Local (built with DS)');
+      filteredInstances.forEach((instance) => {
+        const isWrapper =
+          instance.librarySource.includes('Wrapper') ||
+          instance.librarySource.includes('Local (built with DS)');
 
         if (isWrapper) {
           return;
         }
 
-        const isLibrary = instance.librarySource.includes('Spandex') ||
-                          instance.librarySource.includes('Atomic') ||
-                          instance.librarySource.includes('Global Foundation') ||
-                          instance.librarySource.includes('Design Components');
+        const isLibrary =
+          instance.librarySource.includes('Spandex') ||
+          instance.librarySource.includes('Atomic') ||
+          instance.librarySource.includes('Global Foundation') ||
+          instance.librarySource.includes('Design Components');
 
         if (isLibrary) filteredLibraryInstances++;
       });
 
-      const filteredComponentCoverage = filteredTotalInstances > 0
-        ? (filteredLibraryInstances / filteredTotalInstances) * 100
-        : 0;
+      const filteredComponentCoverage =
+        filteredTotalInstances > 0
+          ? (filteredLibraryInstances / filteredTotalInstances) * 100
+          : 0;
 
-      const filteredOverallScore = (variableCoverage * 0.55) + (filteredComponentCoverage * 0.45);
+      const filteredOverallScore =
+        variableCoverage * 0.55 + filteredComponentCoverage * 0.45;
 
-      const filteredBreakdown = data.libraryBreakdown.map(lib => ({
-        name: lib.name,
-        count: lib.count,
-        percentage: filteredTotalInstances > 0 ? (lib.count / filteredTotalInstances) * 100 : 0
-      })).sort((a, b) => b.count - a.count);
+      const filteredBreakdown = data.libraryBreakdown
+        .map((lib) => ({
+          name: lib.name,
+          count: lib.count,
+          percentage:
+            filteredTotalInstances > 0
+              ? (lib.count / filteredTotalInstances) * 100
+              : 0,
+        }))
+        .sort((a, b) => b.count - a.count);
 
       return {
         overallScore: filteredOverallScore,
@@ -410,22 +913,19 @@ function Plugin() {
         totalOpportunities: hv.totalOpportunities,
         libraryInstances: filteredLibraryInstances,
         totalInstances: filteredTotalInstances,
-        libraryBreakdown: filteredBreakdown
+        libraryBreakdown: filteredBreakdown,
       };
     }
 
     // Filtering IS active - calculate from details
-    console.log('Using filtered details (filters active):');
-    console.log('  Ignored instances:', ignoredInstances.size);
-    console.log('  Ignored components:', ignoredComponents.size);
-    console.log('  Ignored orphans:', ignoredOrphans.size);
-
     let filteredTotalHardcoded = 0;
     let filteredOrphanCount = 0;
 
     // Filter orphans - exclude if component ignored, orphan ignored, OR parent instance ignored
     hv.details.forEach((detail) => {
-      const isComponentIgnored = ignoredComponents.has(detail.parentComponentId);
+      const isComponentIgnored = ignoredComponents.has(
+        detail.parentComponentId
+      );
       const isOrphanIgnored = ignoredOrphans.has(detail.nodeId);
       const isInstanceIgnored = ignoredInstances.has(detail.parentInstanceId);
 
@@ -439,7 +939,9 @@ function Plugin() {
     // Filter token-bound properties - exclude if component ignored OR parent instance ignored
     let filteredTokenBoundCount = 0;
     hv.tokenBoundDetails.forEach((detail) => {
-      const isComponentIgnored = ignoredComponents.has(detail.parentComponentId);
+      const isComponentIgnored = ignoredComponents.has(
+        detail.parentComponentId
+      );
       const isInstanceIgnored = ignoredInstances.has(detail.parentInstanceId);
 
       // Only count if NOT ignored at any level
@@ -448,44 +950,44 @@ function Plugin() {
       }
     });
 
-    const filteredTotalOpportunities = filteredTokenBoundCount + filteredTotalHardcoded;
+    const filteredTotalOpportunities =
+      filteredTokenBoundCount + filteredTotalHardcoded;
 
-    console.log('  Filtered token-bound:', filteredTokenBoundCount);
-    console.log('  Filtered hardcoded:', filteredTotalHardcoded);
-    console.log('  Filtered total opportunities:', filteredTotalOpportunities);
-    console.log('  Filtered coverage:', (filteredTokenBoundCount / filteredTotalOpportunities * 100).toFixed(2) + '%');
+    const filteredVariableCoverage =
+      filteredTotalOpportunities > 0
+        ? (filteredTokenBoundCount / filteredTotalOpportunities) * 100
+        : 0;
 
-    const filteredVariableCoverage = filteredTotalOpportunities > 0
-      ? (filteredTokenBoundCount / filteredTotalOpportunities) * 100
-      : 0;
-
-    const filteredOrphanRate = filteredTotalOpportunities > 0
-      ? (filteredTotalHardcoded / filteredTotalOpportunities) * 100
-      : 0;
+    const filteredOrphanRate =
+      filteredTotalOpportunities > 0
+        ? (filteredTotalHardcoded / filteredTotalOpportunities) * 100
+        : 0;
 
     // Filter component instances
     const filteredInstances = data.componentDetails.filter(
-      instance => !ignoredInstances.has(instance.instanceId)
+      (instance) => !ignoredInstances.has(instance.instanceId)
     );
 
     // Count library vs local in filtered set
     let filteredLibraryInstances = 0;
     let filteredLocalInstances = 0;
 
-    filteredInstances.forEach(instance => {
+    filteredInstances.forEach((instance) => {
       // Check if this is a wrapper (should be excluded from counts)
-      const isWrapper = instance.librarySource.includes('Wrapper') ||
-                        instance.librarySource.includes('Local (built with DS)');
+      const isWrapper =
+        instance.librarySource.includes('Wrapper') ||
+        instance.librarySource.includes('Local (built with DS)');
 
       // Skip wrappers entirely - they're excluded from the defensible metric
       if (isWrapper) {
         return; // Don't count wrappers at all
       }
 
-      const isLibrary = instance.librarySource.includes('Spandex') ||
-                        instance.librarySource.includes('Atomic') ||
-                        instance.librarySource.includes('Global Foundation') ||
-                        instance.librarySource.includes('Design Components');
+      const isLibrary =
+        instance.librarySource.includes('Spandex') ||
+        instance.librarySource.includes('Atomic') ||
+        instance.librarySource.includes('Global Foundation') ||
+        instance.librarySource.includes('Design Components');
 
       if (isLibrary) {
         filteredLibraryInstances++;
@@ -494,32 +996,44 @@ function Plugin() {
       }
     });
 
-    const filteredTotalInstances = filteredLibraryInstances + filteredLocalInstances;
-    const filteredComponentCoverage = filteredTotalInstances > 0
-      ? (filteredLibraryInstances / filteredTotalInstances) * 100
-      : 0;
+    const filteredTotalInstances =
+      filteredLibraryInstances + filteredLocalInstances;
+    const filteredComponentCoverage =
+      filteredTotalInstances > 0
+        ? (filteredLibraryInstances / filteredTotalInstances) * 100
+        : 0;
 
     // Recalculate library breakdown excluding ignored instances AND wrappers
     const filteredLibraryBreakdown = new Map<string, number>();
-    filteredInstances.forEach(instance => {
+    filteredInstances.forEach((instance) => {
       // Exclude wrappers from breakdown counts
-      const isWrapper = instance.librarySource.includes('Wrapper') ||
-                        instance.librarySource.includes('Local (built with DS)');
+      const isWrapper =
+        instance.librarySource.includes('Wrapper') ||
+        instance.librarySource.includes('Local (built with DS)');
       if (!isWrapper) {
         const source = instance.librarySource;
-        filteredLibraryBreakdown.set(source, (filteredLibraryBreakdown.get(source) || 0) + 1);
+        filteredLibraryBreakdown.set(
+          source,
+          (filteredLibraryBreakdown.get(source) || 0) + 1
+        );
       }
     });
 
-    const filteredBreakdown = Array.from(filteredLibraryBreakdown.entries()).map(([name, count]) => ({
-      name,
-      count,
-      percentage: filteredTotalInstances > 0 ? (count / filteredTotalInstances) * 100 : 0
-    })).sort((a, b) => b.count - a.count);
+    const filteredBreakdown = Array.from(filteredLibraryBreakdown.entries())
+      .map(([name, count]) => ({
+        name,
+        count,
+        percentage:
+          filteredTotalInstances > 0
+            ? (count / filteredTotalInstances) * 100
+            : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
 
     // Foundation-First weighting: 55% token adoption, 45% component coverage
     // Rationale: Tokens drive 80% of consistency value (IBM, Atlassian research)
-    const filteredOverallScore = (filteredVariableCoverage * 0.55) + (filteredComponentCoverage * 0.45);
+    const filteredOverallScore =
+      filteredVariableCoverage * 0.55 + filteredComponentCoverage * 0.45;
 
     return {
       overallScore: filteredOverallScore,
@@ -532,7 +1046,7 @@ function Plugin() {
       totalOpportunities: filteredTotalOpportunities,
       libraryInstances: filteredLibraryInstances,
       totalInstances: filteredTotalInstances,
-      libraryBreakdown: filteredBreakdown
+      libraryBreakdown: filteredBreakdown,
     };
   };
 
@@ -543,14 +1057,26 @@ function Plugin() {
     colors: '#e74c3c',
     typography: '#3498db',
     spacing: '#9b59b6',
-    radius: '#f39c12'
+    radius: '#f39c12',
   };
 
-  // Eye icon SVG
+  // Eye icon SVG (16x12 with better stroke weight)
   const eyeIconSVG = (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 3C3.5 3 1.5 5 1.5 6s2 3 4.5 3 4.5-2 4.5-3-2-3-4.5-3zm0 5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" fill="currentColor"/>
-      <circle cx="6" cy="6" r="1" fill="currentColor"/>
+    <svg
+      width="16"
+      height="12"
+      viewBox="0 0 16 12"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M7.9812 3C6.32435 3 4.9812 4.34315 4.9812 6C4.9812 7.65685 6.32435 9 7.9812 9C9.63806 9 10.9812 7.65685 10.9812 6C10.9812 4.34315 9.63806 3 7.9812 3ZM6.2312 6C6.2312 5.0335 7.0147 4.25 7.9812 4.25C8.9477 4.25 9.7312 5.0335 9.7312 6C9.7312 6.9665 8.9477 7.75 7.9812 7.75C7.0147 7.75 6.2312 6.9665 6.2312 6Z"
+        fill="currentColor"
+      />
+      <path
+        d="M7.98114 0C5.56104 0 3.66123 1.29127 2.35726 2.59591C1.04966 3.90417 0.274346 5.29061 0.0913944 5.63519C-0.0304648 5.86471 -0.0304648 6.13529 0.0913944 6.36481C0.274346 6.70939 1.04966 8.09583 2.35726 9.40409C3.66123 10.7087 5.56104 12 7.98114 12C10.4012 12 12.301 10.7087 13.605 9.40409C14.9126 8.09583 15.6879 6.7094 15.8709 6.36481C15.9927 6.13529 15.9927 5.86471 15.8709 5.63519C15.6879 5.2906 14.9126 3.90417 13.605 2.59591C12.301 1.29127 10.4012 0 7.98114 0ZM3.24137 8.52043C2.2544 7.53296 1.59872 6.4891 1.31811 6C1.59872 5.5109 2.2544 4.46704 3.24137 3.47957C4.4285 2.29183 6.02843 1.25 7.98114 1.25C9.93384 1.25 11.5338 2.29183 12.7209 3.47956C13.7079 4.46703 14.3635 5.5109 14.6442 6C14.3635 6.48909 13.7079 7.53297 12.7209 8.52044C11.5338 9.70817 9.93384 10.75 7.98114 10.75C6.02843 10.75 4.4285 9.70817 3.24137 8.52043Z"
+        fill="currentColor"
+      />
     </svg>
   );
 
@@ -561,7 +1087,7 @@ function Plugin() {
     // Group instances by library source
     const instancesByLibrary = new Map<string, ComponentInstanceDetail[]>();
 
-    data.componentDetails.forEach(instance => {
+    data.componentDetails.forEach((instance) => {
       const source = instance.librarySource;
       if (!instancesByLibrary.has(source)) {
         instancesByLibrary.set(source, []);
@@ -570,227 +1096,397 @@ function Plugin() {
     });
 
     const colorMap: { [key: string]: string } = {
-      'Spandex - Atomic Components': '#18A0FB',
-      'Spandex - Design Components': '#5B9BD5', // Blue variant for Design Components
-      'Spandex - Global Foundations': '#4A90E2', // Blue variant for Global Foundations
-      'Local (built with DS) - Wrapper': '#95a5a6', // Gray for wrappers (excluded from count)
-      'Local (built with DS)': '#95a5a6', // Gray for wrappers (excluded from count)
-      'Local (standalone)': '#f39c12',
+      'Spandex - Atomic Components': '#222',
+      'Spandex - Design Components': '#444', // Dark gray variant
+      'Spandex - Global Foundations': '#666', // Medium gray variant
+      'Local (built with DS) - Wrapper': '#999', // Light gray for wrappers (excluded from count)
+      'Local (built with DS)': '#999', // Light gray for wrappers (excluded from count)
+      'Local (standalone)': '#bbb', // Lighter gray for standalone
       'Other Library (not mapped)': '#9b59b6',
-      'Local Components': '#f39c12'
+      'Local Components': '#f39c12',
     };
 
-    return Array.from(instancesByLibrary.entries()).map(([librarySource, instances]) => {
-      const color = colorMap[librarySource] || '#666';
-      const isWrapper = librarySource.includes('Wrapper') || librarySource.includes('Local (built with DS)');
-      const isCollapsed = collapsedSections.has(librarySource);
+    return Array.from(instancesByLibrary.entries()).map(
+      ([librarySource, instances]) => {
+        const color = colorMap[librarySource] || '#666';
+        const isWrapper =
+          librarySource.includes('Wrapper') ||
+          librarySource.includes('Local (built with DS)');
+        const isCollapsed = collapsedSections.has(librarySource);
 
-      return (
-        <div key={librarySource} style={{ marginBottom: '16px' }}>
+        return (
           <div
-            style={{
-              padding: '8px 0',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '12px',
-              cursor: 'pointer',
-              borderBottom: !isCollapsed ? '1px solid var(--figma-color-border)' : 'none'
-            }}
-            onClick={() => handleToggleCollapse(librarySource)}
+            key={librarySource}
+            style={{ marginBottom: '16px' }}
           >
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, color: 'var(--figma-color-text)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
-                {librarySource}
-                {isWrapper && <span style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', fontWeight: 400 }}>(excluded from metrics)</span>}
-              </div>
-              <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginTop: '2px' }}>
-                {instances.length} instance{instances.length > 1 ? 's' : ''}
+            <div
+              style={{
+                padding: '8px 0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '12px',
+                cursor: 'pointer',
+                borderBottom: !isCollapsed
+                  ? '1px solid var(--figma-color-border)'
+                  : 'none',
+              }}
+              onClick={() => handleToggleCollapse(librarySource)}
+            >
+              <div style={{ flex: 1 }}>
+                <div
+                  style={{
+                    fontWeight: 600,
+                    color: 'var(--figma-color-text)',
+                    fontSize: '11px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
+                  {librarySource}
+                  {isWrapper && (
+                    <span
+                      style={{
+                        fontSize: '9px',
+                        color: 'var(--figma-color-text-tertiary)',
+                        fontWeight: 400,
+                      }}
+                    >
+                      (excluded from metrics)
+                    </span>
+                  )}
+                </div>
+                <div
+                  style={{
+                    fontSize: '10px',
+                    color: 'var(--figma-color-text-secondary)',
+                    marginTop: '2px',
+                  }}
+                >
+                  {instances.length} instance{instances.length > 1 ? 's' : ''}
+                </div>
               </div>
             </div>
-          </div>
-          {!isCollapsed && (
-            <div style={{ paddingTop: '8px' }}>
-              {instances.map(instance => {
-                const isIgnored = ignoredInstances.has(instance.instanceId);
-                const instanceOpacity = isIgnored ? 0.4 : 1;
+            {!isCollapsed && (
+              <div style={{ paddingTop: '8px' }}>
+                {instances.map((instance) => {
+                  const isIgnored = ignoredInstances.has(instance.instanceId);
+                  const instanceOpacity = isIgnored ? 0.4 : 1;
 
-                return (
-                  <div key={instance.instanceId} style={{ paddingLeft: '20px', paddingTop: '8px', paddingBottom: '8px', fontSize: '10px', opacity: instanceOpacity, borderBottom: '1px solid var(--figma-color-border)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, color: 'var(--figma-color-text)', marginBottom: '2px' }}>{instance.instanceName}</div>
-                        <div style={{ color: 'var(--figma-color-text-secondary)', fontSize: '9px' }}>
-                          <span style={{ color: 'var(--figma-color-text-tertiary)' }}>Component:</span> {instance.componentName}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {!isWrapper && (
-                          <Checkbox
-                            value={isIgnored}
-                            onValueChange={() => handleToggleIgnoreInstance(instance.instanceId)}
-                          >
-                            <Text style={{ fontSize: '9px' }}>Ignore</Text>
-                          </Checkbox>
-                        )}
-                      <button
-                        onClick={() => handleSelectNode(instance.instanceId)}
-                        title="View in canvas"
+                  return (
+                    <div
+                      key={instance.instanceId}
+                      style={{
+                        paddingLeft: '0px',
+                        paddingTop: '8px',
+                        paddingBottom: '8px',
+                        fontSize: '10px',
+                        opacity: instanceOpacity,
+                        borderBottom: '1px solid var(--figma-color-border)',
+                      }}
+                    >
+                      <div
                         style={{
-                          padding: '4px 6px',
-                          background: '#18A0FB',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '3px',
-                          cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                          gap: '8px',
+                          marginBottom: '4px',
                         }}
                       >
-                        {eyeIconSVG}
-                      </button>
+                        {!isWrapper && (
+                          <CustomCheckbox
+                            checked={isIgnored}
+                            onChange={() =>
+                              handleToggleIgnoreInstance(instance.instanceId)
+                            }
+                          />
+                        )}
+                        <div style={{ flex: 1 }}>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              color: 'var(--figma-color-text)',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            {instance.instanceName}
+                          </div>
+                          <div
+                            style={{
+                              color: 'var(--figma-color-text-secondary)',
+                              fontSize: '9px',
+                            }}
+                          >
+                            <span
+                              style={{
+                                color: 'var(--figma-color-text-tertiary)',
+                              }}
+                            >
+                              Component:
+                            </span>{' '}
+                            {instance.componentName}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() =>
+                            handleSelectNode(instance.instanceId)
+                          }
+                          title="View in canvas"
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            padding: '0',
+                            background: 'transparent',
+                            color: 'var(--text-secondary)',
+                            border: 'none',
+                            borderRadius: '2px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'background 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background =
+                              'var(--figma-color-bg-hover)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          {eyeIconSVG}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-            </div>
-          )}
-        </div>
-      );
-    });
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      }
+    );
   };
 
   // Render orphan details grouped by component
   const renderOrphanDetails = () => {
-    if (!data || !data.hardcodedValues || !data.hardcodedValues.details) return null;
+    if (!data || !data.hardcodedValues || !data.hardcodedValues.details)
+      return null;
 
     // Group orphans by parent component
-    const orphansByComponent = new Map<string, { name: string; id: string; orphans: OrphanDetail[] }>();
+    const orphansByComponent = new Map<
+      string,
+      { name: string; id: string; orphans: OrphanDetail[] }
+    >();
 
-    data.hardcodedValues.details.forEach(detail => {
+    data.hardcodedValues.details.forEach((detail) => {
       const compId = detail.parentComponentId;
       if (!orphansByComponent.has(compId)) {
         orphansByComponent.set(compId, {
           name: detail.parentComponentName,
           id: compId,
-          orphans: []
+          orphans: [],
         });
       }
       orphansByComponent.get(compId)!.orphans.push(detail);
     });
 
-    return Array.from(orphansByComponent.values()).map(component => {
+    return Array.from(orphansByComponent.values()).map((component) => {
       const isComponentIgnored = ignoredComponents.has(component.id);
       const opacityStyle = isComponentIgnored ? 0.5 : 1;
       const isCollapsed = collapsedSections.has(`orphan-${component.id}`);
 
       return (
-        <div key={component.id} style={{ marginBottom: '16px', opacity: opacityStyle }}>
+        <div
+          key={component.id}
+          style={{ marginBottom: '16px', opacity: opacityStyle }}
+        >
           <div
             style={{
               padding: '8px 0',
               display: 'flex',
-              justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '12px',
+              gap: '8px',
               cursor: 'pointer',
-              borderBottom: !isCollapsed ? '1px solid var(--figma-color-border)' : 'none'
+              borderBottom: !isCollapsed
+                ? '1px solid var(--figma-color-border)'
+                : 'none',
             }}
             onClick={() => handleToggleCollapse(`orphan-${component.id}`)}
           >
+            <CustomCheckbox
+              checked={isComponentIgnored}
+              onChange={() => handleToggleIgnoreComponent(component.id)}
+            />
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, color: 'var(--figma-color-text)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div
+                style={{
+                  fontWeight: 600,
+                  color: 'var(--figma-color-text)',
+                  fontSize: '11px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
                 {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
                 {component.name} {isComponentIgnored && '(Ignored)'}
               </div>
-              <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginTop: '2px' }}>
-                {component.orphans.length} orphan{component.orphans.length > 1 ? 's' : ''}
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Checkbox
-                value={isComponentIgnored}
-                onValueChange={() => handleToggleIgnoreComponent(component.id)}
-              >
-                <Text style={{ fontSize: '10px' }}>Ignore</Text>
-              </Checkbox>
-              <button
-                onClick={() => handleSelectNode(component.id)}
-                title="View in canvas"
+              <div
                 style={{
-                  padding: '4px 6px',
-                  background: '#18A0FB',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '3px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                  fontSize: '10px',
+                  color: 'var(--figma-color-text-secondary)',
+                  marginTop: '2px',
                 }}
               >
-                {eyeIconSVG}
-              </button>
+                {component.orphans.length} orphan
+                {component.orphans.length > 1 ? 's' : ''}
+              </div>
             </div>
+            <button
+              onClick={() => handleSelectNode(component.id)}
+              title="View in canvas"
+              style={{
+                width: '20px',
+                height: '20px',
+                padding: '0',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                border: 'none',
+                borderRadius: '2px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background =
+                  'var(--figma-color-bg-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              {eyeIconSVG}
+            </button>
           </div>
           {!isCollapsed && (
             <div style={{ paddingTop: '8px' }}>
-              {component.orphans.map(detail => {
-              const isOrphanIgnored = ignoredOrphans.has(detail.nodeId);
-              const orphanOpacity = isOrphanIgnored ? 0.4 : 1;
-              const color = categoryColors[detail.category] || '#666';
+              {component.orphans.map((detail) => {
+                const isOrphanIgnored = ignoredOrphans.has(detail.nodeId);
+                const orphanOpacity = isOrphanIgnored ? 0.4 : 1;
+                const color = categoryColors[detail.category] || '#666';
 
-              return (
-                <div key={detail.nodeId} style={{ paddingLeft: '20px', paddingTop: '8px', paddingBottom: '8px', fontSize: '10px', opacity: orphanOpacity, borderBottom: '1px solid var(--figma-color-border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, color: 'var(--figma-color-text)', marginBottom: '2px' }}>{detail.nodeName}</div>
-                      <div style={{ color: 'var(--figma-color-text-secondary)', fontSize: '9px', marginBottom: '2px' }}>
-                        <span style={{ color: 'var(--figma-color-text-tertiary)' }}>Type:</span> {detail.nodeType}
+                return (
+                  <div
+                    key={detail.nodeId}
+                    style={{
+                      paddingLeft: '20px',
+                      paddingTop: '8px',
+                      paddingBottom: '8px',
+                      fontSize: '10px',
+                      opacity: orphanOpacity,
+                      borderBottom: '1px solid var(--figma-color-border)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      <CustomCheckbox
+                        checked={isOrphanIgnored}
+                        onChange={() =>
+                          handleToggleIgnoreOrphan(detail.nodeId)
+                        }
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div
+                          style={{
+                            fontWeight: 600,
+                            color: 'var(--figma-color-text)',
+                            marginBottom: '2px',
+                          }}
+                        >
+                          {detail.nodeName}
+                        </div>
+                        <div
+                          style={{
+                            color: 'var(--figma-color-text-secondary)',
+                            fontSize: '9px',
+                            marginBottom: '2px',
+                          }}
+                        >
+                          <span
+                            style={{
+                              color: 'var(--figma-color-text-tertiary)',
+                            }}
+                          >
+                            Type:
+                          </span>{' '}
+                          {detail.nodeType}
+                        </div>
+                        <div
+                          style={{
+                            color: 'var(--figma-color-text-secondary)',
+                            fontSize: '9px',
+                          }}
+                        >
+                          <span
+                            style={{
+                              color: 'var(--figma-color-text-tertiary)',
+                            }}
+                          >
+                            Hardcoded:
+                          </span>{' '}
+                          {detail.properties.map((prop, i) => (
+                            <span key={i}>
+                              <span style={{ color, fontWeight: 500 }}>
+                                {prop}
+                              </span>
+                              {i < detail.properties.length - 1 && ', '}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div style={{ color: 'var(--figma-color-text-secondary)', fontSize: '9px' }}>
-                        <span style={{ color: 'var(--figma-color-text-tertiary)' }}>Hardcoded:</span>{' '}
-                        {detail.properties.map((prop, i) => (
-                          <span key={i}>
-                            <span style={{ color, fontWeight: 500 }}>{prop}</span>
-                            {i < detail.properties.length - 1 && ', '}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Checkbox
-                        value={isOrphanIgnored}
-                        onValueChange={() => handleToggleIgnoreOrphan(detail.nodeId)}
-                      >
-                        <Text style={{ fontSize: '9px' }}>Ignore</Text>
-                      </Checkbox>
                       <button
                         onClick={() => handleSelectNode(detail.nodeId)}
                         title="View in canvas"
                         style={{
-                          padding: '4px 6px',
-                          background: '#18A0FB',
-                          color: 'white',
+                          width: '20px',
+                          height: '20px',
+                          padding: '0',
+                          background: 'transparent',
+                          color: 'var(--text-secondary)',
                           border: 'none',
-                          borderRadius: '3px',
+                          borderRadius: '2px',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
+                          transition: 'background 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background =
+                            'var(--figma-color-bg-hover)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
                         }}
                       >
                         {eyeIconSVG}
                       </button>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
           )}
         </div>
       );
@@ -798,65 +1494,256 @@ function Plugin() {
   };
 
   // Render loading state
-  if (loading) {
+  if (loading && hasSelection) {
     return (
-      <CenteredLayout>
-        <Text align="center">
-          <strong>{progress.step}</strong>
-        </Text>
-        <VerticalSpace space="medium" />
-        <div style={{ width: '240px', height: '4px', background: 'var(--figma-color-bg-tertiary)', borderRadius: '2px', overflow: 'hidden' }}>
-          <div style={{ width: progress.percent + '%', height: '100%', background: '#18A0FB', transition: 'width 0.4s ease' }} />
+      <Fragment>
+        <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
+        <div
+          style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
+        >
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px',
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <div
+                style={{
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: 'var(--text-primary)',
+                  marginBottom: '16px',
+                }}
+              >
+                {progress.step}
+              </div>
+            </div>
+            <div
+              style={{
+                width: '240px',
+                height: '2px',
+                background: 'var(--track-bg)',
+                borderRadius: '4px',
+              }}
+            >
+              <div
+                style={{
+                  width: progress.percent + '%',
+                  height: '100%',
+                  background: 'var(--progress-fill)',
+                  borderRadius: '4px',
+                  transition: 'width 0.4s ease',
+                }}
+              />
+            </div>
+            <VerticalSpace space="small" />
+            <div
+              style={{
+                fontSize: '12px',
+                color: 'var(--text-tertiary)',
+                textAlign: 'center',
+              }}
+            >
+              {Math.round(progress.percent)}%
+            </div>
+          </div>
+
+          {/* Fixed button at bottom */}
+          <div
+            style={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: '16px 20px',
+              background: 'var(--figma-color-bg)',
+              zIndex: 100,
+            }}
+          >
+            <button
+              onClick={handleCancelAnalysis}
+              style={{
+                width: '100%',
+                height: '44px',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '500',
+                letterSpacing: '0.05em',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'background 0.2s, border-color 0.2s',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
-        <VerticalSpace space="small" />
-        <Text align="center" style={{ color: 'var(--figma-color-text-secondary, #999)' }}>
-          {Math.round(progress.percent)}%
-        </Text>
-        <VerticalSpace space="extraLarge" />
-        <div style={{ width: '180px' }}>
-          <Button fullWidth secondary onClick={handleCancelAnalysis}>
-            Cancel
-          </Button>
-        </div>
-      </CenteredLayout>
+      </Fragment>
     );
   }
 
   // Render error state
   if (error) {
     return (
-      <CenteredLayout>
-        <div style={{ width: '100%', maxWidth: '320px' }}>
-          <Banner icon="warning" variant="warning">{error}</Banner>
+      <Fragment>
+        <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
+        <div
+          style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
+        >
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px',
+            }}
+          >
+            <div style={{ width: '100%', maxWidth: '320px' }}>
+              <Banner
+                icon="warning"
+                variant="warning"
+              >
+                {error}
+              </Banner>
+            </div>
+          </div>
+
+          {/* Fixed button at bottom */}
+          <div
+            style={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: '16px 20px',
+              background: 'var(--figma-color-bg)',
+              zIndex: 100,
+            }}
+          >
+            <button
+              onClick={handleAnalyze}
+              disabled={!hasSelection}
+              style={{
+                width: '100%',
+                height: '44px',
+                background: hasSelection
+                  ? 'var(--button-bg)'
+                  : 'var(--button-disabled-bg)',
+                color: hasSelection
+                  ? 'var(--button-text)'
+                  : 'var(--button-disabled-text)',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '500',
+                letterSpacing: '0.05em',
+                cursor: hasSelection ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'background 0.2s',
+              }}
+            >
+              Analyze Selection
+            </button>
+          </div>
         </div>
-        <VerticalSpace space="large" />
-        <div style={{ width: '180px' }}>
-          <Button fullWidth onClick={handleAnalyze} disabled={!hasSelection}>
-            Analyze Selection
-          </Button>
-        </div>
-      </CenteredLayout>
+      </Fragment>
     );
   }
 
   // Render empty selection state
   if (!data && !hasSelection) {
     return (
-      <CenteredLayout>
-        <Text align="center">
-          <strong>No Selection</strong>
-        </Text>
-        <VerticalSpace space="small" />
-        <Text align="center" style={{ color: 'var(--figma-color-text-secondary, #999)' }}>
-          Select frames, components, or sections on your canvas to analyze design system coverage
-        </Text>
-        <VerticalSpace space="extraLarge" />
-        <div style={{ width: '180px' }}>
-          <Button fullWidth disabled>
-            Analyze Selection
-          </Button>
+      <Fragment>
+        <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
+        <div
+          style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
+        >
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px',
+            }}
+          >
+            <div style={{ textAlign: 'center', maxWidth: '320px' }}>
+              <div
+                style={{
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: 'var(--text-primary)',
+                  marginBottom: '8px',
+                }}
+              >
+                No Selection
+              </div>
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--text-tertiary)',
+                  lineHeight: '1.5',
+                }}
+              >
+                Select frames, components, or sections on your canvas to analyze
+                design system coverage
+              </div>
+            </div>
+          </div>
+
+          {/* Fixed button at bottom */}
+          <div
+            style={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: '16px 20px',
+              background: 'var(--figma-color-bg)',
+              zIndex: 100,
+            }}
+          >
+            <button
+              disabled
+              style={{
+                width: '100%',
+                height: '44px',
+                background: 'var(--button-disabled-bg)',
+                color: 'var(--button-disabled-text)',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '500',
+                letterSpacing: '0.05em',
+                cursor: 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
+            >
+              Analyze Selection
+            </button>
+          </div>
         </div>
-      </CenteredLayout>
+      </Fragment>
     );
   }
 
@@ -864,660 +1751,2043 @@ function Plugin() {
   if (data && filtered) {
     // Render compact stats header for orphans tab
     const renderCompactStatsHeader = () => (
-      <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        padding: '16px',
-        borderRadius: '8px',
-        marginBottom: '16px',
-        boxShadow: '0 2px 8px rgba(102, 126, 234, 0.2)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+      <div
+        style={{
+          background: 'var(--figma-color-bg)',
+          padding: '16px',
+          borderRadius: '4px',
+          marginBottom: '16px',
+          border: '1px solid var(--figma-color-border)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '12px',
+          }}
+        >
           {/* Overall Score */}
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#fff', lineHeight: '1' }}>
+            <div
+              style={{
+                fontSize: '28px',
+                fontWeight: '700',
+                color: 'var(--figma-color-text)',
+                lineHeight: '1',
+              }}
+            >
               {formatPercent(filtered.overallScore)}
             </div>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.85)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div
+              style={{
+                fontSize: '9px',
+                color: 'var(--figma-color-text-secondary)',
+                marginTop: '4px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}
+            >
               Overall
             </div>
           </div>
 
           {/* Component Coverage */}
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '20px', fontWeight: '700', color: '#fff', lineHeight: '1' }}>
+            <div
+              style={{
+                fontSize: '20px',
+                fontWeight: '700',
+                color: 'var(--figma-color-text)',
+                lineHeight: '1',
+              }}
+            >
               {formatPercent(filtered.componentCoverage)}
             </div>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.85)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div
+              style={{
+                fontSize: '9px',
+                color: 'var(--figma-color-text-secondary)',
+                marginTop: '4px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}
+            >
               Components
             </div>
           </div>
 
           {/* Design Token Adoption */}
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '20px', fontWeight: '700', color: '#fff', lineHeight: '1' }}>
+            <div
+              style={{
+                fontSize: '20px',
+                fontWeight: '700',
+                color: 'var(--figma-color-text)',
+                lineHeight: '1',
+              }}
+            >
               {formatPercent(filtered.variableCoverage)}
             </div>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.85)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div
+              style={{
+                fontSize: '9px',
+                color: 'var(--figma-color-text-secondary)',
+                marginTop: '4px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}
+            >
               Tokens
             </div>
           </div>
 
           {/* Orphan Rate */}
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '20px', fontWeight: '700', color: filtered.orphanRate < 20 ? '#2ecc71' : filtered.orphanRate < 40 ? '#f39c12' : '#e74c3c', lineHeight: '1' }}>
+            <div
+              style={{
+                fontSize: '20px',
+                fontWeight: '700',
+                color: 'var(--figma-color-text)',
+                lineHeight: '1',
+              }}
+            >
               {formatPercent(filtered.orphanRate)}
             </div>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.85)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div
+              style={{
+                fontSize: '9px',
+                color: 'var(--figma-color-text-secondary)',
+                marginTop: '4px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}
+            >
               Orphan Rate
             </div>
           </div>
         </div>
       </div>
     );
-    const overallFormula = `(Vars ${Math.round(filtered.variableCoverage)}% × 0.55) + (Comps ${Math.round(data.componentCoverage)}% × 0.45) = ${Math.round(filtered.overallScore)}%`;
+    const overallFormula = `(Vars ${Math.round(
+      filtered.variableCoverage
+    )}% × 0.55) + (Comps ${Math.round(
+      data.componentCoverage
+    )}% × 0.45) = ${Math.round(filtered.overallScore)}%`;
     const benchmark = getBenchmark(filtered.overallScore);
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        {/* Scrollable content */}
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-          <Container space="medium">
-            <VerticalSpace space="medium" />
-        {/* Metrics Cards - Compact with Info Icons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-
-          {/* Overall Score Card */}
-          <div style={{
-            background: 'linear-gradient(135deg, #c900b5 0%, #7b64ef 50%, #008cff 100%)',
-            padding: '16px 20px',
-            borderRadius: '12px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '16px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)'
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.95)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>
-                Overall Adoption
-              </div>
-              <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.75)', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                Foundation-First weighted score
-                <Tooltip
-                  dark={true}
-                  content={`Foundation-First Formula (55/45 weighting):\n\nToken Adoption: ${formatPercent(filtered.variableCoverage)} × 0.55 = ${formatPercent(filtered.variableCoverage * 0.55)}\nComponent Coverage: ${formatPercent(filtered.componentCoverage)} × 0.45 = ${formatPercent(filtered.componentCoverage * 0.45)}\n\nOverall Adoption: ${formatPercent(filtered.variableCoverage * 0.55)} + ${formatPercent(filtered.componentCoverage * 0.45)} = ${formatPercent(filtered.overallScore)}\n\nWhy 55/45? Research from IBM, Atlassian, and Pinterest shows that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.`}
-                />
-              </div>
-            </div>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#fff', lineHeight: '1', letterSpacing: '-1.5px', fontFeatureSettings: '"tnum"' }}>
-              {formatPercent(filtered.overallScore)}
-            </div>
-          </div>
-
-          {/* Component Coverage Card */}
-          <div style={{
-            background: 'var(--figma-color-bg-secondary)',
-            padding: '16px 20px',
-            borderRadius: '12px',
-            border: '1px solid var(--figma-color-border)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '16px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)'
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '11px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>
-                Component Coverage
-              </div>
-              <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                {filtered.libraryInstances} of {filtered.totalInstances} components
-                <Tooltip
-                  content={`DS Atomic Components: ${filtered.libraryInstances}\nStandalone Local: ${filtered.totalInstances - filtered.libraryInstances}\nTotal: ${filtered.totalInstances}\n\nFormula: DS Atomic ÷ (DS Atomic + Standalone Local)\nCalculation: ${filtered.libraryInstances} ÷ ${filtered.totalInstances} = ${formatPercent(filtered.componentCoverage)}\n\nNote: Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`}
-                />
-              </div>
-            </div>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--figma-color-text)', lineHeight: '1', letterSpacing: '-1.5px', fontFeatureSettings: '"tnum"' }}>
-              {formatPercent(filtered.componentCoverage)}
-            </div>
-          </div>
-
-          {/* Design Token Adoption Card */}
-          <div style={{
-            background: 'var(--figma-color-bg-secondary)',
-            padding: '16px 20px',
-            borderRadius: '12px',
-            border: '1px solid var(--figma-color-border)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '16px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)'
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '11px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>
-                Design Token Adoption
-              </div>
-              <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                {filtered.tokenBoundCount} of {filtered.totalOpportunities} properties
-                <Tooltip
-                  content={`Token-Bound Properties: ${filtered.tokenBoundCount}\nTotal Properties: ${filtered.totalOpportunities}\nCalculation: ${filtered.tokenBoundCount} ÷ ${filtered.totalOpportunities} = ${formatPercent(filtered.variableCoverage)}`}
-                />
-              </div>
-            </div>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--figma-color-text)', lineHeight: '1', letterSpacing: '-1.5px', fontFeatureSettings: '"tnum"' }}>
-              {formatPercent(filtered.variableCoverage)}
-            </div>
-          </div>
-        </div>
-
-        {/* Custom Tabs - Exact match to create-figma-plugin styling */}
-        <div style={{
-          position: 'relative',
-          zIndex: 1,
-          display: 'flex',
-          borderBottom: '1px solid var(--figma-color-border, #e6e6e6)',
-          marginBottom: '16px',
-          overflowX: 'auto'
-        }}>
-          {(['overview', 'components', 'tokens'] as const).map((tab, index) => {
-            const isActive = activeTab === tab;
-            const labels = {
-              overview: 'Overview',
-              components: 'Components',
-              tokens: `Design Tokens`
-            };
-
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+      <Fragment>
+        <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
+        <div
+          style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
+        >
+          {/* Scrollable content */}
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              paddingBottom: '76px',
+            }}
+          >
+            <Container space="medium">
+              <VerticalSpace space="medium" />
+              {/* Metrics Cards - Ultra Minimal */}
+              <div
                 style={{
-                  padding: '8px 4px',
-                  paddingLeft: index === 0 ? '8px' : '4px',
-                  paddingRight: index === 3 ? '8px' : '4px',
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '11px',
-                  fontWeight: 'inherit',
-                  color: 'var(--figma-color-text-secondary, #999)',
-                  fontFamily: 'inherit',
-                  outline: 'none',
                   display: 'flex',
-                  alignItems: 'center'
-                }}
-                onMouseOver={(e) => {
-                  const span = e.currentTarget.querySelector('span');
-                  if (span && !isActive) {
-                    (span as HTMLElement).style.backgroundColor = 'var(--figma-color-bg-secondary, #f5f5f5)';
-                  }
-                }}
-                onMouseOut={(e) => {
-                  const span = e.currentTarget.querySelector('span');
-                  if (span && !isActive) {
-                    (span as HTMLElement).style.backgroundColor = 'transparent';
-                  }
+                  flexDirection: 'column',
+                  gap: '0',
+                  marginBottom: '32px',
                 }}
               >
-                <span style={{
-                  height: '24px',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  backgroundColor: isActive ? 'var(--figma-color-bg-secondary, #f5f5f5)' : 'transparent',
-                  color: isActive ? 'var(--figma-color-text, #000)' : 'inherit',
-                  fontWeight: isActive ? '600' : 'inherit',
-                  display: 'flex',
-                  alignItems: 'center',
-                  transition: 'background-color 0.1s',
-                  whiteSpace: 'nowrap'
-                }}>
-                  {labels[tab]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === 'overview' && (
-          <div>
-            <Text style={{ fontSize: '11px', color: 'var(--figma-color-text-secondary, #999)', marginBottom: '16px' }}>
-              Quick summary of analysis results
-            </Text>
-
-            {/* Mini summary cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div style={{ background: 'var(--figma-color-bg-secondary)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--figma-color-border)', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)' }}>
-                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
-                  Components
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--figma-color-text)', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
-                  {filtered.totalInstances}
-                </div>
-                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', marginTop: '4px' }}>
-                  analyzed
-                </div>
-              </div>
-
-              <div style={{ background: 'var(--figma-color-bg-secondary)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--figma-color-border)', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)' }}>
-                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
-                  Design Tokens
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--figma-color-text)', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
-                  {filtered.totalOpportunities}
-                </div>
-                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', marginTop: '4px' }}>
-                  properties
-                </div>
-              </div>
-
-              <div style={{ background: 'var(--figma-color-bg-secondary)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--figma-color-border)', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)' }}>
-                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
-                  Libraries
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--figma-color-text)', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
-                  {filtered.libraryBreakdown.length}
-                </div>
-                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', marginTop: '4px' }}>
-                  sources
-                </div>
-              </div>
-
-              <div style={{ background: 'var(--figma-color-bg-secondary)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--figma-color-border)', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)' }}>
-                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
-                  Orphans
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: filtered.orphanRate < 20 ? '#16a34a' : filtered.orphanRate < 40 ? '#f59e0b' : '#dc2626', letterSpacing: '-0.5px', fontFeatureSettings: '"tnum"' }}>
-                  {filtered.orphanCount}
-                </div>
-                <div style={{ fontSize: '9px', color: 'var(--figma-color-text-tertiary)', marginTop: '4px' }}>
-                  hardcoded
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'components' && (
-          <div>
-            <Text style={{ fontSize: '13px', fontWeight: '600', letterSpacing: '-0.2px', marginBottom: '16px' }}>Component Sources Overview</Text>
-
-            {/* Minimal bar charts */}
-            {filtered.libraryBreakdown && filtered.libraryBreakdown.length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                {filtered.libraryBreakdown.map((lib, index) => {
-                  // Assign colors from palette based on index
-                  const colors = ['#c900b5', '#7b64ef', '#008cff', '#00a5f4', '#00b6d2', '#14c1b0'];
-                  const startColor = colors[index % colors.length];
-                  const endColor = colors[(index + 1) % colors.length];
-
-                  return (
-                    <div key={lib.name} style={{ marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <Text style={{ fontSize: '11px', fontWeight: '500' }}>{lib.name}</Text>
-                        <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>
-                          {lib.count} ({formatPercent(lib.percentage)})
-                        </Text>
+                {/* Overall Score Card */}
+                <div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--text-primary)',
+                          fontWeight: '500',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Overall Adoption
                       </div>
-                      <div style={{ width: '100%', height: '4px', background: 'var(--figma-color-bg-tertiary)', borderRadius: '20px', overflow: 'hidden' }}>
-                        <div style={{
-                          width: lib.percentage + '%',
-                          height: '100%',
-                          background: `linear-gradient(90deg, ${startColor} 0%, ${startColor}dd 50%, ${endColor}aa 100%)`,
-                          borderRadius: '20px',
-                          transition: 'width 0.3s ease'
-                        }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            <Divider />
-            <VerticalSpace space="medium" />
-
-            {renderComponentDetails()}
-          </div>
-        )}
-
-        {activeTab === 'tokens' && (
-          <div>
-            {/* Hardcoded Values Breakdown */}
-            <Text style={{ fontSize: '13px', fontWeight: '600', letterSpacing: '-0.2px', marginBottom: '16px' }}>Hardcoded by Type</Text>
-            {data.hardcodedValues && data.hardcodedValues.totalHardcoded > 0 ? (
-              <Fragment>
-                {[
-                  { label: 'Colors', count: data.hardcodedValues.colors },
-                  { label: 'Typography', count: data.hardcodedValues.typography },
-                  { label: 'Spacing', count: data.hardcodedValues.spacing },
-                  { label: 'Radius', count: data.hardcodedValues.radius }
-                ].filter(item => item.count > 0).map((item, index) => {
-                  const percentage = data.hardcodedValues.totalHardcoded > 0 ? (item.count / data.hardcodedValues.totalHardcoded) * 100 : 0;
-                  const colors = ['#c900b5', '#7b64ef', '#008cff', '#00a5f4', '#00b6d2', '#14c1b0'];
-                  const startColor = colors[index % colors.length];
-                  const endColor = colors[(index + 1) % colors.length];
-
-                  return (
-                    <div key={item.label} style={{ marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <Text style={{ fontSize: '11px', fontWeight: '500' }}>{item.label}</Text>
-                        <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>
-                          {item.count} ({formatPercent(percentage)})
-                        </Text>
-                      </div>
-                      <div style={{ width: '100%', height: '4px', background: 'var(--figma-color-bg-tertiary)', borderRadius: '20px', overflow: 'hidden' }}>
-                        <div style={{
-                          width: percentage + '%',
-                          height: '100%',
-                          background: `linear-gradient(90deg, ${startColor} 0%, ${startColor}dd 50%, ${endColor}aa 100%)`,
-                          borderRadius: '20px',
-                          transition: 'width 0.3s ease'
-                        }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </Fragment>
-            ) : (
-              <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px', marginBottom: '16px' }}>No hardcoded values detected</Text>
-            )}
-
-            <VerticalSpace space="medium" />
-            <Divider />
-            <VerticalSpace space="medium" />
-
-            {/* Token Sources with Orphan Rate Badge */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <Text style={{ fontSize: '13px', fontWeight: '600', letterSpacing: '-0.2px' }}>Token Sources</Text>
-              {/* Orphan Rate Badge */}
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                background: filtered.orphanRate < 20 ? '#f0fdf4' : filtered.orphanRate < 40 ? '#fef3c7' : '#fef2f2',
-                border: `1px solid ${filtered.orphanRate < 20 ? '#bbf7d0' : filtered.orphanRate < 40 ? '#fde68a' : '#fecaca'}`
-              }}>
-                <Text style={{
-                  fontSize: '10px',
-                  fontWeight: '600',
-                  color: 'var(--figma-color-text-tertiary)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
-                }}>Orphan Rate</Text>
-                <Text style={{
-                  fontSize: '11px',
-                  fontWeight: '700',
-                  color: filtered.orphanRate < 20 ? '#16a34a' : filtered.orphanRate < 40 ? '#f59e0b' : '#dc2626'
-                }}>{formatPercent(filtered.orphanRate)}</Text>
-              </div>
-            </div>
-            {data.variableBreakdown && data.variableBreakdown.length > 0 ? (
-              data.variableBreakdown.map((lib, index) => {
-                // Assign colors from palette based on index
-                const colors = ['#c900b5', '#7b64ef', '#008cff', '#00a5f4', '#00b6d2', '#14c1b0'];
-                const startColor = colors[index % colors.length];
-                const endColor = colors[(index + 1) % colors.length];
-
-                return (
-                  <div key={lib.name} style={{ marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                      <Text style={{ fontSize: '11px', fontWeight: '500' }}>{lib.name}</Text>
-                      <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>
-                        {lib.count} ({formatPercent(lib.percentage)})
-                      </Text>
-                    </div>
-                    <div style={{ width: '100%', height: '4px', background: 'var(--figma-color-bg-tertiary)', borderRadius: '20px', overflow: 'hidden' }}>
-                      <div style={{
-                        width: lib.percentage + '%',
-                        height: '100%',
-                        background: `linear-gradient(90deg, ${startColor} 0%, ${startColor}dd 50%, ${endColor}aa 100%)`,
-                        borderRadius: '20px',
-                        transition: 'width 0.3s ease'
-                      }} />
+                      <Tooltip
+                        position="bottom"
+                        content={`Foundation-First Formula (55/45 weighting):\n\nToken Adoption: ${formatPercent(
+                          filtered.variableCoverage
+                        )} × 0.55 = ${formatPercent(
+                          filtered.variableCoverage * 0.55
+                        )}\nComponent Coverage: ${formatPercent(
+                          filtered.componentCoverage
+                        )} × 0.45 = ${formatPercent(
+                          filtered.componentCoverage * 0.45
+                        )}\n\nOverall Adoption: ${formatPercent(
+                          filtered.variableCoverage * 0.55
+                        )} + ${formatPercent(
+                          filtered.componentCoverage * 0.45
+                        )} = ${formatPercent(
+                          filtered.overallScore
+                        )}\n\nWhy 55/45? Research from IBM, Atlassian, and Pinterest shows that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.`}
+                      />
                     </div>
                   </div>
-                );
-              })
-            ) : (
-              <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>No design tokens found</Text>
-            )}
+                  <div
+                    style={{
+                      background: 'var(--card-bg)',
+                      padding: '20px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '24px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '16px',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {/* Tokens Row */}
+                      <div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '6px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '12px',
+                                color: 'var(--text-secondary)',
+                                fontWeight: '500',
+                              }}
+                            >
+                              Tokens
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              fontFeatureSettings: '"tnum"',
+                              color: 'var(--text-tertiary)',
+                            }}
+                          >
+                            {formatPercent(filtered.variableCoverage)}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            height: '2px',
+                            width: '100%',
+                            background: 'var(--track-bg)',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: '100%',
+                              width: `${filtered.variableCoverage}%`,
+                              background: 'var(--progress-fill)',
+                              borderRadius: '4px',
+                              transition: 'width 0.3s',
+                            }}
+                          />
+                        </div>
+                      </div>
 
-            <VerticalSpace space="medium" />
-            <Divider />
-            <VerticalSpace space="medium" />
+                      {/* Components Row */}
+                      <div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '6px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '12px',
+                                color: 'var(--text-secondary)',
+                                fontWeight: '500',
+                              }}
+                            >
+                              Components
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              fontFeatureSettings: '"tnum"',
+                              color: 'var(--text-tertiary)',
+                            }}
+                          >
+                            {formatPercent(filtered.componentCoverage)}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            height: '2px',
+                            width: '100%',
+                            background: 'var(--track-bg)',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: '100%',
+                              width: `${filtered.componentCoverage}%`,
+                              background: 'var(--progress-fill)',
+                              borderRadius: '4px',
+                              transition: 'width 0.3s',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
 
-            {/* Orphan Details */}
-            <Text style={{ fontSize: '13px', fontWeight: '600', letterSpacing: '-0.2px', marginBottom: '16px' }}>Orphan Details by Component</Text>
-            {data.hardcodedValues.details && data.hardcodedValues.details.length > 0 ? (
-              <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-                {renderOrphanDetails()}
-              </div>
-            ) : (
-              <div style={{
-                padding: '32px',
-                textAlign: 'center',
-                background: 'var(--figma-color-bg-secondary)',
-                borderRadius: '8px',
-                border: '2px dashed var(--figma-color-border)'
-              }}>
-                <div style={{ fontSize: '40px', marginBottom: '12px' }}>🎉</div>
-                <Text style={{ fontSize: '13px', fontWeight: '600', color: 'var(--figma-color-text)', marginBottom: '4px' }}>
-                  No Orphans Found
-                </Text>
-                <Text style={{ fontSize: '11px', color: 'var(--figma-color-text-tertiary)' }}>
-                  All properties are using design tokens
-                </Text>
-              </div>
-            )}
-          </div>
-        )}
+                    <div style={{ flexShrink: 0 }}>
+                      <DonutChart
+                        segments={[
+                          {
+                            value: filtered.overallScore,
+                            color: 'var(--progress-fill)',
+                          },
+                          {
+                            value: 100 - filtered.overallScore,
+                            color: 'rgba(0, 0, 0, 0.06)',
+                          },
+                        ]}
+                        centerValue={formatPercent(filtered.overallScore)}
+                        onClick={() =>
+                          setModalContent({
+                            title: 'Overall Adoption Score',
+                            content: `FOUNDATION FIRST FORMULA
+(55/45 weighting)
 
-        {/* Remove old verbose cards - they're replaced by the grid above */}
-        <div style={{ display: 'none' }}>
-          {/* Component Coverage OLD */}
-          <div style={{
-            background: '#fff',
-            padding: '20px',
-            borderRadius: '10px',
-            border: '2px solid var(--figma-color-border)',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-          }}>
-            {/* Header with score */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                width: '48px',
-                height: '48px',
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                fontWeight: '700',
-                color: '#fff',
-                flexShrink: 0
-              }}>
-                {formatPercent(data.componentCoverage)}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--figma-color-text)', marginBottom: '2px' }}>Component Coverage</div>
-                <div style={{ fontSize: '11px', color: 'var(--figma-color-text-tertiary)' }}>
-                  How many components use the design system
+TOKEN ADOPTION
+${formatPercent(filtered.variableCoverage)} × 0.55 = ${formatPercent(
+                              filtered.variableCoverage * 0.55
+                            )}
+
+COMPONENT COVERAGE
+${formatPercent(filtered.componentCoverage)} × 0.45 = ${formatPercent(
+                              filtered.componentCoverage * 0.45
+                            )}
+
+OVERALL ADOPTION
+${formatPercent(filtered.variableCoverage * 0.55)} + ${formatPercent(
+                              filtered.componentCoverage * 0.45
+                            )} = ${formatPercent(filtered.overallScore)}
+
+WHY 55/45
+Research from IBM, Atlassian, and Pinterest shows that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.`,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Component Coverage Card */}
+                <div style={{ marginTop: '32px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--text-primary)',
+                          fontWeight: '500',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Component Coverage
+                      </div>
+                      <Tooltip
+                        position="bottom"
+                        content={`Formula: Library Components ÷ Total Components\n\nLibrary Components: ${
+                          filtered.libraryInstances
+                        }\nLocal Components: ${
+                          filtered.totalInstances - filtered.libraryInstances
+                        }\nTotal: ${filtered.totalInstances}\n\nCalculation: ${
+                          filtered.libraryInstances
+                        } ÷ ${filtered.totalInstances} = ${formatPercent(
+                          filtered.componentCoverage
+                        )}\n\nNote: Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`}
+                      />
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        color: 'var(--text-tertiary)',
+                        fontWeight: '500',
+                        fontFeatureSettings: '"tnum"',
+                      }}
+                    >
+                      {filtered.libraryInstances} / {filtered.totalInstances}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      background: 'var(--card-bg)',
+                      padding: '20px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '24px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '16px',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {/* DS Components Row */}
+                      <div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '6px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '12px',
+                                color: 'var(--text-secondary)',
+                                fontWeight: '500',
+                              }}
+                            >
+                              DS Components
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              fontFeatureSettings: '"tnum"',
+                              color: 'var(--text-tertiary)',
+                            }}
+                          >
+                            {filtered.libraryInstances}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            height: '2px',
+                            width: '100%',
+                            background: 'var(--track-bg)',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: '100%',
+                              width: `${
+                                filtered.totalInstances > 0
+                                  ? (filtered.libraryInstances /
+                                      filtered.totalInstances) *
+                                    100
+                                  : 0
+                              }%`,
+                              background: 'var(--progress-fill)',
+                              borderRadius: '4px',
+                              transition: 'width 0.3s',
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Local Components Row */}
+                      <div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '6px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '12px',
+                                color: 'var(--text-secondary)',
+                                fontWeight: '500',
+                              }}
+                            >
+                              Local Components
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              fontFeatureSettings: '"tnum"',
+                              color: 'var(--text-tertiary)',
+                            }}
+                          >
+                            {filtered.totalInstances -
+                              filtered.libraryInstances}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            height: '2px',
+                            width: '100%',
+                            background: 'var(--track-bg)',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: '100%',
+                              width: `${
+                                filtered.totalInstances > 0
+                                  ? ((filtered.totalInstances -
+                                      filtered.libraryInstances) /
+                                      filtered.totalInstances) *
+                                    100
+                                  : 0
+                              }%`,
+                              background: 'var(--progress-fill)',
+                              borderRadius: '4px',
+                              transition: 'width 0.3s',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ flexShrink: 0 }}>
+                      <DonutChart
+                        segments={[
+                          {
+                            value: filtered.libraryInstances,
+                            color: 'var(--progress-fill)',
+                          },
+                          {
+                            value:
+                              filtered.totalInstances -
+                              filtered.libraryInstances,
+                            color: 'rgba(0, 0, 0, 0.06)',
+                          },
+                        ]}
+                        centerValue={formatPercent(filtered.componentCoverage)}
+                        onClick={() =>
+                          setModalContent({
+                            title: 'Component Coverage',
+                            content: `FORMULA
+Library Components ÷ Total Components
+
+LIBRARY COMPONENTS
+${filtered.libraryInstances}
+
+LOCAL COMPONENTS
+${filtered.totalInstances - filtered.libraryInstances}
+
+TOTAL
+${filtered.totalInstances}
+
+CALCULATION
+${filtered.libraryInstances} ÷ ${filtered.totalInstances} = ${formatPercent(
+                              filtered.componentCoverage
+                            )}
+
+NOTE
+Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Design Token Adoption Card */}
+                <div style={{ marginTop: '32px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--text-primary)',
+                          fontWeight: '500',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Design Token Adoption
+                      </div>
+                      <Tooltip
+                        position="bottom"
+                        content={`Formula: Token-Bound Properties ÷ Total Properties\n\nToken-Bound Properties: ${
+                          filtered.tokenBoundCount
+                        }\nHardcoded Properties: ${
+                          filtered.totalOpportunities - filtered.tokenBoundCount
+                        }\nTotal Properties: ${
+                          filtered.totalOpportunities
+                        }\n\nCalculation: ${filtered.tokenBoundCount} ÷ ${
+                          filtered.totalOpportunities
+                        } = ${formatPercent(
+                          filtered.variableCoverage
+                        )}\n\nNote: This measures token adoption at the property level, not component level. Each component has multiple properties (fills, strokes, typography, radius, borders) and we count how many individual properties use design tokens.`}
+                      />
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        color: 'var(--text-tertiary)',
+                        fontWeight: '500',
+                        fontFeatureSettings: '"tnum"',
+                      }}
+                    >
+                      {filtered.tokenBoundCount} / {filtered.totalOpportunities}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      background: 'var(--card-bg)',
+                      padding: '20px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '24px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '16px',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {/* Tokens Row */}
+                      <div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '6px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '12px',
+                                color: 'var(--text-secondary)',
+                                fontWeight: '500',
+                              }}
+                            >
+                              Tokens
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              fontFeatureSettings: '"tnum"',
+                              color: 'var(--text-tertiary)',
+                            }}
+                          >
+                            {filtered.tokenBoundCount}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            height: '2px',
+                            width: '100%',
+                            background: 'var(--track-bg)',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: '100%',
+                              width: `${
+                                filtered.totalOpportunities > 0
+                                  ? (filtered.tokenBoundCount /
+                                      filtered.totalOpportunities) *
+                                    100
+                                  : 0
+                              }%`,
+                              background: 'var(--progress-fill)',
+                              borderRadius: '4px',
+                              transition: 'width 0.3s',
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Hardcoded Row */}
+                      <div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '6px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '12px',
+                                color: 'var(--text-secondary)',
+                                fontWeight: '500',
+                              }}
+                            >
+                              Hardcoded
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              fontFeatureSettings: '"tnum"',
+                              color: 'var(--text-tertiary)',
+                            }}
+                          >
+                            {filtered.totalOpportunities -
+                              filtered.tokenBoundCount}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            height: '2px',
+                            width: '100%',
+                            background: 'var(--track-bg)',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: '100%',
+                              width: `${
+                                filtered.totalOpportunities > 0
+                                  ? ((filtered.totalOpportunities -
+                                      filtered.tokenBoundCount) /
+                                      filtered.totalOpportunities) *
+                                    100
+                                  : 0
+                              }%`,
+                              background: 'var(--progress-fill)',
+                              borderRadius: '4px',
+                              transition: 'width 0.3s',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ flexShrink: 0 }}>
+                      <DonutChart
+                        segments={[
+                          {
+                            value: filtered.tokenBoundCount,
+                            color: 'var(--progress-fill)',
+                          },
+                          {
+                            value:
+                              filtered.totalOpportunities -
+                              filtered.tokenBoundCount,
+                            color: 'rgba(0, 0, 0, 0.06)',
+                          },
+                        ]}
+                        centerValue={formatPercent(filtered.variableCoverage)}
+                        onClick={() =>
+                          setModalContent({
+                            title: 'Design Token Adoption',
+                            content: `FORMULA
+Token-Bound Properties ÷ Total Properties
+
+TOKEN BOUND PROPERTIES
+${filtered.tokenBoundCount}
+
+HARDCODED PROPERTIES
+${filtered.totalOpportunities - filtered.tokenBoundCount}
+
+TOTAL PROPERTIES
+${filtered.totalOpportunities}
+
+CALCULATION
+${filtered.tokenBoundCount} ÷ ${filtered.totalOpportunities} = ${formatPercent(
+                              filtered.variableCoverage
+                            )}
+
+NOTE
+This measures token adoption at the property level, not component level. Each component has multiple properties (fills, strokes, typography, radius, borders) and we count how many individual properties use design tokens.`,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Calculation breakdown */}
-            <div style={{
-              background: 'var(--figma-color-bg-secondary)',
-              padding: '12px',
-              borderRadius: '8px',
-              border: '1px solid var(--figma-color-border)'
-            }}>
-              <div style={{ fontSize: '10px', fontWeight: '600', color: '#667eea', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Calculation
+              {/* Figma-style Tabs */}
+              <div
+                style={{
+                  background: 'var(--tab-container-bg, #242424)',
+                  padding: '0',
+                  borderRadius: '4px',
+                  marginTop: '32px',
+                  display: 'flex',
+                  gap: '0',
+                  marginBottom: '24px',
+                }}
+              >
+                {(['overview', 'components', 'tokens'] as const).map((tab) => {
+                  const isActive = activeTab === tab;
+                  const labels = {
+                    overview: 'OVERVIEW',
+                    components: 'COMPONENTS',
+                    tokens: 'DESIGN TOKENS',
+                  };
+
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      style={{
+                        flex: 1,
+                        padding: '10px 16px',
+                        background: isActive
+                          ? 'var(--button-bg)'
+                          : 'transparent',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '10px',
+                        fontWeight: '400',
+                        letterSpacing: '0.4px',
+                        color: isActive
+                          ? 'var(--button-text)'
+                          : 'var(--tab-inactive-text)',
+                        fontFamily: 'inherit',
+                        outline: 'none',
+                        transition: 'all 0.15s',
+                        boxShadow: 'none',
+                        opacity: 1,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.opacity = '0.7';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                      }}
+                    >
+                      {labels[tab]}
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* Step 1: Raw numbers */}
-              <div style={{ marginBottom: '8px' }}>
-                <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Library Instances</div>
-                <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--figma-color-text)', fontFamily: 'monospace' }}>
-                  {data.stats.libraryInstances}
+              {/* Tab Content */}
+              {activeTab === 'overview' && (
+                <div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        color: 'var(--text-primary)',
+                        textTransform: 'uppercase',
+                        margin: 0,
+                        lineHeight: 'normal',
+                      }}
+                    >
+                      Summary
+                    </p>
+                  </div>
+
+                  {/* Mini summary cards */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gridTemplateRows: '1fr 1fr',
+                      gap: '12px',
+                      height: '142px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        gridArea: '1 / 1',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--text-tertiary)',
+                          fontWeight: '400',
+                          lineHeight: 'normal',
+                          margin: 0,
+                        }}
+                      >
+                        Components
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '26px',
+                          fontWeight: '700',
+                          color: 'var(--text-primary)',
+                          lineHeight: 'normal',
+                          margin: 0,
+                          fontFeatureSettings: '"tnum"',
+                        }}
+                      >
+                        {filtered.totalInstances}
+                      </p>
+                    </div>
+
+                    <div
+                      style={{
+                        gridArea: '1 / 2',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--text-tertiary)',
+                          fontWeight: '400',
+                          lineHeight: 'normal',
+                          margin: 0,
+                        }}
+                      >
+                        Design Tokens
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '26px',
+                          fontWeight: '700',
+                          color: 'var(--text-primary)',
+                          lineHeight: 'normal',
+                          margin: 0,
+                          fontFeatureSettings: '"tnum"',
+                        }}
+                      >
+                        {filtered.totalOpportunities}
+                      </p>
+                    </div>
+
+                    <div
+                      style={{
+                        gridArea: '2 / 1',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--text-tertiary)',
+                          fontWeight: '400',
+                          lineHeight: 'normal',
+                          margin: 0,
+                        }}
+                      >
+                        Libraries
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '26px',
+                          fontWeight: '700',
+                          color: 'var(--text-primary)',
+                          lineHeight: 'normal',
+                          margin: 0,
+                          fontFeatureSettings: '"tnum"',
+                        }}
+                      >
+                        {filtered.libraryBreakdown.length}
+                      </p>
+                    </div>
+
+                    <div
+                      style={{
+                        gridArea: '2 / 2',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--text-tertiary)',
+                          fontWeight: '400',
+                          lineHeight: 'normal',
+                          margin: 0,
+                        }}
+                      >
+                        Orphans
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '26px',
+                          fontWeight: '700',
+                          color: 'var(--text-primary)',
+                          lineHeight: 'normal',
+                          margin: 0,
+                          fontFeatureSettings: '"tnum"',
+                        }}
+                      >
+                        {filtered.orphanCount}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div style={{ marginBottom: '8px' }}>
-                <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Total Components (Library + Local)</div>
-                <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--figma-color-text)', fontFamily: 'monospace' }}>
-                  {data.stats.libraryInstances + data.stats.localInstances}
+              {activeTab === 'components' && (
+                <div>
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--text-primary)',
+                      fontWeight: '500',
+                      textTransform: 'uppercase',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    Component Sources Overview
+                  </div>
+
+                  {/* Minimal bar charts */}
+                  {filtered.libraryBreakdown &&
+                    filtered.libraryBreakdown.length > 0 && (
+                      <div style={{ marginBottom: '20px' }}>
+                        {filtered.libraryBreakdown.map((lib, index) => {
+                          return (
+                            <div
+                              key={lib.name}
+                              style={{ marginBottom: '12px' }}
+                            >
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  marginBottom: '6px',
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontSize: '12px',
+                                    fontWeight: '500',
+                                    color: 'var(--text-secondary)',
+                                  }}
+                                >
+                                  {lib.name}
+                                </span>
+                                <span
+                                  style={{
+                                    fontSize: '12px',
+                                    fontWeight: '500',
+                                    fontFeatureSettings: '"tnum"',
+                                    color: 'var(--text-tertiary)',
+                                  }}
+                                >
+                                  {lib.count}
+                                </span>
+                              </div>
+                              <div
+                                style={{
+                                  height: '2px',
+                                  width: '100%',
+                                  background: 'var(--track-bg)',
+                                  borderRadius: '4px',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    height: '100%',
+                                    width: lib.percentage + '%',
+                                    background: 'var(--progress-fill)',
+                                    borderRadius: '4px',
+                                    transition: 'width 0.3s',
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                  <VerticalSpace space="medium" />
+
+                  {/* Component Details Header */}
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--text-primary)',
+                      fontWeight: '500',
+                      textTransform: 'uppercase',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    Component Details
+                  </div>
+
+                  {renderComponentDetails()}
                 </div>
-              </div>
+              )}
 
-              <div style={{ height: '1px', background: '#d0d0d0', margin: '8px 0' }} />
+              {activeTab === 'tokens' && (
+                <div>
+                  {/* Hardcoded Values Breakdown */}
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--text-primary)',
+                      fontWeight: '500',
+                      textTransform: 'uppercase',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    Hardcoded by Type
+                  </div>
+                  {data.hardcodedValues &&
+                  data.hardcodedValues.totalHardcoded > 0 ? (
+                    <Fragment>
+                      {[
+                        { label: 'Colors', count: data.hardcodedValues.colors },
+                        {
+                          label: 'Typography',
+                          count: data.hardcodedValues.typography,
+                        },
+                        {
+                          label: 'Spacing',
+                          count: data.hardcodedValues.spacing,
+                        },
+                        { label: 'Radius', count: data.hardcodedValues.radius },
+                      ]
+                        .filter((item) => item.count > 0)
+                        .map((item, index) => {
+                          const percentage =
+                            data.hardcodedValues.totalHardcoded > 0
+                              ? (item.count /
+                                  data.hardcodedValues.totalHardcoded) *
+                                100
+                              : 0;
 
-              {/* Step 2: Percentage */}
-              <div style={{ marginBottom: '8px' }}>
-                <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Coverage Rate</div>
-                <div style={{ fontSize: '18px', fontWeight: '700', color: '#667eea', fontFamily: 'monospace' }}>
-                  {formatPercent(data.componentCoverage)}
+                          return (
+                            <div
+                              key={item.label}
+                              style={{ marginBottom: '12px' }}
+                            >
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  marginBottom: '6px',
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontSize: '12px',
+                                    fontWeight: '500',
+                                    color: 'var(--text-secondary)',
+                                  }}
+                                >
+                                  {item.label}
+                                </span>
+                                <span
+                                  style={{
+                                    fontSize: '12px',
+                                    fontWeight: '500',
+                                    fontFeatureSettings: '"tnum"',
+                                    color: 'var(--text-tertiary)',
+                                  }}
+                                >
+                                  {item.count}
+                                </span>
+                              </div>
+                              <div
+                                style={{
+                                  height: '2px',
+                                  width: '100%',
+                                  background: 'var(--track-bg)',
+                                  borderRadius: '4px',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    height: '100%',
+                                    width: percentage + '%',
+                                    background: 'var(--progress-fill)',
+                                    borderRadius: '4px',
+                                    transition: 'width 0.3s',
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </Fragment>
+                  ) : (
+                    <Text
+                      style={{
+                        color: 'var(--figma-color-text-tertiary)',
+                        fontSize: '11px',
+                        marginBottom: '16px',
+                      }}
+                    >
+                      No hardcoded values detected
+                    </Text>
+                  )}
+
+                  <VerticalSpace space="medium" />
+
+                  {/* Token Sources - Hidden for now */}
+                  <div style={{ display: 'none' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '16px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--text-primary)',
+                          fontWeight: '500',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Token Sources
+                      </div>
+                      {/* Orphan Rate Badge */}
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: 'var(--figma-color-bg)',
+                          border: '1px solid var(--figma-color-border)',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            color: 'var(--figma-color-text-tertiary)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                          }}
+                        >
+                          Orphan Rate
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            color: 'var(--figma-color-text)',
+                          }}
+                        >
+                          {formatPercent(filtered.orphanRate)}
+                        </span>
+                      </div>
+                    </div>
+                    {data.variableBreakdown &&
+                    data.variableBreakdown.length > 0 ? (
+                      <div style={{ marginBottom: '20px' }}>
+                        {data.variableBreakdown.map((lib, index) => {
+                          return (
+                            <div
+                              key={lib.name}
+                              style={{ marginBottom: '12px' }}
+                            >
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  marginBottom: '6px',
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontSize: '12px',
+                                    fontWeight: '500',
+                                    color: 'var(--text-secondary)',
+                                  }}
+                                >
+                                  {lib.name}
+                                </span>
+                                <span
+                                  style={{
+                                    fontSize: '12px',
+                                    fontWeight: '500',
+                                    fontFeatureSettings: '"tnum"',
+                                    color: 'var(--text-tertiary)',
+                                  }}
+                                >
+                                  {lib.count}
+                                </span>
+                              </div>
+                              <div
+                                style={{
+                                  height: '2px',
+                                  width: '100%',
+                                  background: 'var(--track-bg)',
+                                  borderRadius: '4px',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    height: '100%',
+                                    width: lib.percentage + '%',
+                                    background: 'var(--progress-fill)',
+                                    borderRadius: '4px',
+                                    transition: 'width 0.3s',
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <Text
+                        style={{
+                          color: 'var(--figma-color-text-tertiary)',
+                          fontSize: '11px',
+                        }}
+                      >
+                        No design tokens found
+                      </Text>
+                    )}
+
+                    <VerticalSpace space="medium" />
+                  </div>
+
+                  {/* Orphan Details */}
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--text-primary)',
+                      fontWeight: '500',
+                      textTransform: 'uppercase',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    Orphan Details by Component
+                  </div>
+                  {data.hardcodedValues.details &&
+                  data.hardcodedValues.details.length > 0 ? (
+                    <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                      {renderOrphanDetails()}
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        padding: '32px',
+                        textAlign: 'center',
+                        background: 'var(--figma-color-bg)',
+                        borderRadius: '4px',
+                        border: '1px solid var(--figma-color-border)',
+                      }}
+                    >
+                      <div style={{ fontSize: '40px', marginBottom: '12px' }}>
+                        🎉
+                      </div>
+                      <Text
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: 'var(--figma-color-text)',
+                          marginBottom: '4px',
+                        }}
+                      >
+                        No Orphans Found
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: '11px',
+                          color: 'var(--figma-color-text-tertiary)',
+                        }}
+                      >
+                        All properties are using design tokens
+                      </Text>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
-              {/* Step 3: Weighted contribution */}
-              <div style={{ marginBottom: '4px' }}>
-                <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Weight Applied (45% of total score - Foundation-First)</div>
-                <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--figma-color-text)' }}>
-                  {formatPercent(data.componentCoverage)} × 0.45 = <span style={{ color: '#667eea', fontWeight: '700' }}>{formatPercent(data.componentCoverage * 0.45)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+              {/* Remove old verbose cards - they're replaced by the grid above */}
+              <div style={{ display: 'none' }}>
+                {/* Component Coverage OLD */}
+                <div
+                  style={{
+                    background: '#fff',
+                    padding: '20px',
+                    borderRadius: '10px',
+                    border: '2px solid var(--figma-color-border)',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                  }}
+                >
+                  {/* Header with score */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        background:
+                          'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '20px',
+                        fontWeight: '700',
+                        color: '#fff',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {formatPercent(data.componentCoverage)}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: '700',
+                          color: 'var(--figma-color-text)',
+                          marginBottom: '2px',
+                        }}
+                      >
+                        Component Coverage
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '11px',
+                          color: 'var(--figma-color-text-tertiary)',
+                        }}
+                      >
+                        How many components use the design system
+                      </div>
+                    </div>
+                  </div>
 
-          {/* Variable Coverage OLD */}
-          <div style={{
-            background: '#fff',
-            padding: '20px',
-            borderRadius: '10px',
-            border: '2px solid var(--figma-color-border)',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-          }}>
-            {/* Header with score */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div style={{
-                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                width: '48px',
-                height: '48px',
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                fontWeight: '700',
-                color: '#fff',
-                flexShrink: 0
-              }}>
-                {formatPercent(filtered.variableCoverage)}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--figma-color-text)', marginBottom: '2px' }}>Variable Coverage</div>
-                <div style={{ fontSize: '11px', color: 'var(--figma-color-text-tertiary)' }}>
-                  How many properties use design tokens
-                </div>
-              </div>
-            </div>
+                  {/* Calculation breakdown */}
+                  <div
+                    style={{
+                      background: 'var(--figma-color-bg-secondary)',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--figma-color-border)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: '600',
+                        color: '#667eea',
+                        marginBottom: '8px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      Calculation
+                    </div>
 
-            {/* Calculation breakdown */}
-            <div style={{
-              background: 'var(--figma-color-bg-secondary)',
-              padding: '12px',
-              borderRadius: '8px',
-              border: '1px solid var(--figma-color-border)'
-            }}>
-              <div style={{ fontSize: '10px', fontWeight: '600', color: '#f5576c', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Calculation
-              </div>
-
-              {(() => {
-                return (
-                  <Fragment>
                     {/* Step 1: Raw numbers */}
                     <div style={{ marginBottom: '8px' }}>
-                      <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Token-Bound Properties</div>
-                      <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--figma-color-text)', fontFamily: 'monospace' }}>
-                        {filtered.tokenBoundCount}
+                      <div
+                        style={{
+                          fontSize: '10px',
+                          color: 'var(--figma-color-text-secondary)',
+                          marginBottom: '4px',
+                        }}
+                      >
+                        Library Instances
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '18px',
+                          fontWeight: '700',
+                          color: 'var(--figma-color-text)',
+                          fontFamily: 'monospace',
+                        }}
+                      >
+                        {data.stats.libraryInstances}
                       </div>
                     </div>
 
                     <div style={{ marginBottom: '8px' }}>
-                      <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Total Properties (Token-Bound + Hardcoded)</div>
-                      <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--figma-color-text)', fontFamily: 'monospace' }}>
-                        {filtered.totalOpportunities}
+                      <div
+                        style={{
+                          fontSize: '10px',
+                          color: 'var(--figma-color-text-secondary)',
+                          marginBottom: '4px',
+                        }}
+                      >
+                        Total Components (Library + Local)
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '18px',
+                          fontWeight: '700',
+                          color: 'var(--figma-color-text)',
+                          fontFamily: 'monospace',
+                        }}
+                      >
+                        {data.stats.libraryInstances +
+                          data.stats.localInstances}
                       </div>
                     </div>
 
-                    <div style={{ height: '1px', background: '#d0d0d0', margin: '8px 0' }} />
+                    <div
+                      style={{
+                        height: '1px',
+                        background: '#d0d0d0',
+                        margin: '8px 0',
+                      }}
+                    />
 
                     {/* Step 2: Percentage */}
                     <div style={{ marginBottom: '8px' }}>
-                      <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Coverage Rate</div>
-                      <div style={{ fontSize: '18px', fontWeight: '700', color: '#f5576c', fontFamily: 'monospace' }}>
-                        {formatPercent(filtered.variableCoverage)}
+                      <div
+                        style={{
+                          fontSize: '10px',
+                          color: 'var(--figma-color-text-secondary)',
+                          marginBottom: '4px',
+                        }}
+                      >
+                        Coverage Rate
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '18px',
+                          fontWeight: '700',
+                          color: '#667eea',
+                          fontFamily: 'monospace',
+                        }}
+                      >
+                        {formatPercent(data.componentCoverage)}
                       </div>
                     </div>
 
                     {/* Step 3: Weighted contribution */}
                     <div style={{ marginBottom: '4px' }}>
-                      <div style={{ fontSize: '10px', color: 'var(--figma-color-text-secondary)', marginBottom: '4px' }}>Weight Applied (55% of total score - Foundation-First)</div>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--figma-color-text)' }}>
-                        {formatPercent(filtered.variableCoverage)} × 0.55 = <span style={{ color: '#f5576c', fontWeight: '700' }}>{formatPercent(filtered.variableCoverage * 0.55)}</span>
+                      <div
+                        style={{
+                          fontSize: '10px',
+                          color: 'var(--figma-color-text-secondary)',
+                          marginBottom: '4px',
+                        }}
+                      >
+                        Weight Applied (45% of total score - Foundation-First)
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: 'var(--figma-color-text)',
+                        }}
+                      >
+                        {formatPercent(data.componentCoverage)} × 0.45 ={' '}
+                        <span style={{ color: '#667eea', fontWeight: '700' }}>
+                          {formatPercent(data.componentCoverage * 0.45)}
+                        </span>
                       </div>
                     </div>
-                  </Fragment>
-                );
-              })()}
-            </div>
+                  </div>
+                </div>
+
+                {/* Variable Coverage OLD */}
+                <div
+                  style={{
+                    background: '#fff',
+                    padding: '20px',
+                    borderRadius: '10px',
+                    border: '2px solid var(--figma-color-border)',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                  }}
+                >
+                  {/* Header with score */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        background:
+                          'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '20px',
+                        fontWeight: '700',
+                        color: '#fff',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {formatPercent(filtered.variableCoverage)}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: '700',
+                          color: 'var(--figma-color-text)',
+                          marginBottom: '2px',
+                        }}
+                      >
+                        Variable Coverage
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '11px',
+                          color: 'var(--figma-color-text-tertiary)',
+                        }}
+                      >
+                        How many properties use design tokens
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Calculation breakdown */}
+                  <div
+                    style={{
+                      background: 'var(--figma-color-bg-secondary)',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--figma-color-border)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: '600',
+                        color: '#f5576c',
+                        marginBottom: '8px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      Calculation
+                    </div>
+
+                    {(() => {
+                      return (
+                        <Fragment>
+                          {/* Step 1: Raw numbers */}
+                          <div style={{ marginBottom: '8px' }}>
+                            <div
+                              style={{
+                                fontSize: '10px',
+                                color: 'var(--figma-color-text-secondary)',
+                                marginBottom: '4px',
+                              }}
+                            >
+                              Token-Bound Properties
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '18px',
+                                fontWeight: '700',
+                                color: 'var(--figma-color-text)',
+                                fontFamily: 'monospace',
+                              }}
+                            >
+                              {filtered.tokenBoundCount}
+                            </div>
+                          </div>
+
+                          <div style={{ marginBottom: '8px' }}>
+                            <div
+                              style={{
+                                fontSize: '10px',
+                                color: 'var(--figma-color-text-secondary)',
+                                marginBottom: '4px',
+                              }}
+                            >
+                              Total Properties (Token-Bound + Hardcoded)
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '18px',
+                                fontWeight: '700',
+                                color: 'var(--figma-color-text)',
+                                fontFamily: 'monospace',
+                              }}
+                            >
+                              {filtered.totalOpportunities}
+                            </div>
+                          </div>
+
+                          <div
+                            style={{
+                              height: '1px',
+                              background: '#d0d0d0',
+                              margin: '8px 0',
+                            }}
+                          />
+
+                          {/* Step 2: Percentage */}
+                          <div style={{ marginBottom: '8px' }}>
+                            <div
+                              style={{
+                                fontSize: '10px',
+                                color: 'var(--figma-color-text-secondary)',
+                                marginBottom: '4px',
+                              }}
+                            >
+                              Coverage Rate
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '18px',
+                                fontWeight: '700',
+                                color: '#f5576c',
+                                fontFamily: 'monospace',
+                              }}
+                            >
+                              {formatPercent(filtered.variableCoverage)}
+                            </div>
+                          </div>
+
+                          {/* Step 3: Weighted contribution */}
+                          <div style={{ marginBottom: '4px' }}>
+                            <div
+                              style={{
+                                fontSize: '10px',
+                                color: 'var(--figma-color-text-secondary)',
+                                marginBottom: '4px',
+                              }}
+                            >
+                              Weight Applied (55% of total score -
+                              Foundation-First)
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: 'var(--figma-color-text)',
+                              }}
+                            >
+                              {formatPercent(filtered.variableCoverage)} × 0.55
+                              ={' '}
+                              <span
+                                style={{ color: '#f5576c', fontWeight: '700' }}
+                              >
+                                {formatPercent(
+                                  filtered.variableCoverage * 0.55
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        </Fragment>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              <VerticalSpace space="medium" />
+            </Container>
+          </div>
+
+          {/* Sticky button at bottom - fixed to bottom of viewport */}
+          <div
+            style={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: '16px 20px',
+              background: 'var(--figma-color-bg)',
+              zIndex: 100,
+            }}
+          >
+            <button
+              onClick={handleAnalyze}
+              disabled={!hasSelection}
+              style={{
+                width: '100%',
+                height: '44px',
+                background: hasSelection
+                  ? 'var(--button-bg)'
+                  : 'var(--button-disabled-bg)',
+                color: hasSelection
+                  ? 'var(--button-text)'
+                  : 'var(--button-disabled-text)',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '500',
+                letterSpacing: '0.05em',
+                cursor: hasSelection ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'background 0.2s',
+              }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M23 4v6h-6M1 20v-6h6" />
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+              </svg>
+              {data
+                ? `Re-analyze ${selectionCount} ${
+                    selectionCount === 1 ? 'item' : 'items'
+                  }`
+                : 'Analyze Selection'}
+            </button>
           </div>
         </div>
 
-        <VerticalSpace space="medium" />
-      </Container>
-    </div>
-
-    {/* Sticky button at bottom */}
-    <div style={{
-      borderTop: '1px solid var(--figma-color-border, #e6e6e6)',
-      padding: '12px 16px',
-      background: 'var(--figma-color-bg, #fff)'
-    }}>
-      <Button fullWidth onClick={handleAnalyze} disabled={!hasSelection}>
-        {data ? `Re-analyze ${selectionCount} ${selectionCount === 1 ? 'item' : 'items'}` : 'Analyze Selection'}
-      </Button>
-    </div>
-  </div>
+        {/* Modal */}
+        <Modal
+          isOpen={modalContent !== null}
+          onClose={() => setModalContent(null)}
+          title={modalContent?.title || ''}
+          content={modalContent?.content || ''}
+        />
+      </Fragment>
     );
   }
 
   // Default render (when selection exists but not analyzed)
   return (
-    <CenteredLayout>
-      <Text align="center">
-        <strong>{selectionCount} {selectionCount === 1 ? 'item' : 'items'} selected</strong>
-      </Text>
-      <VerticalSpace space="small" />
-      <Text align="center" style={{ color: 'var(--figma-color-text-secondary, #999)' }}>
-        Ready to analyze design system coverage
-      </Text>
-      <VerticalSpace space="extraLarge" />
-      <div style={{ width: '180px' }}>
-        <Button fullWidth onClick={handleAnalyze}>
-          Analyze Selection
-        </Button>
+    <Fragment>
+      <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
+      <div
+        style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
+      >
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+          }}
+        >
+          <div style={{ textAlign: 'center', maxWidth: '320px' }}>
+            <div
+              style={{
+                fontSize: '14px',
+                fontWeight: '600',
+                color: 'var(--text-primary)',
+                marginBottom: '8px',
+              }}
+            >
+              {selectionCount} {selectionCount === 1 ? 'item' : 'items'}{' '}
+              selected
+            </div>
+            <div
+              style={{
+                fontSize: '12px',
+                color: 'var(--text-tertiary)',
+                lineHeight: '1.5',
+              }}
+            >
+              Ready to analyze design system coverage
+            </div>
+          </div>
+        </div>
+
+        {/* Fixed button at bottom */}
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '16px 20px',
+            background: 'var(--figma-color-bg)',
+            zIndex: 100,
+          }}
+        >
+          <button
+            onClick={handleAnalyze}
+            style={{
+              width: '100%',
+              height: '44px',
+              background: 'var(--button-bg)',
+              color: 'var(--button-text)',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontWeight: '500',
+              letterSpacing: '0.05em',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'background 0.2s',
+            }}
+          >
+            Analyze Selection
+          </button>
+        </div>
       </div>
-    </CenteredLayout>
+
+      {/* Modal */}
+      <Modal
+        isOpen={modalContent !== null}
+        onClose={() => setModalContent(null)}
+        title={modalContent?.title || ''}
+        content={modalContent?.content || ''}
+      />
+    </Fragment>
   );
 }
 
