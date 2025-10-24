@@ -590,13 +590,7 @@ function Plugin() {
     // If no filters active, use accurate backend totals (calculated from ALL instances)
     if (!hasActiveFilters) {
       const backendTokenBound = hv.totalOpportunities - hv.totalHardcoded;
-      console.log('Using backend totals (no filters active):');
-      console.log('  Token-bound:', backendTokenBound);
-      console.log('  Hardcoded:', hv.totalHardcoded);
-      console.log('  Total Opportunities:', hv.totalOpportunities);
-      console.log('  Coverage:', (backendTokenBound / hv.totalOpportunities * 100).toFixed(2) + '%');
-
-      const variableCoverage = hv.totalOpportunities > 0
+const variableCoverage = hv.totalOpportunities > 0
         ? (backendTokenBound / hv.totalOpportunities) * 100
         : 0;
 
@@ -659,12 +653,7 @@ function Plugin() {
     }
 
     // Filtering IS active - calculate from details
-    console.log('Using filtered details (filters active):');
-    console.log('  Ignored instances:', ignoredInstances.size);
-    console.log('  Ignored components:', ignoredComponents.size);
-    console.log('  Ignored orphans:', ignoredOrphans.size);
-
-    let filteredTotalHardcoded = 0;
+let filteredTotalHardcoded = 0;
     let filteredOrphanCount = 0;
 
     // Filter orphans - exclude if component ignored, orphan ignored, OR parent instance ignored
@@ -694,12 +683,7 @@ function Plugin() {
 
     const filteredTotalOpportunities = filteredTokenBoundCount + filteredTotalHardcoded;
 
-    console.log('  Filtered token-bound:', filteredTokenBoundCount);
-    console.log('  Filtered hardcoded:', filteredTotalHardcoded);
-    console.log('  Filtered total opportunities:', filteredTotalOpportunities);
-    console.log('  Filtered coverage:', (filteredTokenBoundCount / filteredTotalOpportunities * 100).toFixed(2) + '%');
-
-    const filteredVariableCoverage = filteredTotalOpportunities > 0
+const filteredVariableCoverage = filteredTotalOpportunities > 0
       ? (filteredTokenBoundCount / filteredTotalOpportunities) * 100
       : 0;
 

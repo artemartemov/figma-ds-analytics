@@ -4887,10 +4887,7 @@ async function getAvailableLibraries(): Promise<TeamLibrary[]> {
     // Get all available variable collections from team libraries
     const variableCollections = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
 
-    console.log('=== DEBUG: Variable Collections from Team Libraries ===');
-    console.log('Total collections:', variableCollections.length);
-
-    for (const collection of variableCollections) {
+for (const collection of variableCollections) {
       // Log all available properties to understand the API
       console.log('\nCollection:', {
         key: collection.key,
