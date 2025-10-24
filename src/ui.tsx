@@ -217,6 +217,7 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
               marginTop: index === 0 ? '0' : '16px',
               marginBottom: '6px',
               fontSize: '10px',
+              whiteSpace: 'nowrap',
             }}
           >
             <span
@@ -242,6 +243,7 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
               color: 'var(--text-primary)',
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: '10px',
+              whiteSpace: 'nowrap',
             }}
           >
             {line}
@@ -259,6 +261,26 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
         );
       }
 
+      // Check if line is a number (primary color)
+      if (/^\d+$/.test(line.trim())) {
+        return (
+          <div
+            key={index}
+            style={{
+              marginBottom: '4px',
+              color: 'var(--text-primary)',
+              fontSize: '10px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {line}
+          </div>
+        );
+      }
+
+      // Check if line is part of a longer paragraph (allow wrapping)
+      const isLongText = line.length > 80 || line.includes('Wrapper') || line.includes('Research') || line.includes('property');
+
       // Regular text
       return (
         <div
@@ -266,7 +288,8 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
           style={{
             marginBottom: '4px',
             color: 'var(--text-secondary)',
-            fontSize: '11px',
+            fontSize: '10px',
+            whiteSpace: isLongText ? 'normal' : 'nowrap',
           }}
         >
           {line}
@@ -337,8 +360,9 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
             width: '12px',
             height: '12px',
             borderRadius: '50%',
-            background: dark ? 'rgba(255,255,255,0.2)' : '#e8e8e8',
-            color: dark ? 'rgba(255,255,255,0.9)' : '#666',
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--text-secondary)',
             fontWeight: '600',
             cursor: 'pointer',
             fontSize: '16px',
