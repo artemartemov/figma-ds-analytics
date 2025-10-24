@@ -6,7 +6,6 @@ import {
   Text,
   Button,
   VerticalSpace,
-  Checkbox,
   Divider,
   Banner,
   IconButton,
@@ -393,6 +392,51 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
   );
 }
 
+// Custom Checkbox Component
+interface CustomCheckboxProps {
+  checked: boolean;
+  onChange: () => void;
+}
+
+function CustomCheckbox({ checked, onChange }: CustomCheckboxProps) {
+  return (
+    <div
+      onClick={onChange}
+      style={{
+        width: '14px',
+        height: '14px',
+        minWidth: '14px',
+        minHeight: '14px',
+        borderRadius: '3px',
+        background: checked ? '#000000' : '#E5E5E5',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+      }}
+    >
+      {checked && (
+        <svg
+          width="10"
+          height="8"
+          viewBox="0 0 10 8"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M1 4L3.5 6.5L9 1"
+            stroke="white"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+    </div>
+  );
+}
+
 // Donut Chart Component
 interface DonutChartProps {
   segments: Array<{ value: number; color: string; label?: string }>;
@@ -607,32 +651,6 @@ function Plugin() {
       }
     }
 
-    /* Custom checkbox styling to match Figma design patterns */
-    input[type="checkbox"] {
-      width: 10px !important;
-      height: 10px !important;
-      min-width: 10px !important;
-      min-height: 10px !important;
-      margin: 0 !important;
-      margin-right: 6px !important;
-      border-radius: 2px !important;
-      border: 1px solid var(--border-color) !important;
-      background: transparent !important;
-      cursor: pointer !important;
-    }
-
-    input[type="checkbox"]:checked {
-      background: var(--figma-color-text) !important;
-      border-color: var(--figma-color-text) !important;
-    }
-
-    /* Checkbox label styling */
-    label {
-      display: flex !important;
-      align-items: center !important;
-      gap: 0 !important;
-      cursor: pointer !important;
-    }
 
     * {
       font-family: 'JetBrains Mono', 'Monaco', 'Courier New', monospace !important;
@@ -1042,23 +1060,21 @@ function Plugin() {
     radius: '#f39c12',
   };
 
-  // Eye icon SVG (14x14 for better visibility)
+  // Eye icon SVG (16x12 with better stroke weight)
   const eyeIconSVG = (
     <svg
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
+      width="16"
+      height="12"
+      viewBox="0 0 16 12"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
-        d="M7 4C4 4 1.5 6.5 1.5 7s2.5 3 5.5 3 5.5-1.5 5.5-3-2.5-3-5.5-3zm0 5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"
+        d="M7.9812 3C6.32435 3 4.9812 4.34315 4.9812 6C4.9812 7.65685 6.32435 9 7.9812 9C9.63806 9 10.9812 7.65685 10.9812 6C10.9812 4.34315 9.63806 3 7.9812 3ZM6.2312 6C6.2312 5.0335 7.0147 4.25 7.9812 4.25C8.9477 4.25 9.7312 5.0335 9.7312 6C9.7312 6.9665 8.9477 7.75 7.9812 7.75C7.0147 7.75 6.2312 6.9665 6.2312 6Z"
         fill="currentColor"
       />
-      <circle
-        cx="7"
-        cy="7"
-        r="1"
+      <path
+        d="M7.98114 0C5.56104 0 3.66123 1.29127 2.35726 2.59591C1.04966 3.90417 0.274346 5.29061 0.0913944 5.63519C-0.0304648 5.86471 -0.0304648 6.13529 0.0913944 6.36481C0.274346 6.70939 1.04966 8.09583 2.35726 9.40409C3.66123 10.7087 5.56104 12 7.98114 12C10.4012 12 12.301 10.7087 13.605 9.40409C14.9126 8.09583 15.6879 6.7094 15.8709 6.36481C15.9927 6.13529 15.9927 5.86471 15.8709 5.63519C15.6879 5.2906 14.9126 3.90417 13.605 2.59591C12.301 1.29127 10.4012 0 7.98114 0ZM3.24137 8.52043C2.2544 7.53296 1.59872 6.4891 1.31811 6C1.59872 5.5109 2.2544 4.46704 3.24137 3.47957C4.4285 2.29183 6.02843 1.25 7.98114 1.25C9.93384 1.25 11.5338 2.29183 12.7209 3.47956C13.7079 4.46703 14.3635 5.5109 14.6442 6C14.3635 6.48909 13.7079 7.53297 12.7209 8.52044C11.5338 9.70817 9.93384 10.75 7.98114 10.75C6.02843 10.75 4.4285 9.70817 3.24137 8.52043Z"
         fill="currentColor"
       />
     </svg>
@@ -1163,7 +1179,7 @@ function Plugin() {
                     <div
                       key={instance.instanceId}
                       style={{
-                        paddingLeft: '20px',
+                        paddingLeft: '0px',
                         paddingTop: '8px',
                         paddingBottom: '8px',
                         fontSize: '10px',
@@ -1174,11 +1190,19 @@ function Plugin() {
                       <div
                         style={{
                           display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
+                          alignItems: 'center',
+                          gap: '8px',
                           marginBottom: '4px',
                         }}
                       >
+                        {!isWrapper && (
+                          <CustomCheckbox
+                            checked={isIgnored}
+                            onChange={() =>
+                              handleToggleIgnoreInstance(instance.instanceId)
+                            }
+                          />
+                        )}
                         <div style={{ flex: 1 }}>
                           <div
                             style={{
@@ -1205,58 +1229,35 @@ function Plugin() {
                             {instance.componentName}
                           </div>
                         </div>
-                        <div
+                        <button
+                          onClick={() =>
+                            handleSelectNode(instance.instanceId)
+                          }
+                          title="View in canvas"
                           style={{
+                            width: '20px',
+                            height: '20px',
+                            padding: '0',
+                            background: 'transparent',
+                            color: 'var(--text-secondary)',
+                            border: 'none',
+                            borderRadius: '2px',
+                            cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px',
+                            justifyContent: 'center',
+                            transition: 'background 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background =
+                              'var(--figma-color-bg-hover)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
                           }}
                         >
-                          {!isWrapper && (
-                            <Checkbox
-                              value={isIgnored}
-                              onValueChange={() =>
-                                handleToggleIgnoreInstance(instance.instanceId)
-                              }
-                            >
-                              <Text style={{ fontSize: '9px' }}>Ignore</Text>
-                            </Checkbox>
-                          )}
-                          <button
-                            onClick={() =>
-                              handleSelectNode(instance.instanceId)
-                            }
-                            title="View in canvas"
-                            style={{
-                              width: '20px',
-                              height: '20px',
-                              padding: '0',
-                              background: 'transparent',
-                              color: 'var(--text-secondary)',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: '2px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition:
-                                'background 0.15s ease, border-color 0.15s ease',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background =
-                                'var(--figma-color-bg-hover)';
-                              e.currentTarget.style.borderColor =
-                                'var(--text-secondary)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'transparent';
-                              e.currentTarget.style.borderColor =
-                                'var(--border-color)';
-                            }}
-                          >
-                            {eyeIconSVG}
-                          </button>
-                        </div>
+                          {eyeIconSVG}
+                        </button>
                       </div>
                     </div>
                   );
@@ -1306,9 +1307,8 @@ function Plugin() {
             style={{
               padding: '8px 0',
               display: 'flex',
-              justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '12px',
+              gap: '8px',
               cursor: 'pointer',
               borderBottom: !isCollapsed
                 ? '1px solid var(--figma-color-border)'
@@ -1316,6 +1316,10 @@ function Plugin() {
             }}
             onClick={() => handleToggleCollapse(`orphan-${component.id}`)}
           >
+            <CustomCheckbox
+              checked={isComponentIgnored}
+              onChange={() => handleToggleIgnoreComponent(component.id)}
+            />
             <div style={{ flex: 1 }}>
               <div
                 style={{
@@ -1341,43 +1345,33 @@ function Plugin() {
                 {component.orphans.length > 1 ? 's' : ''}
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Checkbox
-                value={isComponentIgnored}
-                onValueChange={() => handleToggleIgnoreComponent(component.id)}
-              >
-                <Text style={{ fontSize: '10px' }}>Ignore</Text>
-              </Checkbox>
-              <button
-                onClick={() => handleSelectNode(component.id)}
-                title="View in canvas"
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  padding: '0',
-                  background: 'transparent',
-                  color: 'var(--text-secondary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '2px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'background 0.15s ease, border-color 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background =
-                    'var(--figma-color-bg-hover)';
-                  e.currentTarget.style.borderColor = 'var(--text-secondary)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderColor = 'var(--border-color)';
-                }}
-              >
-                {eyeIconSVG}
-              </button>
-            </div>
+            <button
+              onClick={() => handleSelectNode(component.id)}
+              title="View in canvas"
+              style={{
+                width: '20px',
+                height: '20px',
+                padding: '0',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                border: 'none',
+                borderRadius: '2px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background =
+                  'var(--figma-color-bg-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              {eyeIconSVG}
+            </button>
           </div>
           {!isCollapsed && (
             <div style={{ paddingTop: '8px' }}>
@@ -1401,11 +1395,17 @@ function Plugin() {
                     <div
                       style={{
                         display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-start',
+                        alignItems: 'center',
+                        gap: '8px',
                         marginBottom: '4px',
                       }}
                     >
+                      <CustomCheckbox
+                        checked={isOrphanIgnored}
+                        onChange={() =>
+                          handleToggleIgnoreOrphan(detail.nodeId)
+                        }
+                      />
                       <div style={{ flex: 1 }}>
                         <div
                           style={{
@@ -1455,54 +1455,33 @@ function Plugin() {
                           ))}
                         </div>
                       </div>
-                      <div
+                      <button
+                        onClick={() => handleSelectNode(detail.nodeId)}
+                        title="View in canvas"
                         style={{
+                          width: '20px',
+                          height: '20px',
+                          padding: '0',
+                          background: 'transparent',
+                          color: 'var(--text-secondary)',
+                          border: 'none',
+                          borderRadius: '2px',
+                          cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '8px',
+                          justifyContent: 'center',
+                          transition: 'background 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background =
+                            'var(--figma-color-bg-hover)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
                         }}
                       >
-                        <Checkbox
-                          value={isOrphanIgnored}
-                          onValueChange={() =>
-                            handleToggleIgnoreOrphan(detail.nodeId)
-                          }
-                        >
-                          <Text style={{ fontSize: '9px' }}>Ignore</Text>
-                        </Checkbox>
-                        <button
-                          onClick={() => handleSelectNode(detail.nodeId)}
-                          title="View in canvas"
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            padding: '0',
-                            background: 'transparent',
-                            color: 'var(--text-secondary)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '2px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition:
-                              'background 0.15s ease, border-color 0.15s ease',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background =
-                              'var(--figma-color-bg-hover)';
-                            e.currentTarget.style.borderColor =
-                              'var(--text-secondary)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.borderColor =
-                              'var(--border-color)';
-                          }}
-                        >
-                          {eyeIconSVG}
-                        </button>
-                      </div>
+                        {eyeIconSVG}
+                      </button>
                     </div>
                   </div>
                 );
@@ -2692,6 +2671,7 @@ This measures token adoption at the property level, not component level. Each co
                         outline: 'none',
                         transition: 'all 0.15s',
                         boxShadow: 'none',
+                        opacity: 1,
                       }}
                       onMouseEnter={(e) => {
                         if (!isActive) {
@@ -2699,9 +2679,7 @@ This measures token adoption at the property level, not component level. Each co
                         }
                       }}
                       onMouseLeave={(e) => {
-                        if (!isActive) {
-                          e.currentTarget.style.opacity = '1';
-                        }
+                        e.currentTarget.style.opacity = '1';
                       }}
                     >
                       {labels[tab]}
