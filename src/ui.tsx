@@ -199,6 +199,20 @@ interface ModalProps {
 function Modal({ isOpen, onClose, title, content }: ModalProps) {
   if (!isOpen) return null;
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
   // Parse and format content with styling
   const formatContent = (text: string) => {
     const lines = text.split('\n');
