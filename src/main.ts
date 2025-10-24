@@ -4888,14 +4888,6 @@ async function getAvailableLibraries(): Promise<TeamLibrary[]> {
     const variableCollections = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
 
 for (const collection of variableCollections) {
-      // Log all available properties to understand the API
-      console.log('\nCollection:', {
-        key: collection.key,
-        name: collection.name,
-        // Check what other properties exist
-        allProps: Object.keys(collection)
-      });
-
       // Use the collection key as the library identifier for now
       const libraryKey = collection.key;
       const libraryName = collection.name || 'Unknown Library';
@@ -4930,17 +4922,9 @@ for (const collection of variableCollections) {
         // Try to get the parent library name
         const parentKey = mainComponent.parent?.name || componentKey;
 
-        console.log('Component from library:', {
-          componentName: mainComponent.name,
-          componentKey: componentKey,
-          parentName: mainComponent.parent?.name
-        });
-
         componentLibraries.add(componentKey);
       }
     }
-
-    console.log('Total component library keys detected:', componentLibraries.size);
   } catch (error) {
     console.warn('Could not detect component libraries:', error);
   }
@@ -5043,6 +5027,19 @@ async function saveIgnoredInstances(instanceIds: Set<string>): Promise<void> {
   await figma.clientStorage.setAsync(IGNORED_INSTANCES_KEY, Array.from(instanceIds));
 }
 
+const ONBOARDING_SEEN_KEY = 'onboardingSeen';
+
+// Load onboarding status from client storage
+async function loadOnboardingStatus(): Promise<boolean> {
+  const stored = await figma.clientStorage.getAsync(ONBOARDING_SEEN_KEY);
+  return stored === true;
+}
+
+// Save onboarding status to client storage
+async function saveOnboardingStatus(seen: boolean): Promise<void> {
+  await figma.clientStorage.setAsync(ONBOARDING_SEEN_KEY, seen);
+}
+
 // Get library name from variable by checking its collection
 async function getLibraryNameFromVariable(variable: Variable): Promise<string | null> {
   const mappings = await loadCollectionMappings();
@@ -5109,7 +5106,7 @@ import { showUI, on, emit } from '@create-figma-plugin/utilities';
 let analysisCancelled = false;
 
 export default function () {
-  showUI({ width: 440, height: 840 });
+  showUI({ width: 440, height: 800 });
 
   // Send initial selection status to UI
   function checkAndSendSelectionStatus() {
@@ -5122,13 +5119,15 @@ export default function () {
     });
   }
 
-  // Check selection status on plugin open
-  checkAndSendSelectionStatus();
-
   // Listen for selection changes
   figma.on('selectionchange', () => {
     checkAndSendSelectionStatus();
   });
+
+  // Check selection status after UI has time to mount and register handlers
+  setTimeout(() => {
+    checkAndSendSelectionStatus();
+  }, 150);
 
   // Listen for UI events
   on('ANALYZE', async () => {
@@ -5228,15 +5227,57 @@ export default function () {
     }
   });
 
-  // Auto-run analysis on plugin load
+  on('GET_ONBOARDING_STATUS', async () => {
+    try {
+      const hasSeenOnboarding = await loadOnboardingStatus();
+      emit('ONBOARDING_STATUS', hasSeenOnboarding);
+    } catch (error) {
+      console.error('Failed to load onboarding status:', error);
+      emit('ONBOARDING_STATUS', false);
+    }
+  });
+
+  on('SET_ONBOARDING_SEEN', async () => {
+    try {
+      await saveOnboardingStatus(true);
+    } catch (error) {
+      console.error('Failed to save onboarding status:', error);
+    }
+  });
+
+  on('RESET_ONBOARDING', async () => {
+    try {
+      await saveOnboardingStatus(false);
+      const hasSeenOnboarding = await loadOnboardingStatus();
+      emit('ONBOARDING_STATUS', hasSeenOnboarding);
+    } catch (error) {
+      console.error('Failed to reset onboarding:', error);
+    }
+  });
+
+  // Send onboarding status on plugin load (after UI handlers are registered)
   setTimeout(async () => {
     try {
-      const metrics = await analyzeCoverage();
-      emit('RESULTS', metrics);
+      const hasSeenOnboarding = await loadOnboardingStatus();
+      emit('ONBOARDING_STATUS', hasSeenOnboarding);
+    } catch (error) {
+      console.error('Failed to load onboarding status:', error);
+      emit('ONBOARDING_STATUS', false);
+    }
+  }, 150);
+
+  // Auto-run analysis on plugin load (only if onboarding has been seen)
+  setTimeout(async () => {
+    try {
+      const hasSeenOnboarding = await loadOnboardingStatus();
+      if (hasSeenOnboarding) {
+        const metrics = await analyzeCoverage();
+        emit('RESULTS', metrics);
+      }
     } catch (error) {
       // Silently fail on initial load if no selection
     }
-  }, 100);
+  }, 200);
 
 }
 
@@ -5264,10 +5305,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   }
 
   await sendProgress('Initializing analysis...', 0);
-
-  console.log(`\n=== ANALYZING SELECTION ===`);
-  console.log(`Selected ${selection.length} top-level node(s)`);
-
   await sendProgress('Finding component instances...', 5);
 
   // Find all component instances within the selection
@@ -5300,11 +5337,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
         }
       }
     }
-  }
-
-  console.log(`Found ${componentInstances.length} visible component instance(s) in selection`);
-  if (hiddenInstancesSkipped > 0) {
-    console.log(`Skipped ${hiddenInstancesSkipped} hidden instance(s)`);
   }
 
   await sendProgress(`Categorizing ${componentInstances.length} components...`, 15);
@@ -5360,8 +5392,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     }
   }
 
-  console.log(`Identified ${wrapperInstanceIds.size} wrapper component(s) to exclude from counts`);
-
   // Step 2: Process all instances for categorization and counting
   for (const instance of componentInstances) {
     const mainComponent = instance.mainComponent;
@@ -5415,7 +5445,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     // Wrappers are excluded because their nested DS components are already counted
     if (isWrapper) {
       // Don't count wrappers in metrics
-      console.log(`Excluding wrapper from count: ${instance.name}`);
     } else {
       // Count only non-wrapper instances
       if (isDesignSystemComponent) {
@@ -5441,26 +5470,12 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     }
   }
 
-  // Log detailed breakdown
-  console.log(`\n=== DETAILED COMPONENT BREAKDOWN ===`);
-  console.log(`DS library instances (atomic): ${libraryInstances}`);
-  console.log(`Local standalone components: ${localInstances}`);
-  console.log(`Wrapper components (excluded from count): ${localWithDSCount.count}`);
-  console.log(`Total instances analyzed (including wrappers): ${componentInstances.length}`);
-  console.log(`Total instances counted (excluding wrappers): ${libraryInstances + localInstances}`);
-
   // Calculate coverage percentages
   // NEW APPROACH: Count DS atomic components / (DS atomic + standalone local)
   // Wrappers are excluded because their nested DS components are already counted
   const totalInstances = libraryInstances + localInstances;
   const componentCoverage =
     totalInstances > 0 ? (libraryInstances / totalInstances) * 100 : 0;
-
-  console.log(`\n=== COVERAGE METRICS (Defensible Approach) ===`);
-  console.log(`Component Coverage: ${Math.round(componentCoverage)}% (${libraryInstances} DS / ${totalInstances} total)`);
-  console.log(`Formula: DS Atomic Components / (DS Atomic + Standalone Local)`);
-  console.log(`Wrappers excluded: ${localWithDSCount.count} local components built with DS are NOT counted`);
-  console.log(`Why: Wrappers are organizational - their nested DS components are already counted`);
 
   const totalComponents = componentsWithVariables + componentsWithoutVariables;
   const variableCoverage =
@@ -5477,11 +5492,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     }))
     .sort((a, b) => b.count - a.count); // Sort by count descending
 
-  // ===================================================================
-  // DEBUG: Component Key Mapping Status
-  // ===================================================================
-  console.log('=== COMPONENT KEY MAPPING STATUS ===');
-
   // Collect unique component keys
   const uniqueKeys = new Set<string>();
   const unmappedKeys: string[] = [];
@@ -5496,37 +5506,9 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     }
   }
 
-  console.log(`Total unique library component keys: ${uniqueKeys.size}`);
-  console.log(`Mapped keys: ${uniqueKeys.size - unmappedKeys.length}`);
-  console.log(`Unmapped keys: ${unmappedKeys.length}`);
-
-  if (unmappedKeys.length > 0) {
-    console.log('\n⚠️  WARNING: Some components are not mapped to libraries!');
-    console.log('Run the Library Scanner plugin to generate the mapping.\n');
-    console.log('Sample unmapped keys (first 5):');
-    unmappedKeys.slice(0, 5).forEach((key, i) => {
-      console.log(`${i + 1}. ${key}`);
-    });
-  } else if (uniqueKeys.size > 0) {
-    console.log('\n✅ All library components are mapped!');
-  }
-
-  console.log('\n=== LIBRARY BREAKDOWN ===');
-  console.log('Library breakdown:', libraryBreakdown);
-  console.log(
-    'Total instances:',
-    totalInstances,
-    'Library:',
-    libraryInstances,
-    'Local:',
-    localInstances
-  );
-
   // ===================================================================
   // Variable Source Tracking (Library-Based)
   // ===================================================================
-  console.log('\n=== VARIABLE SOURCE TRACKING ===');
-
   const variableSourceCounts = new Map<string, number>();
   const allVariableIds = new Set<string>();
   const unmappedVariableIds = new Set<string>();
@@ -5571,68 +5553,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     }
   }
 
-  console.log(`Total unique variable IDs used: ${allVariableIds.size}`);
-  console.log(`Mapped variable IDs: ${allVariableIds.size - unmappedVariableIds.size}`);
-  console.log(`Unmapped variable IDs: ${unmappedVariableIds.size}`);
-  console.log(`Alias resolutions performed: ${aliasResolutions.size}`);
-
-  // DEBUG: Show alias resolutions
-  if (aliasResolutions.size > 0) {
-    console.log('\n=== ALIAS RESOLUTIONS (first 5) ===');
-    Array.from(aliasResolutions.entries()).slice(0, 5).forEach(([aliasId, sourceId], i) => {
-      const aliasVar = figma.variables.getVariableById(aliasId);
-      const sourceVar = figma.variables.getVariableById(sourceId);
-      console.log(`${i + 1}. Alias: "${aliasId}" (${aliasVar?.name || 'unknown'})`);
-      console.log(`   → Source: "${sourceId}" (${sourceVar?.name || 'unknown'})`);
-    });
-  }
-
-  // DEBUG: Show sample IDs from the page with variable names
-  console.log('\n=== SAMPLE VARIABLE IDS FROM PAGE (first 10) ===');
-  Array.from(allVariableIds).slice(0, 10).forEach((id, i) => {
-    const variable = figma.variables.getVariableById(id);
-    const collection = variable ? figma.variables.getVariableCollectionById(variable.variableCollectionId) : null;
-    const mapped = VARIABLE_ID_TO_LIBRARY[id];
-    console.log(`${i + 1}. "${id}"`);
-    console.log(`   Name: ${variable?.name || 'unknown'}`);
-    console.log(`   Key: ${variable?.key || 'unknown'}`);
-    console.log(`   Remote: ${variable?.remote ?? 'unknown'}`);
-    console.log(`   Collection: ${collection?.name || 'unknown'}`);
-    console.log(`   Collection Remote: ${collection?.remote ?? 'unknown'}`);
-    console.log(`   Collection Key: ${collection?.key || 'unknown'}`);
-    console.log(`   Mapped: ${mapped ? '✅ ' + mapped : '❌ Not in mapping'}`);
-  });
-
-  // DEBUG: Show enabled libraries
   const enabledLibraries = await loadEnabledLibraries();
-  console.log('\n=== ENABLED LIBRARIES ===');
-  console.log(`Total enabled libraries: ${enabledLibraries.size}`);
-  if (enabledLibraries.size > 0) {
-    Array.from(enabledLibraries).forEach((libraryKey, i) => {
-      console.log(`${i + 1}. Library Key: ${libraryKey}`);
-    });
-  } else {
-    console.log('No libraries enabled yet. Use Settings to connect libraries.');
-  }
-
-  if (unmappedCollections.size > 0) {
-    console.log('\n⚠️  WARNING: Some variables are from libraries that are not enabled!');
-    console.log('Open Settings to enable these libraries.\n');
-    console.log('Variables from non-enabled libraries:');
-    Array.from(unmappedCollections).forEach((collectionInfo, i) => {
-      console.log(`${i + 1}. ${collectionInfo}`);
-    });
-    console.log('\nSample unmapped variable IDs (first 10):');
-    Array.from(unmappedVariableIds).slice(0, 10).forEach((id, i) => {
-      const variable = figma.variables.getVariableById(id);
-      const collection = variable ? figma.variables.getVariableCollectionById(variable.variableCollectionId) : null;
-      console.log(`${i + 1}. "${id}"`);
-      console.log(`   Name: ${variable?.name || 'unknown'}`);
-      console.log(`   Collection: ${collection?.name || 'unknown'}`);
-    });
-  } else if (allVariableIds.size > 0) {
-    console.log('\n✅ All variables are mapped!');
-  }
 
   // Create variable breakdown with percentages
   const totalVariableUsages = Array.from(variableSourceCounts.values()).reduce((sum, count) => sum + count, 0);
@@ -5646,21 +5567,10 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     }))
     .sort((a, b) => b.count - a.count); // Sort by count descending
 
-  console.log('\n=== VARIABLE BREAKDOWN ===');
-  console.log('Variable breakdown:', variableBreakdown);
-  console.log('Total variable usages:', totalVariableUsages);
-
   // Count variable-bound properties (for accurate token adoption)
-  console.log('\n=== VARIABLE-BOUND PROPERTIES DETECTION ===');
-  console.log(`Total component instances found: ${componentInstances.length}`);
-
   // Limit processing to prevent crashes on large files
   const MAX_INSTANCES_TO_ANALYZE = 10000;
   const instancesToAnalyze = componentInstances.slice(0, MAX_INSTANCES_TO_ANALYZE);
-
-  if (componentInstances.length > MAX_INSTANCES_TO_ANALYZE) {
-    console.log(`⚠ Limiting detailed analysis to first ${MAX_INSTANCES_TO_ANALYZE} instances for performance`);
-  }
 
   await sendProgress(`Analyzing tokens in ${instancesToAnalyze.length} components...`, 30);
 
@@ -5684,7 +5594,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     processedCount++;
     // Update progress at key intervals
     if (processedCount % updateInterval === 0 || processedCount === instancesToAnalyze.length) {
-      console.log(`Processed ${processedCount}/${instancesToAnalyze.length} instances...`);
       // Report progress: 30% to 60% range
       const progressPercent = 30 + (processedCount / instancesToAnalyze.length) * 30;
       await sendProgress(`Analyzing tokens (${processedCount}/${instancesToAnalyze.length})...`, progressPercent);
@@ -5694,14 +5603,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   const totalVariableBound = variableBoundTotals.colors + variableBoundTotals.typography +
                              variableBoundTotals.spacing + variableBoundTotals.radius;
 
-  console.log('Variable-bound colors:', variableBoundTotals.colors);
-  console.log('Variable-bound typography:', variableBoundTotals.typography);
-  console.log('Variable-bound spacing:', variableBoundTotals.spacing);
-  console.log('Variable-bound radius:', variableBoundTotals.radius);
-  console.log('Total variable-bound properties:', totalVariableBound);
-
   // Detect hardcoded values that should use variables
-  console.log('\n=== HARDCODED VALUES DETECTION ===');
   const hardcodedTotals = {
     colors: 0,
     typography: 0,
@@ -5722,7 +5624,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     processedCount++;
     // Update progress at key intervals
     if (processedCount % updateInterval2 === 0 || processedCount === instancesToAnalyze.length) {
-      console.log(`Processed ${processedCount}/${instancesToAnalyze.length} instances...`);
       // Report progress: 60% to 80% range
       const progressPercent = 60 + (processedCount / instancesToAnalyze.length) * 20;
       await sendProgress(`Detecting hardcoded values (${processedCount}/${instancesToAnalyze.length})...`, progressPercent);
@@ -5733,7 +5634,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
                          hardcodedTotals.spacing + hardcodedTotals.radius;
 
   // Collect detailed orphan information (for troubleshooting)
-  console.log('\n=== COLLECTING ORPHAN DETAILS ===');
   const orphanDetails: OrphanDetail[] = [];
   for (const instance of instancesToAnalyze) {
     const componentId = instance.mainComponent?.id || instance.id;
@@ -5742,7 +5642,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     collectOrphanDetails(instance, orphanDetails, 0, componentId, componentName, instanceId);
     // No limit - collect details for ALL instances to ensure accurate filtering
   }
-  console.log(`Collected ${orphanDetails.length} orphan details from ${instancesToAnalyze.length} instances`);
 
   // Collect token-bound property details
   const tokenBoundDetails: TokenBoundDetail[] = [];
@@ -5753,7 +5652,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     collectTokenBoundDetails(instance, tokenBoundDetails, 0, componentId, componentName, instanceId);
     // No limit - collect details for ALL instances to ensure accurate filtering
   }
-  console.log(`Collected ${tokenBoundDetails.length} token-bound details from ${instancesToAnalyze.length} instances`);
 
   await sendProgress('Loading ignored items...', 85);
 
@@ -5771,14 +5669,6 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   const accurateVariableCoverage = totalOpportunities > 0
     ? (totalVariableBound / totalOpportunities) * 100
     : 0;
-
-  console.log('Hardcoded colors:', hardcodedTotals.colors);
-  console.log('Hardcoded typography:', hardcodedTotals.typography);
-  console.log('Hardcoded spacing:', hardcodedTotals.spacing);
-  console.log('Hardcoded radius:', hardcodedTotals.radius);
-  console.log('Total hardcoded values:', totalHardcoded);
-  console.log('Total opportunities:', totalOpportunities);
-  console.log('ACCURATE Token Adoption:', accurateVariableCoverage.toFixed(1) + '%');
 
   await sendProgress('Finalizing results...', 95);
 

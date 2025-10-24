@@ -220,8 +220,8 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
       if (
         line === line.toUpperCase() &&
         line.trim() !== '' &&
-        line.length < 50 &&
-        /^[A-Z\s]+$/.test(line)
+        line.length < 80 &&
+        /^[A-Z\s\(\)\-\/]+$/.test(line)
       ) {
         return (
           <div
@@ -230,7 +230,8 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
               marginTop: index === 0 ? '0' : '12px',
               marginBottom: '6px',
               fontSize: '10px',
-              whiteSpace: 'nowrap',
+              whiteSpace: 'normal',
+              wordWrap: 'break-word',
             }}
           >
             <span
@@ -256,7 +257,9 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
               color: 'var(--text-primary)',
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: '10px',
-              whiteSpace: 'nowrap',
+              whiteSpace: 'normal',
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word',
             }}
           >
             {line}
@@ -291,18 +294,17 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
         );
       }
 
-      // Check if line is part of a longer paragraph (allow wrapping)
-      const isLongText = line.length > 80 || line.includes('Wrapper') || line.includes('Research') || line.includes('property');
-
-      // Regular text - paragraphs in primary color, short text in secondary
+      // Regular text - default to wrapping and primary color
       return (
         <div
           key={index}
           style={{
             marginBottom: '4px',
-            color: isLongText ? 'var(--text-primary)' : 'var(--text-secondary)',
+            color: 'var(--text-primary)',
             fontSize: '10px',
-            whiteSpace: isLongText ? 'normal' : 'nowrap',
+            whiteSpace: 'normal',
+            wordWrap: 'break-word',
+            lineHeight: '1.5',
           }}
         >
           {line}
@@ -331,7 +333,7 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
       <div
         style={{
           background: 'var(--figma-color-bg)',
-          borderRadius: '8px',
+          borderRadius: '0',
           padding: '24px',
           maxWidth: '400px',
           width: '100%',
@@ -364,6 +366,692 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
           {formatContent(content)}
         </div>
 
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--text-secondary)',
+            fontWeight: '600',
+            cursor: 'pointer',
+            fontSize: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+          }}
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Onboarding Modal Component
+interface OnboardingModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
+  if (!isOpen) return null;
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.75)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '20px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--figma-color-bg)',
+          borderRadius: '0',
+          padding: '24px',
+          maxWidth: '480px',
+          width: '100%',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          position: 'relative',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          style={{
+            fontSize: '13px',
+            fontWeight: '700',
+            color: 'var(--figma-color-text)',
+            marginBottom: '20px',
+            paddingRight: '24px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+          }}
+        >
+          Design System Coverage
+        </div>
+
+        {/* Content */}
+        <div
+          style={{
+            fontSize: '11px',
+            lineHeight: '1.65',
+            color: 'var(--figma-color-text)',
+          }}
+        >
+          {/* What it does */}
+          <div style={{ marginBottom: '24px' }}>
+            <div
+              style={{
+                fontSize: '11px',
+                color: 'var(--figma-color-text)',
+                fontWeight: '700',
+                letterSpacing: '0.03em',
+                textTransform: 'uppercase',
+                marginBottom: '10px',
+              }}
+            >
+              What This Plugin Does
+            </div>
+            <p
+              style={{ margin: '0 0 12px 0', color: 'var(--figma-color-text)' }}
+            >
+              This plugin measures how well your designs adopt your design
+              system by tracking two key metrics:
+              <strong> Component Coverage</strong> (are you using library
+              components?) and <strong>Token Adoption</strong> (are those
+              components using design tokens/variables?).
+            </p>
+          </div>
+
+          {/* How metrics are calculated */}
+          <div style={{ marginBottom: '24px' }}>
+            <div
+              style={{
+                fontSize: '11px',
+                color: 'var(--figma-color-text)',
+                fontWeight: '700',
+                letterSpacing: '0.03em',
+                textTransform: 'uppercase',
+                marginBottom: '10px',
+              }}
+            >
+              How Metrics Are Calculated
+            </div>
+
+            <div style={{ marginBottom: '14px' }}>
+              <div
+                style={{
+                  fontWeight: '600',
+                  marginBottom: '6px',
+                  fontSize: '11px',
+                }}
+              >
+                Component Coverage
+              </div>
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '10px',
+                  color: 'var(--figma-color-text-secondary)',
+                  marginBottom: '6px',
+                }}
+              >
+                Library Instances ÷ Total Instances × 100
+              </div>
+              <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
+                Measures what percentage of component instances come from your
+                design system libraries.
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '14px' }}>
+              <div
+                style={{
+                  fontWeight: '600',
+                  marginBottom: '6px',
+                  fontSize: '11px',
+                }}
+              >
+                Token Adoption (Property-Level)
+              </div>
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '10px',
+                  color: 'var(--figma-color-text-secondary)',
+                  marginBottom: '6px',
+                }}
+              >
+                Variable-bound Properties ÷ Total Properties × 100
+              </div>
+              <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
+                Counts individual properties (fills, strokes, typography,
+                radius, borders) that use design tokens. A button with 5
+                properties and only 1 token-bound property = 20% token adoption,
+                not 100%.
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '14px' }}>
+              <div
+                style={{
+                  fontWeight: '600',
+                  marginBottom: '6px',
+                  fontSize: '11px',
+                }}
+              >
+                Overall Score (Foundation-First)
+              </div>
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '10px',
+                  color: 'var(--figma-color-text-secondary)',
+                  marginBottom: '6px',
+                }}
+              >
+                (Token Adoption × 0.55) + (Component Coverage × 0.45)
+              </div>
+              <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
+                Tokens are weighted higher (55%) because they drive 80% of
+                design consistency. Based on research from IBM Carbon,
+                Atlassian, and Pinterest design systems.
+              </p>
+            </div>
+
+            <div>
+              <div
+                style={{
+                  fontWeight: '600',
+                  marginBottom: '6px',
+                  fontSize: '11px',
+                }}
+              >
+                Orphan Rate
+              </div>
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '10px',
+                  color: 'var(--figma-color-text-secondary)',
+                  marginBottom: '6px',
+                }}
+              >
+                Hardcoded Properties ÷ Total Properties × 100
+              </div>
+              <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
+                Tracks hardcoded values (colors, typography, radius, borders)
+                that should be using tokens. Industry target: &lt;20% orphans.
+              </p>
+            </div>
+          </div>
+
+          {/* Limitations */}
+          <div style={{ marginBottom: '24px' }}>
+            <div
+              style={{
+                fontSize: '11px',
+                color: 'var(--figma-color-text)',
+                fontWeight: '700',
+                letterSpacing: '0.03em',
+                textTransform: 'uppercase',
+                marginBottom: '10px',
+              }}
+            >
+              What This Plugin Is NOT
+            </div>
+            <p
+              style={{ margin: '0 0 12px 0', color: 'var(--figma-color-text)' }}
+            >
+              This plugin <strong>only analyzes what you select</strong>—it
+              cannot scan entire pages or files automatically. It measures
+              adoption of existing components and tokens, but{' '}
+              <strong>cannot detect which components are missing</strong> from
+              your design system.
+            </p>
+            <p
+              style={{ margin: '0 0 12px 0', color: 'var(--figma-color-text)' }}
+            >
+              The plugin <strong>does not analyze spacing</strong> (padding,
+              gaps) due to high false positive rates. It also{' '}
+              <strong>cannot track usage over time</strong>—you'll need to
+              export results and track them manually.
+            </p>
+            <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
+              Finally, it <strong>cannot auto-fix orphaned values</strong> or
+              enforce design system rules. It's a measurement tool, not an
+              enforcement tool.
+            </p>
+          </div>
+
+          {/* Getting Started */}
+          <div>
+            <div
+              style={{
+                fontSize: '11px',
+                color: 'var(--figma-color-text)',
+                fontWeight: '700',
+                letterSpacing: '0.03em',
+                textTransform: 'uppercase',
+                marginBottom: '10px',
+              }}
+            >
+              Getting Started
+            </div>
+            <p
+              style={{ margin: '0 0 8px 0', color: 'var(--figma-color-text)' }}
+            >
+              1. Select the frames, components, or sections you want to analyze
+              <br />
+              2. Click "Analyze Selection" to see your metrics
+              <br />
+              3. Use the tabs to explore components and design tokens in detail
+              <br />
+              4. Mark intentional exceptions as "Ignored" to refine your metrics
+            </p>
+          </div>
+        </div>
+
+        {/* Get Started Button */}
+        <button
+          onClick={onClose}
+          style={{
+            width: '100%',
+            height: '40px',
+            marginTop: '24px',
+            background: 'var(--button-bg)',
+            color: 'var(--button-text)',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: '600',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+          }}
+        >
+          Get Started
+        </button>
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--text-secondary)',
+            fontWeight: '600',
+            cursor: 'pointer',
+            fontSize: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+          }}
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Help Modal (same content as onboarding, but always accessible)
+interface HelpModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+let helpModalRenderCount = 0;
+
+function HelpModal({ isOpen, onClose }: HelpModalProps) {
+  helpModalRenderCount++;
+
+  if (!isOpen) {
+    return null;
+  }
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.75)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '20px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--figma-color-bg)',
+          borderRadius: '0',
+          padding: '24px',
+          maxWidth: '480px',
+          width: '100%',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          position: 'relative',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          style={{
+            fontSize: '13px',
+            fontWeight: '700',
+            color: 'var(--figma-color-text)',
+            marginBottom: '20px',
+            paddingRight: '24px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+          }}
+        >
+          Design System Coverage
+        </div>
+
+        {/* Content */}
+        <div
+          style={{
+            fontSize: '11px',
+            lineHeight: '1.65',
+            color: 'var(--figma-color-text)',
+          }}
+        >
+          {/* What it does */}
+          <div style={{ marginBottom: '24px' }}>
+            <div
+              style={{
+                fontSize: '11px',
+                color: 'var(--figma-color-text)',
+                fontWeight: '700',
+                letterSpacing: '0.03em',
+                textTransform: 'uppercase',
+                marginBottom: '10px',
+              }}
+            >
+              What This Plugin Does
+            </div>
+            <p
+              style={{ margin: '0 0 12px 0', color: 'var(--figma-color-text)' }}
+            >
+              This plugin measures how well your designs adopt your design
+              system by tracking two key metrics:
+              <strong> Component Coverage</strong> (are you using library
+              components?) and <strong>Token Adoption</strong> (are those
+              components using design tokens/variables?).
+            </p>
+          </div>
+
+          {/* How metrics are calculated */}
+          <div style={{ marginBottom: '24px' }}>
+            <div
+              style={{
+                fontSize: '11px',
+                color: 'var(--figma-color-text)',
+                fontWeight: '700',
+                letterSpacing: '0.03em',
+                textTransform: 'uppercase',
+                marginBottom: '10px',
+              }}
+            >
+              How Metrics Are Calculated
+            </div>
+
+            <div style={{ marginBottom: '14px' }}>
+              <div
+                style={{
+                  fontWeight: '600',
+                  marginBottom: '6px',
+                  fontSize: '11px',
+                }}
+              >
+                Component Coverage
+              </div>
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '10px',
+                  color: 'var(--figma-color-text-secondary)',
+                  marginBottom: '6px',
+                }}
+              >
+                Library Instances ÷ Total Instances × 100
+              </div>
+              <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
+                Measures what percentage of component instances come from your
+                design system libraries.
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '14px' }}>
+              <div
+                style={{
+                  fontWeight: '600',
+                  marginBottom: '6px',
+                  fontSize: '11px',
+                }}
+              >
+                Token Adoption (Property-Level)
+              </div>
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '10px',
+                  color: 'var(--figma-color-text-secondary)',
+                  marginBottom: '6px',
+                }}
+              >
+                Variable-bound Properties ÷ Total Properties × 100
+              </div>
+              <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
+                Counts individual properties (fills, strokes, typography,
+                radius, borders) that use design tokens. A button with 5
+                properties and only 1 token-bound property = 20% token adoption,
+                not 100%.
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '14px' }}>
+              <div
+                style={{
+                  fontWeight: '600',
+                  marginBottom: '6px',
+                  fontSize: '11px',
+                }}
+              >
+                Overall Score (Foundation-First)
+              </div>
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '10px',
+                  color: 'var(--figma-color-text-secondary)',
+                  marginBottom: '6px',
+                }}
+              >
+                (Token Adoption × 0.55) + (Component Coverage × 0.45)
+              </div>
+              <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
+                Tokens are weighted higher (55%) because they drive 80% of
+                design consistency. Based on research from IBM Carbon,
+                Atlassian, and Pinterest design systems.
+              </p>
+            </div>
+
+            <div>
+              <div
+                style={{
+                  fontWeight: '600',
+                  marginBottom: '6px',
+                  fontSize: '11px',
+                }}
+              >
+                Orphan Rate
+              </div>
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '10px',
+                  color: 'var(--figma-color-text-secondary)',
+                  marginBottom: '6px',
+                }}
+              >
+                Hardcoded Properties ÷ Total Properties × 100
+              </div>
+              <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
+                Tracks hardcoded values (colors, typography, radius, borders)
+                that should be using tokens. Industry target: &lt;20% orphans.
+              </p>
+            </div>
+          </div>
+
+          {/* Limitations */}
+          <div style={{ marginBottom: '24px' }}>
+            <div
+              style={{
+                fontSize: '11px',
+                color: 'var(--figma-color-text)',
+                fontWeight: '700',
+                letterSpacing: '0.03em',
+                textTransform: 'uppercase',
+                marginBottom: '10px',
+              }}
+            >
+              What This Plugin Is NOT
+            </div>
+            <p
+              style={{ margin: '0 0 12px 0', color: 'var(--figma-color-text)' }}
+            >
+              This plugin <strong>only analyzes what you select</strong>—it
+              cannot scan entire pages or files automatically. It measures
+              adoption of existing components and tokens, but{' '}
+              <strong>cannot detect which components are missing</strong> from
+              your design system.
+            </p>
+            <p
+              style={{ margin: '0 0 12px 0', color: 'var(--figma-color-text)' }}
+            >
+              The plugin <strong>does not analyze spacing</strong> (padding,
+              gaps) due to high false positive rates. It also{' '}
+              <strong>cannot track usage over time</strong>—you'll need to
+              export results and track them manually.
+            </p>
+            <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
+              Finally, it <strong>cannot auto-fix orphaned values</strong> or
+              enforce design system rules. It's a measurement tool, not an
+              enforcement tool.
+            </p>
+          </div>
+
+          {/* Getting Started */}
+          <div>
+            <div
+              style={{
+                fontSize: '11px',
+                color: 'var(--figma-color-text)',
+                fontWeight: '700',
+                letterSpacing: '0.03em',
+                textTransform: 'uppercase',
+                marginBottom: '10px',
+              }}
+            >
+              Getting Started
+            </div>
+            <p
+              style={{ margin: '0 0 8px 0', color: 'var(--figma-color-text)' }}
+            >
+              1. Select the frames, components, or sections you want to analyze
+              <br />
+              2. Click "Analyze Selection" to see your metrics
+              <br />
+              3. Use the tabs to explore components and design tokens in detail
+              <br />
+              4. Mark intentional exceptions as "Ignored" to refine your metrics
+            </p>
+          </div>
+        </div>
+
+        {/* Get Started Button */}
+        <button
+          onClick={onClose}
+          style={{
+            width: '100%',
+            height: '40px',
+            marginTop: '24px',
+            background: 'var(--button-bg)',
+            color: 'var(--button-text)',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: '600',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+          }}
+        >
+          Got It
+        </button>
+
+        {/* Close button */}
         <button
           onClick={onClose}
           style={{
@@ -449,17 +1137,55 @@ interface DonutChartProps {
   centerLabel?: string;
   gapDegrees?: number;
   onClick?: () => void;
+  trackColor?: 'card' | 'tab';
+}
+
+// Animated Counter Hook
+function useAnimatedCounter(target: number, duration: number = 800) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let startTime: number | null = null;
+    let animationFrame: number;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+
+      // Ease out cubic
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(target * easeProgress));
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [target, duration]);
+
+  return count;
 }
 
 function DonutChart({
   segments,
   size = 64,
-  strokeWidth = 4,
+  strokeWidth = 3,
   centerValue,
   centerLabel,
   gapDegrees = 0,
   onClick,
+  trackColor = 'card',
 }: DonutChartProps) {
+  // Parse and animate percentage values
+  const isPercentage = centerValue?.includes('%');
+  const numericValue = isPercentage
+    ? parseFloat(centerValue?.replace('%', '') || '0')
+    : 0;
+  const animatedValue = useAnimatedCounter(numericValue, 800);
+  const displayValue = isPercentage ? `${animatedValue}%` : centerValue;
+
   // Chart dimensions
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -469,33 +1195,43 @@ function DonutChart({
   const gapLength = (gapDegrees / 360) * circumference;
 
   // Calculate total value for percentage calculations
-  const total = segments.reduce((sum, seg) => sum + seg.value, 0);
+  const total = segments.reduce((sum, seg) => sum + (seg.value || 0), 0);
 
   // Generate progress arcs
   // Note: These use stroke-dasharray for animation-ready rendering
   let currentOffset = 0;
-  const progressArcs = segments.map((segment, index) => {
-    const percentage = segment.value / total;
-    const strokeLength = circumference * percentage - gapLength;
-    const offset = currentOffset;
-    currentOffset += strokeLength + gapLength;
+  const progressArcs = segments
+    .filter(segment => segment.value > 0) // Only render segments with positive values
+    .map((segment, index) => {
+      // Safety checks to prevent NaN
+      const safeValue = segment.value || 0;
+      const safeTotal = total || 1; // Prevent division by zero
+      const percentage = safeValue / safeTotal;
+      const strokeLength = Math.max(0, circumference * percentage - gapLength); // Ensure non-negative
+      const offset = currentOffset;
+      currentOffset += strokeLength + gapLength;
 
-    return (
-      <circle
-        key={`progress-${index}`}
-        cx={center}
-        cy={center}
-        r={radius}
-        fill="none"
-        stroke={segment.color}
-        strokeWidth={strokeWidth}
-        strokeDasharray={`${strokeLength} ${circumference}`}
-        strokeDashoffset={-offset}
-        strokeLinecap="butt"
-        transform={`rotate(-90 ${center} ${center})`}
-      />
-    );
-  });
+      return (
+        <circle
+          key={`progress-${index}`}
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={segment.color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={`${strokeLength} ${circumference}`}
+          strokeDashoffset={-offset}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${center} ${center})`}
+          style={{
+            ['--stroke-length' as any]: strokeLength,
+            animation: 'donutFill 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+            animationDelay: `${index * 0.1}s`,
+          }}
+        />
+      );
+    });
 
   return (
     <div
@@ -520,7 +1256,7 @@ function DonutChart({
           r={radius}
           fill="none"
           style={{
-            stroke: 'var(--track-bg)',
+            stroke: trackColor === 'card' ? 'var(--track-bg-card)' : 'var(--track-bg-tab)',
             strokeWidth: `${strokeWidth}px`,
           }}
         />
@@ -543,14 +1279,14 @@ function DonutChart({
         >
           <div
             style={{
-              fontSize: '18px',
-              fontWeight: '700',
+              fontSize: '14px',
+              fontWeight: '900',
               lineHeight: '1',
               fontFeatureSettings: '"tnum"',
               color: 'var(--text-primary)',
             }}
           >
-            {centerValue}
+            {displayValue}
           </div>
           {centerLabel && (
             <div
@@ -590,10 +1326,14 @@ function Plugin() {
     content: string;
   } | null>(null);
 
+  // Onboarding modal state
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showHelpTooltip, setShowHelpTooltip] = useState(false);
+
+
   // Theme-aware CSS using Figma's native CSS variables
   const themeStyles = `
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-
     /* Normalize plugin header spacing */
     * {
       box-sizing: border-box;
@@ -621,8 +1361,9 @@ function Plugin() {
     /* Light mode specific overrides */
     @media (prefers-color-scheme: light) {
       :root {
-        --track-bg: #ffffff;
-        --progress-fill: #222222;
+        --track-bg-card: #FFFFFF;
+        --track-bg-tab: #F5F5F5;
+        --progress-fill: #000000;
         --progress-fill-secondary: #52525B;
       }
     }
@@ -630,7 +1371,8 @@ function Plugin() {
     /* Dark mode specific overrides */
     @media (prefers-color-scheme: dark) {
       :root {
-        --track-bg: #505050;
+        --track-bg-card: #232323;
+        --track-bg-tab: #232323;
         --progress-fill: #FFFFFF;
         --progress-fill-secondary: #B8B8B8;
         --button-bg: #FFFFFF;
@@ -658,6 +1400,25 @@ function Plugin() {
     * {
       font-family: 'JetBrains Mono', 'Monaco', 'Courier New', monospace !important;
     }
+
+    /* Animations */
+    @keyframes barGrow {
+      from {
+        transform: scaleX(0);
+      }
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    @keyframes donutFill {
+      from {
+        stroke-dasharray: 0 1000;
+      }
+      to {
+        stroke-dasharray: var(--stroke-length) 1000;
+      }
+    }
   `;
 
   // Tab state
@@ -676,7 +1437,9 @@ function Plugin() {
   );
   // Track orphan instances by composite key: orphanNodeId:componentId
   // This allows ignoring an orphan in specific components or everywhere
-  const [ignoredOrphanInstances, setIgnoredOrphanInstances] = useState<Set<string>>(new Set());
+  const [ignoredOrphanInstances, setIgnoredOrphanInstances] = useState<
+    Set<string>
+  >(new Set());
   const [ignoredInstances, setIgnoredInstances] = useState<Set<string>>(
     new Set()
   );
@@ -685,17 +1448,32 @@ function Plugin() {
   );
 
   // Helper functions for orphan instance tracking
-  const getOrphanInstanceKey = (orphanNodeId: string, componentId: string) => 
+  const getOrphanInstanceKey = (orphanNodeId: string, componentId: string) =>
     `${orphanNodeId}:${componentId}`;
-  
-  const isOrphanIgnoredInComponent = (orphanNodeId: string, componentId: string) =>
+
+  const isOrphanIgnoredInComponent = (
+    orphanNodeId: string,
+    componentId: string
+  ) =>
     ignoredOrphanInstances.has(getOrphanInstanceKey(orphanNodeId, componentId));
-  
-  const isOrphanIgnoredEverywhere = (orphanNodeId: string, componentIds: string[]) =>
-    componentIds.every(compId => isOrphanIgnoredInComponent(orphanNodeId, compId));
+
+  const isOrphanIgnoredEverywhere = (
+    orphanNodeId: string,
+    componentIds: string[]
+  ) =>
+    componentIds.every((compId) =>
+      isOrphanIgnoredInComponent(orphanNodeId, compId)
+    );
 
   // Listen for messages from plugin backend
   useEffect(() => {
+    // Expose reset function for testing (accessible from console)
+    const resetFn = () => {
+      emit('RESET_ONBOARDING');
+    };
+    (window as any).resetOnboarding = resetFn;
+    (globalThis as any).resetOnboarding = resetFn;
+
     on('RESULTS', (results: CoverageMetrics) => {
       setData(results);
       setLoading(false);
@@ -711,12 +1489,14 @@ function Plugin() {
         // New format: Set<orphanNodeId:componentId>
         const orphanInstances = new Set<string>();
         if (results.hardcodedValues.ignoredOrphans) {
-          results.hardcodedValues.ignoredOrphans.forEach(orphanId => {
+          results.hardcodedValues.ignoredOrphans.forEach((orphanId) => {
             // For backwards compatibility, if we have orphan IDs without component context,
             // we need to mark them as ignored in all components
-            results.hardcodedValues.details?.forEach(detail => {
+            results.hardcodedValues.details?.forEach((detail) => {
               if (detail.nodeId === orphanId) {
-                orphanInstances.add(getOrphanInstanceKey(orphanId, detail.parentComponentId));
+                orphanInstances.add(
+                  getOrphanInstanceKey(orphanId, detail.parentComponentId)
+                );
               }
             });
           });
@@ -751,12 +1531,19 @@ function Plugin() {
     on('PROGRESS', (data: { step: string; percent: number }) => {
       setProgress({ step: data.step, percent: data.percent });
       // When we receive progress, we know analysis has started AND there's a selection
-      if (!loading) {
-        setLoading(true);
-        setHasSelection(true);
-      }
+      setLoading((currentLoading) => {
+        if (!currentLoading) {
+          setHasSelection(true);
+          return true;
+        }
+        return currentLoading;
+      });
     });
-  }, [loading]);
+    on('ONBOARDING_STATUS', (hasSeenOnboarding: boolean) => {
+      const shouldShow = !hasSeenOnboarding;
+      setShowOnboarding(shouldShow);
+    });
+  }, []); // Empty dependency array - handlers should only be registered once on mount
 
   // Helper functions
   const formatPercent = (value: number) => Math.round(value) + '%';
@@ -799,14 +1586,24 @@ function Plugin() {
     emit('SELECT_NODE', nodeId);
   };
 
+  const handleCloseOnboarding = () => {
+    setShowOnboarding(false);
+    emit('SET_ONBOARDING_SEEN');
+    // Trigger analysis after closing onboarding if user has selection
+    if (hasSelection) {
+      emit('ANALYZE');
+    }
+  };
+
   const handleToggleIgnoreComponent = (componentId: string) => {
     const newIgnoredComponents = new Set(ignoredComponents);
     const newIgnoredOrphanInstances = new Set(ignoredOrphanInstances);
 
     // Find all orphans for this component
-    const componentOrphans = data?.hardcodedValues?.details?.filter(
-      detail => detail.parentComponentId === componentId
-    ) || [];
+    const componentOrphans =
+      data?.hardcodedValues?.details?.filter(
+        (detail) => detail.parentComponentId === componentId
+      ) || [];
 
     // Check if we should ignore or unignore based on the actual stored state
     const isCurrentlyIgnored = ignoredComponents.has(componentId);
@@ -815,7 +1612,7 @@ function Plugin() {
       // Unignore the component and all its orphan instances
       newIgnoredComponents.delete(componentId);
       emit('UNIGNORE_COMPONENT', componentId);
-      componentOrphans.forEach(orphan => {
+      componentOrphans.forEach((orphan) => {
         const key = getOrphanInstanceKey(orphan.nodeId, componentId);
         if (newIgnoredOrphanInstances.has(key)) {
           newIgnoredOrphanInstances.delete(key);
@@ -826,7 +1623,7 @@ function Plugin() {
       // Ignore the component and all its orphan instances
       newIgnoredComponents.add(componentId);
       emit('IGNORE_COMPONENT', componentId);
-      componentOrphans.forEach(orphan => {
+      componentOrphans.forEach((orphan) => {
         const key = getOrphanInstanceKey(orphan.nodeId, componentId);
         if (!newIgnoredOrphanInstances.has(key)) {
           newIgnoredOrphanInstances.add(key);
@@ -845,20 +1642,26 @@ function Plugin() {
   };
 
   // Toggle ignore for an orphan in ALL components
-  const handleToggleIgnoreOrphanEverywhere = (orphanNodeId: string, componentIds: string[]) => {
+  const handleToggleIgnoreOrphanEverywhere = (
+    orphanNodeId: string,
+    componentIds: string[]
+  ) => {
     const newSet = new Set(ignoredOrphanInstances);
-    const isCurrentlyIgnoredEverywhere = isOrphanIgnoredEverywhere(orphanNodeId, componentIds);
+    const isCurrentlyIgnoredEverywhere = isOrphanIgnoredEverywhere(
+      orphanNodeId,
+      componentIds
+    );
 
     if (isCurrentlyIgnoredEverywhere) {
       // Unignore in all components
-      componentIds.forEach(compId => {
+      componentIds.forEach((compId) => {
         const key = getOrphanInstanceKey(orphanNodeId, compId);
         newSet.delete(key);
       });
       emit('UNIGNORE_ORPHAN', orphanNodeId);
     } else {
       // Ignore in all components
-      componentIds.forEach(compId => {
+      componentIds.forEach((compId) => {
         const key = getOrphanInstanceKey(orphanNodeId, compId);
         newSet.add(key);
       });
@@ -873,7 +1676,10 @@ function Plugin() {
   };
 
   // Toggle ignore for an orphan in a SPECIFIC component
-  const handleToggleIgnoreOrphanInComponent = (orphanNodeId: string, componentId: string) => {
+  const handleToggleIgnoreOrphanInComponent = (
+    orphanNodeId: string,
+    componentId: string
+  ) => {
     const newSet = new Set(ignoredOrphanInstances);
     const key = getOrphanInstanceKey(orphanNodeId, componentId);
 
@@ -909,14 +1715,17 @@ function Plugin() {
     }
   };
 
-  const handleToggleIgnoreLibrary = (librarySource: string, instanceIds: string[]) => {
+  const handleToggleIgnoreLibrary = (
+    librarySource: string,
+    instanceIds: string[]
+  ) => {
     const newIgnoredLibraries = new Set(ignoredLibraries);
     const newIgnoredInstances = new Set(ignoredInstances);
 
     if (newIgnoredLibraries.has(librarySource)) {
       // Unignore the library and all its instances
       newIgnoredLibraries.delete(librarySource);
-      instanceIds.forEach(id => {
+      instanceIds.forEach((id) => {
         if (newIgnoredInstances.has(id)) {
           newIgnoredInstances.delete(id);
           emit('UNIGNORE_INSTANCE', id);
@@ -925,7 +1734,7 @@ function Plugin() {
     } else {
       // Ignore the library and all its instances
       newIgnoredLibraries.add(librarySource);
-      instanceIds.forEach(id => {
+      instanceIds.forEach((id) => {
         if (!newIgnoredInstances.has(id)) {
           newIgnoredInstances.add(id);
           emit('IGNORE_INSTANCE', id);
@@ -1049,7 +1858,10 @@ function Plugin() {
       const isComponentIgnored = ignoredComponents.has(
         detail.parentComponentId
       );
-      const isOrphanIgnored = isOrphanIgnoredInComponent(detail.nodeId, detail.parentComponentId);
+      const isOrphanIgnored = isOrphanIgnoredInComponent(
+        detail.nodeId,
+        detail.parentComponentId
+      );
       const isInstanceIgnored = ignoredInstances.has(detail.parentInstanceId);
 
       // Only count if NOT ignored at any level
@@ -1237,10 +2049,14 @@ function Plugin() {
           librarySource.includes('Local (built with DS)');
         const isCollapsed = collapsedSections.has(librarySource);
 
-        const instanceIds = instances.map(i => i.instanceId);
+        const instanceIds = instances.map((i) => i.instanceId);
         // Check if library is ignored OR if all instances are manually ignored
-        const allInstancesIgnored = !isWrapper && instanceIds.length > 0 && instanceIds.every(id => ignoredInstances.has(id));
-        const isLibraryIgnored = ignoredLibraries.has(librarySource) || allInstancesIgnored;
+        const allInstancesIgnored =
+          !isWrapper &&
+          instanceIds.length > 0 &&
+          instanceIds.every((id) => ignoredInstances.has(id));
+        const isLibraryIgnored =
+          ignoredLibraries.has(librarySource) || allInstancesIgnored;
 
         return (
           <div
@@ -1260,7 +2076,12 @@ function Plugin() {
               }}
             >
               <div
-                style={{ flex: 1, cursor: 'pointer', opacity: isLibraryIgnored ? 0.5 : 1, minWidth: 0 }}
+                style={{
+                  flex: 1,
+                  cursor: 'pointer',
+                  opacity: isLibraryIgnored ? 0.5 : 1,
+                  minWidth: 0,
+                }}
                 onClick={() => handleToggleCollapse(librarySource)}
               >
                 <div
@@ -1311,7 +2132,9 @@ function Plugin() {
                 >
                   <CustomCheckbox
                     checked={isLibraryIgnored}
-                    onChange={() => handleToggleIgnoreLibrary(librarySource, instanceIds)}
+                    onChange={() =>
+                      handleToggleIgnoreLibrary(librarySource, instanceIds)
+                    }
                   />
                   <span
                     style={{
@@ -1372,7 +2195,9 @@ function Plugin() {
                               fontWeight: 600,
                               color: 'var(--figma-color-text)',
                               marginBottom: '2px',
-                              textDecoration: isIgnored ? 'line-through' : 'none',
+                              textDecoration: isIgnored
+                                ? 'line-through'
+                                : 'none',
                             }}
                           >
                             {instance.instanceName}
@@ -1394,9 +2219,7 @@ function Plugin() {
                           </div>
                         </div>
                         <button
-                          onClick={() =>
-                            handleSelectNode(instance.instanceId)
-                          }
+                          onClick={() => handleSelectNode(instance.instanceId)}
                           title="View in canvas"
                           style={{
                             width: '20px',
@@ -1457,7 +2280,7 @@ function Plugin() {
       }
       const group = orphanGroups.get(detail.nodeId)!;
       // Only add component if not already in the list
-      if (!group.components.some(c => c.id === detail.parentComponentId)) {
+      if (!group.components.some((c) => c.id === detail.parentComponentId)) {
         group.components.push({
           id: detail.parentComponentId,
           name: detail.parentComponentName,
@@ -1466,10 +2289,15 @@ function Plugin() {
     });
 
     return Array.from(orphanGroups.values()).map((group) => {
-      const componentIds = group.components.map(c => c.id);
-      const isIgnoredEverywhere = isOrphanIgnoredEverywhere(group.orphan.nodeId, componentIds);
+      const componentIds = group.components.map((c) => c.id);
+      const isIgnoredEverywhere = isOrphanIgnoredEverywhere(
+        group.orphan.nodeId,
+        componentIds
+      );
       const orphanOpacity = isIgnoredEverywhere ? 0.4 : 1;
-      const isCollapsed = collapsedSections.has(`orphan-${group.orphan.nodeId}`);
+      const isCollapsed = collapsedSections.has(
+        `orphan-${group.orphan.nodeId}`
+      );
       const color = categoryColors[group.orphan.category] || '#666';
 
       return (
@@ -1490,8 +2318,15 @@ function Plugin() {
             }}
           >
             <div
-              style={{ flex: 1, cursor: 'pointer', opacity: orphanOpacity, minWidth: 0 }}
-              onClick={() => handleToggleCollapse(`orphan-${group.orphan.nodeId}`)}
+              style={{
+                flex: 1,
+                cursor: 'pointer',
+                opacity: orphanOpacity,
+                minWidth: 0,
+              }}
+              onClick={() =>
+                handleToggleCollapse(`orphan-${group.orphan.nodeId}`)
+              }
             >
               <div
                 style={{
@@ -1527,10 +2362,28 @@ function Plugin() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                <span style={{ textTransform: 'uppercase', fontSize: '9px', color: 'var(--figma-color-text-tertiary)' }}>TYPE:</span>{' '}
-                <span style={{ textTransform: 'capitalize' }}>{group.orphan.nodeType.toLowerCase()}</span>
+                <span
+                  style={{
+                    textTransform: 'uppercase',
+                    fontSize: '9px',
+                    color: 'var(--figma-color-text-tertiary)',
+                  }}
+                >
+                  TYPE:
+                </span>{' '}
+                <span style={{ textTransform: 'capitalize' }}>
+                  {group.orphan.nodeType.toLowerCase()}
+                </span>
                 {' • '}
-                <span style={{ textTransform: 'uppercase', fontSize: '9px', color: 'var(--figma-color-text-tertiary)' }}>HARDCODED:</span>{' '}
+                <span
+                  style={{
+                    textTransform: 'uppercase',
+                    fontSize: '9px',
+                    color: 'var(--figma-color-text-tertiary)',
+                  }}
+                >
+                  HARDCODED:
+                </span>{' '}
                 {group.orphan.properties.map((prop, i) => (
                   <span key={i}>
                     <span style={{ color, fontWeight: 500 }}>{prop}</span>
@@ -1549,7 +2402,12 @@ function Plugin() {
             >
               <CustomCheckbox
                 checked={isIgnoredEverywhere}
-                onChange={() => handleToggleIgnoreOrphanEverywhere(group.orphan.nodeId, componentIds)}
+                onChange={() =>
+                  handleToggleIgnoreOrphanEverywhere(
+                    group.orphan.nodeId,
+                    componentIds
+                  )
+                }
               />
               <span
                 style={{
@@ -1563,7 +2421,10 @@ function Plugin() {
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleToggleIgnoreOrphanEverywhere(group.orphan.nodeId, componentIds);
+                  handleToggleIgnoreOrphanEverywhere(
+                    group.orphan.nodeId,
+                    componentIds
+                  );
                 }}
               >
                 Ignore All
@@ -1575,7 +2436,10 @@ function Plugin() {
           {!isCollapsed && (
             <div style={{ paddingTop: '8px' }}>
               {group.components.map((comp) => {
-                const isIgnoredInThisComponent = isOrphanIgnoredInComponent(group.orphan.nodeId, comp.id);
+                const isIgnoredInThisComponent = isOrphanIgnoredInComponent(
+                  group.orphan.nodeId,
+                  comp.id
+                );
                 const componentOpacity = isIgnoredInThisComponent ? 0.4 : 1;
 
                 return (
@@ -1599,7 +2463,12 @@ function Plugin() {
                     >
                       <CustomCheckbox
                         checked={isIgnoredInThisComponent}
-                        onChange={() => handleToggleIgnoreOrphanInComponent(group.orphan.nodeId, comp.id)}
+                        onChange={() =>
+                          handleToggleIgnoreOrphanInComponent(
+                            group.orphan.nodeId,
+                            comp.id
+                          )
+                        }
                       />
                       <div style={{ flex: 1, opacity: componentOpacity }}>
                         <div
@@ -1607,7 +2476,9 @@ function Plugin() {
                             fontWeight: 600,
                             color: 'var(--figma-color-text)',
                             marginBottom: '2px',
-                            textDecoration: isIgnoredInThisComponent ? 'line-through' : 'none',
+                            textDecoration: isIgnoredInThisComponent
+                              ? 'line-through'
+                              : 'none',
                           }}
                         >
                           {comp.name}
@@ -1645,7 +2516,8 @@ function Plugin() {
                           transition: 'background 0.15s ease',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'var(--figma-color-bg-hover)';
+                          e.currentTarget.style.background =
+                            'var(--figma-color-bg-hover)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = 'transparent';
@@ -1672,20 +2544,120 @@ function Plugin() {
         <div
           style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
         >
+          {/* Header with help button */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '12px',
+              zIndex: 1000,
+            }}
+          >
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setModalContent({
+                  title: 'HELP',
+                  content: `WHAT THIS PLUGIN DOES
+
+This plugin measures how well your designs adopt your design system by tracking two key metrics: Component Coverage (are you using library components?) and Token Adoption (are those components using design tokens/variables?).
+
+HOW METRICS ARE CALCULATED
+
+COMPONENT COVERAGE
+Library Instances ÷ Total Instances × 100
+Measures what percentage of component instances come from your design system libraries.
+
+TOKEN ADOPTION (PROPERTY-LEVEL)
+Variable-bound Properties ÷ Total Properties × 100
+Counts individual properties (fills, strokes, typography, radius, borders) that use design tokens. A button with 5 properties and only 1 token-bound property = 20% token adoption, not 100%.
+
+OVERALL SCORE (FOUNDATION-FIRST)
+(Token Adoption × 0.55) + (Component Coverage × 0.45)
+Tokens are weighted higher (55%) because they drive 80% of design consistency. Based on research from IBM Carbon, Atlassian, and Pinterest design systems.
+
+ORPHAN RATE
+Hardcoded Properties ÷ Total Properties × 100
+Tracks hardcoded values (colors, typography, radius, borders) that should be using tokens. Industry target: <20% orphans.
+
+WHAT THIS PLUGIN IS NOT
+
+This plugin only analyzes what you select—it cannot scan entire pages or files automatically. It measures adoption of existing components and tokens, but cannot detect which components are missing from your design system.
+
+The plugin does not analyze spacing (padding, gaps) due to high false positive rates. It also cannot track usage over time—you'll need to export results and track them manually.
+
+Finally, it cannot auto-fix orphaned values or enforce design system rules. It's a measurement tool, not an enforcement tool.
+
+GETTING STARTED
+
+1. Select the frames, components, or sections you want to analyze
+2. Click "Analyze Selection" to see your metrics
+3. Use the tabs to explore components and design tokens in detail
+4. Mark intentional exceptions as "Ignored" to refine your metrics`
+                });
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--figma-color-text)';
+                setShowHelpTooltip(true);
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#9D9D9D';
+                setTimeout(() => {
+                  setShowHelpTooltip(false);
+                }, 100);
+              }}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: '#9D9D9D',
+                fontSize: '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                fontWeight: '300',
+                cursor: 'pointer',
+                padding: '4px',
+                transition: 'color 0.2s',
+                position: 'relative',
+              }}
+            >
+              ?
+              {showHelpTooltip && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: '20px',
+                    transform: 'translateY(-50%)',
+                    background: 'var(--figma-color-bg-inverse)',
+                    color: 'var(--figma-color-text-onbrand)',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'none',
+                    zIndex: 10000,
+                  }}
+                >
+                  Help
+                </div>
+              )}
+            </button>
+          </div>
+
           <div
             style={{
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               justifyContent: 'center',
               padding: '20px',
             }}
           >
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'left' }}>
               <div
                 style={{
-                  fontSize: '14px',
+                  fontSize: '11px',
                   fontWeight: '600',
                   color: 'var(--text-primary)',
                   marginBottom: '16px',
@@ -1696,31 +2668,44 @@ function Plugin() {
             </div>
             <div
               style={{
-                width: '240px',
-                height: '2px',
-                background: 'var(--track-bg)',
-                borderRadius: '4px',
+                position: 'relative',
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
               <div
                 style={{
-                  width: progress.percent + '%',
-                  height: '100%',
-                  background: 'var(--progress-fill)',
-                  borderRadius: '4px',
-                  transition: 'width 0.4s ease',
+                  flex: 1,
+                  height: '2px',
+                  background: 'var(--track-bg-card)',
+                  borderRadius: '0',
                 }}
-              />
-            </div>
-            <VerticalSpace space="small" />
-            <div
-              style={{
-                fontSize: '12px',
-                color: 'var(--text-tertiary)',
-                textAlign: 'center',
-              }}
-            >
-              {Math.round(progress.percent)}%
+              >
+                <div
+                  style={{
+                    width: progress.percent + '%',
+                    height: '100%',
+                    background: 'var(--progress-fill)',
+                    borderRadius: '0',
+                    transition: 'width 0.4s ease',
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  position: 'absolute',
+                  right: '0',
+                  fontSize: '12px',
+                  color: 'var(--text-tertiary)',
+                  textAlign: 'right',
+                  minWidth: '40px',
+                  paddingLeft: '12px',
+                  background: 'var(--figma-color-bg)',
+                }}
+              >
+                {Math.round(progress.percent)}%
+              </div>
             </div>
           </div>
 
@@ -1731,35 +2716,67 @@ function Plugin() {
               bottom: 0,
               left: 0,
               right: 0,
-              padding: '16px 20px',
+              padding: '16px 0 0 0',
               background: 'var(--figma-color-bg)',
               zIndex: 100,
             }}
           >
             <button
               onClick={handleCancelAnalysis}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background =
+                  'var(--figma-color-bg-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
               style={{
                 width: '100%',
-                height: '44px',
+                height: '52px',
                 background: 'transparent',
                 color: 'var(--text-secondary)',
                 border: '1px solid var(--border-color)',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: '500',
-                letterSpacing: '0.05em',
+                borderRadius: '0',
+                fontSize: '11px',
+                fontWeight: '300',
+                letterSpacing: '0.1em',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                justifyContent: 'flex-start',
                 gap: '8px',
+                paddingLeft: '20px',
                 transition: 'background 0.2s, border-color 0.2s',
               }}
             >
-              Cancel
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+              CANCEL
             </button>
           </div>
         </div>
+
+        {/* Onboarding Modal */}
+        <OnboardingModal
+          isOpen={showOnboarding}
+          onClose={handleCloseOnboarding}
+        />
+
+        {/* Help Modal */}
+        <HelpModal
+          isOpen={showHelpModal}
+          onClose={() => setShowHelpModal(false)}
+        />
       </Fragment>
     );
   }
@@ -1772,6 +2789,106 @@ function Plugin() {
         <div
           style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
         >
+          {/* Header with help button */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              zIndex: 1000,
+            }}
+          >
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setModalContent({
+                  title: 'HELP',
+                  content: `WHAT THIS PLUGIN DOES
+
+This plugin measures how well your designs adopt your design system by tracking two key metrics: Component Coverage (are you using library components?) and Token Adoption (are those components using design tokens/variables?).
+
+HOW METRICS ARE CALCULATED
+
+COMPONENT COVERAGE
+Library Instances ÷ Total Instances × 100
+Measures what percentage of component instances come from your design system libraries.
+
+TOKEN ADOPTION (PROPERTY-LEVEL)
+Variable-bound Properties ÷ Total Properties × 100
+Counts individual properties (fills, strokes, typography, radius, borders) that use design tokens. A button with 5 properties and only 1 token-bound property = 20% token adoption, not 100%.
+
+OVERALL SCORE (FOUNDATION-FIRST)
+(Token Adoption × 0.55) + (Component Coverage × 0.45)
+Tokens are weighted higher (55%) because they drive 80% of design consistency. Based on research from IBM Carbon, Atlassian, and Pinterest design systems.
+
+ORPHAN RATE
+Hardcoded Properties ÷ Total Properties × 100
+Tracks hardcoded values (colors, typography, radius, borders) that should be using tokens. Industry target: <20% orphans.
+
+WHAT THIS PLUGIN IS NOT
+
+This plugin only analyzes what you select—it cannot scan entire pages or files automatically. It measures adoption of existing components and tokens, but cannot detect which components are missing from your design system.
+
+The plugin does not analyze spacing (padding, gaps) due to high false positive rates. It also cannot track usage over time—you'll need to export results and track them manually.
+
+Finally, it cannot auto-fix orphaned values or enforce design system rules. It's a measurement tool, not an enforcement tool.
+
+GETTING STARTED
+
+1. Select the frames, components, or sections you want to analyze
+2. Click "Analyze Selection" to see your metrics
+3. Use the tabs to explore components and design tokens in detail
+4. Mark intentional exceptions as "Ignored" to refine your metrics`
+                });
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--figma-color-text)';
+                setShowHelpTooltip(true);
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#9D9D9D';
+                setTimeout(() => {
+                  setShowHelpTooltip(false);
+                }, 100);
+              }}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: '#9D9D9D',
+                fontSize: '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                fontWeight: '300',
+                cursor: 'pointer',
+                padding: '4px',
+                transition: 'color 0.2s',
+                position: 'relative',
+              }}
+            >
+              ?
+              {showHelpTooltip && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: '20px',
+                    transform: 'translateY(-50%)',
+                    background: 'var(--figma-color-bg-inverse)',
+                    color: 'var(--figma-color-text-onbrand)',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'none',
+                    zIndex: 10000,
+                  }}
+                >
+                  Help
+                </div>
+              )}
+            </button>
+          </div>
+
           <div
             style={{
               flex: 1,
@@ -1799,7 +2916,7 @@ function Plugin() {
               bottom: 0,
               left: 0,
               right: 0,
-              padding: '16px 20px',
+              padding: '0',
               background: 'var(--figma-color-bg)',
               zIndex: 100,
             }}
@@ -1807,9 +2924,19 @@ function Plugin() {
             <button
               onClick={handleAnalyze}
               disabled={!hasSelection}
+              onMouseEnter={(e) => {
+                if (hasSelection) {
+                  e.currentTarget.style.opacity = '0.85';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (hasSelection) {
+                  e.currentTarget.style.opacity = '1';
+                }
+              }}
               style={{
                 width: '100%',
-                height: '44px',
+                height: '52px',
                 background: hasSelection
                   ? 'var(--button-bg)'
                   : 'var(--button-disabled-bg)',
@@ -1817,22 +2944,49 @@ function Plugin() {
                   ? 'var(--button-text)'
                   : 'var(--button-disabled-text)',
                 border: 'none',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: '500',
-                letterSpacing: '0.05em',
+                borderRadius: '0',
+                fontSize: '11px',
+                fontWeight: '300',
+                letterSpacing: '0.1em',
                 cursor: hasSelection ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                justifyContent: 'flex-start',
                 gap: '8px',
-                transition: 'background 0.2s',
+                paddingLeft: '20px',
+                transition: 'opacity 0.2s',
+                opacity: 1,
               }}
             >
-              Analyze Selection
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 3v18h18" />
+                <path d="M18 17V9M13 17V5M8 17v-3" />
+              </svg>
+              ANALYZE SELECTION
             </button>
           </div>
         </div>
+
+        {/* Onboarding Modal */}
+        <OnboardingModal
+          isOpen={showOnboarding}
+          onClose={handleCloseOnboarding}
+        />
+
+        {/* Help Modal */}
+        <HelpModal
+          isOpen={showHelpModal}
+          onClose={() => setShowHelpModal(false)}
+        />
       </Fragment>
     );
   }
@@ -1845,26 +2999,126 @@ function Plugin() {
         <div
           style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
         >
+          {/* Header with help button */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              zIndex: 1000,
+            }}
+          >
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setModalContent({
+                  title: 'HELP',
+                  content: `WHAT THIS PLUGIN DOES
+
+This plugin measures how well your designs adopt your design system by tracking two key metrics: Component Coverage (are you using library components?) and Token Adoption (are those components using design tokens/variables?).
+
+HOW METRICS ARE CALCULATED
+
+COMPONENT COVERAGE
+Library Instances ÷ Total Instances × 100
+Measures what percentage of component instances come from your design system libraries.
+
+TOKEN ADOPTION (PROPERTY-LEVEL)
+Variable-bound Properties ÷ Total Properties × 100
+Counts individual properties (fills, strokes, typography, radius, borders) that use design tokens. A button with 5 properties and only 1 token-bound property = 20% token adoption, not 100%.
+
+OVERALL SCORE (FOUNDATION-FIRST)
+(Token Adoption × 0.55) + (Component Coverage × 0.45)
+Tokens are weighted higher (55%) because they drive 80% of design consistency. Based on research from IBM Carbon, Atlassian, and Pinterest design systems.
+
+ORPHAN RATE
+Hardcoded Properties ÷ Total Properties × 100
+Tracks hardcoded values (colors, typography, radius, borders) that should be using tokens. Industry target: <20% orphans.
+
+WHAT THIS PLUGIN IS NOT
+
+This plugin only analyzes what you select—it cannot scan entire pages or files automatically. It measures adoption of existing components and tokens, but cannot detect which components are missing from your design system.
+
+The plugin does not analyze spacing (padding, gaps) due to high false positive rates. It also cannot track usage over time—you'll need to export results and track them manually.
+
+Finally, it cannot auto-fix orphaned values or enforce design system rules. It's a measurement tool, not an enforcement tool.
+
+GETTING STARTED
+
+1. Select the frames, components, or sections you want to analyze
+2. Click "Analyze Selection" to see your metrics
+3. Use the tabs to explore components and design tokens in detail
+4. Mark intentional exceptions as "Ignored" to refine your metrics`
+                });
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--figma-color-text)';
+                setShowHelpTooltip(true);
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#9D9D9D';
+                setTimeout(() => {
+                  setShowHelpTooltip(false);
+                }, 100);
+              }}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: '#9D9D9D',
+                fontSize: '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                fontWeight: '300',
+                cursor: 'pointer',
+                padding: '4px',
+                transition: 'color 0.2s',
+                position: 'relative',
+              }}
+            >
+              ?
+              {showHelpTooltip && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: '20px',
+                    transform: 'translateY(-50%)',
+                    background: 'var(--figma-color-bg-inverse)',
+                    color: 'var(--figma-color-text-onbrand)',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'none',
+                    zIndex: 10000,
+                  }}
+                >
+                  Help
+                </div>
+              )}
+            </button>
+          </div>
+
           <div
             style={{
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               justifyContent: 'center',
               padding: '20px',
             }}
           >
-            <div style={{ textAlign: 'center', maxWidth: '320px' }}>
+            <div style={{ textAlign: 'left', maxWidth: '320px' }}>
               <div
                 style={{
-                  fontSize: '14px',
+                  fontSize: '11px',
                   fontWeight: '600',
                   color: 'var(--text-primary)',
                   marginBottom: '8px',
                 }}
               >
-                No Selection
+                NO SELECTION
               </div>
               <div
                 style={{
@@ -1886,7 +3140,7 @@ function Plugin() {
               bottom: 0,
               left: 0,
               right: 0,
-              padding: '16px 20px',
+              padding: '0',
               background: 'var(--figma-color-bg)',
               zIndex: 100,
             }}
@@ -1895,25 +3149,45 @@ function Plugin() {
               disabled
               style={{
                 width: '100%',
-                height: '44px',
+                height: '52px',
                 background: 'var(--button-disabled-bg)',
                 color: 'var(--button-disabled-text)',
                 border: 'none',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: '500',
-                letterSpacing: '0.05em',
+                borderRadius: '0',
+                fontSize: '11px',
+                fontWeight: '300',
+                letterSpacing: '0.1em',
                 cursor: 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                justifyContent: 'flex-start',
                 gap: '8px',
+                paddingLeft: '20px',
               }}
             >
-              Analyze Selection
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 3v18h18" />
+                <path d="M18 17V9M13 17V5M8 17v-3" />
+              </svg>
+              ANALYZE SELECTION
             </button>
           </div>
         </div>
+
+        {/* Onboarding Modal */}
+        <OnboardingModal
+          isOpen={showOnboarding}
+          onClose={handleCloseOnboarding}
+        />
       </Fragment>
     );
   }
@@ -2054,6 +3328,106 @@ function Plugin() {
         <div
           style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
         >
+          {/* Header with help button */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              zIndex: 1000,
+            }}
+          >
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setModalContent({
+                  title: 'HELP',
+                  content: `WHAT THIS PLUGIN DOES
+
+This plugin measures how well your designs adopt your design system by tracking two key metrics: Component Coverage (are you using library components?) and Token Adoption (are those components using design tokens/variables?).
+
+HOW METRICS ARE CALCULATED
+
+COMPONENT COVERAGE
+Library Instances ÷ Total Instances × 100
+Measures what percentage of component instances come from your design system libraries.
+
+TOKEN ADOPTION (PROPERTY-LEVEL)
+Variable-bound Properties ÷ Total Properties × 100
+Counts individual properties (fills, strokes, typography, radius, borders) that use design tokens. A button with 5 properties and only 1 token-bound property = 20% token adoption, not 100%.
+
+OVERALL SCORE (FOUNDATION-FIRST)
+(Token Adoption × 0.55) + (Component Coverage × 0.45)
+Tokens are weighted higher (55%) because they drive 80% of design consistency. Based on research from IBM Carbon, Atlassian, and Pinterest design systems.
+
+ORPHAN RATE
+Hardcoded Properties ÷ Total Properties × 100
+Tracks hardcoded values (colors, typography, radius, borders) that should be using tokens. Industry target: <20% orphans.
+
+WHAT THIS PLUGIN IS NOT
+
+This plugin only analyzes what you select—it cannot scan entire pages or files automatically. It measures adoption of existing components and tokens, but cannot detect which components are missing from your design system.
+
+The plugin does not analyze spacing (padding, gaps) due to high false positive rates. It also cannot track usage over time—you'll need to export results and track them manually.
+
+Finally, it cannot auto-fix orphaned values or enforce design system rules. It's a measurement tool, not an enforcement tool.
+
+GETTING STARTED
+
+1. Select the frames, components, or sections you want to analyze
+2. Click "Analyze Selection" to see your metrics
+3. Use the tabs to explore components and design tokens in detail
+4. Mark intentional exceptions as "Ignored" to refine your metrics`
+                });
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--figma-color-text)';
+                setShowHelpTooltip(true);
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#9D9D9D';
+                setTimeout(() => {
+                  setShowHelpTooltip(false);
+                }, 100);
+              }}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: '#9D9D9D',
+                fontSize: '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                fontWeight: '300',
+                cursor: 'pointer',
+                padding: '4px',
+                transition: 'color 0.2s',
+                position: 'relative',
+              }}
+            >
+              ?
+              {showHelpTooltip && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: '20px',
+                    transform: 'translateY(-50%)',
+                    background: 'var(--figma-color-bg-inverse)',
+                    color: 'var(--figma-color-text-onbrand)',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'none',
+                    zIndex: 10000,
+                  }}
+                >
+                  Help
+                </div>
+              )}
+            </button>
+          </div>
+
           {/* Scrollable content */}
           <div
             style={{
@@ -2184,7 +3558,7 @@ function Plugin() {
                           style={{
                             height: '2px',
                             width: '100%',
-                            background: 'var(--track-bg)',
+                            background: 'var(--track-bg-card)',
                             borderRadius: '4px',
                           }}
                         >
@@ -2194,7 +3568,8 @@ function Plugin() {
                               width: `${filtered.variableCoverage}%`,
                               background: 'var(--progress-fill)',
                               borderRadius: '4px',
-                              transition: 'width 0.3s',
+                              transformOrigin: 'left',
+                              animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                             }}
                           />
                         </div>
@@ -2242,7 +3617,7 @@ function Plugin() {
                           style={{
                             height: '2px',
                             width: '100%',
-                            background: 'var(--track-bg)',
+                            background: 'var(--track-bg-card)',
                             borderRadius: '4px',
                           }}
                         >
@@ -2252,7 +3627,9 @@ function Plugin() {
                               width: `${filtered.componentCoverage}%`,
                               background: 'var(--progress-fill)',
                               borderRadius: '4px',
-                              transition: 'width 0.3s',
+                              transformOrigin: 'left',
+                              animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                              animationDelay: '0.1s',
                             }}
                           />
                         </div>
@@ -2268,7 +3645,7 @@ function Plugin() {
                           },
                           {
                             value: 100 - filtered.overallScore,
-                            color: 'rgba(0, 0, 0, 0.06)',
+                            color: 'var(--track-bg-card)',
                           },
                         ]}
                         centerValue={formatPercent(filtered.overallScore)}
@@ -2342,16 +3719,6 @@ Research from IBM, Atlassian, and Pinterest shows that foundational elements (to
                         )}\n\nNote: Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`}
                       />
                     </div>
-                    <div
-                      style={{
-                        fontSize: '12px',
-                        color: 'var(--text-tertiary)',
-                        fontWeight: '500',
-                        fontFeatureSettings: '"tnum"',
-                      }}
-                    >
-                      {filtered.libraryInstances} / {filtered.totalInstances}
-                    </div>
                   </div>
                   <div
                     style={{
@@ -2409,14 +3776,20 @@ Research from IBM, Atlassian, and Pinterest shows that foundational elements (to
                               color: 'var(--text-tertiary)',
                             }}
                           >
-                            {filtered.libraryInstances}
+                            {formatPercent(
+                              filtered.totalInstances > 0
+                                ? (filtered.libraryInstances /
+                                    filtered.totalInstances) *
+                                  100
+                                : 0
+                            )}
                           </div>
                         </div>
                         <div
                           style={{
                             height: '2px',
                             width: '100%',
-                            background: 'var(--track-bg)',
+                            background: 'var(--track-bg-card)',
                             borderRadius: '4px',
                           }}
                         >
@@ -2432,7 +3805,8 @@ Research from IBM, Atlassian, and Pinterest shows that foundational elements (to
                               }%`,
                               background: 'var(--progress-fill)',
                               borderRadius: '4px',
-                              transition: 'width 0.3s',
+                              transformOrigin: 'left',
+                              animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                             }}
                           />
                         </div>
@@ -2473,15 +3847,21 @@ Research from IBM, Atlassian, and Pinterest shows that foundational elements (to
                               color: 'var(--text-tertiary)',
                             }}
                           >
-                            {filtered.totalInstances -
-                              filtered.libraryInstances}
+                            {formatPercent(
+                              filtered.totalInstances > 0
+                                ? ((filtered.totalInstances -
+                                    filtered.libraryInstances) /
+                                    filtered.totalInstances) *
+                                  100
+                                : 0
+                            )}
                           </div>
                         </div>
                         <div
                           style={{
                             height: '2px',
                             width: '100%',
-                            background: 'var(--track-bg)',
+                            background: 'var(--track-bg-card)',
                             borderRadius: '4px',
                           }}
                         >
@@ -2498,7 +3878,9 @@ Research from IBM, Atlassian, and Pinterest shows that foundational elements (to
                               }%`,
                               background: 'var(--progress-fill)',
                               borderRadius: '4px',
-                              transition: 'width 0.3s',
+                              transformOrigin: 'left',
+                              animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                              animationDelay: '0.1s',
                             }}
                           />
                         </div>
@@ -2509,14 +3891,12 @@ Research from IBM, Atlassian, and Pinterest shows that foundational elements (to
                       <DonutChart
                         segments={[
                           {
-                            value: filtered.libraryInstances,
+                            value: filtered.componentCoverage,
                             color: 'var(--progress-fill)',
                           },
                           {
-                            value:
-                              filtered.totalInstances -
-                              filtered.libraryInstances,
-                            color: 'rgba(0, 0, 0, 0.06)',
+                            value: 100 - filtered.componentCoverage,
+                            color: 'var(--track-bg-card)',
                           },
                         ]}
                         centerValue={formatPercent(filtered.componentCoverage)}
@@ -2591,16 +3971,6 @@ Wrapper components (local components built with DS) are excluded from this count
                         )}\n\nNote: This measures token adoption at the property level, not component level. Each component has multiple properties (fills, strokes, typography, radius, borders) and we count how many individual properties use design tokens.`}
                       />
                     </div>
-                    <div
-                      style={{
-                        fontSize: '12px',
-                        color: 'var(--text-tertiary)',
-                        fontWeight: '500',
-                        fontFeatureSettings: '"tnum"',
-                      }}
-                    >
-                      {filtered.tokenBoundCount} / {filtered.totalOpportunities}
-                    </div>
                   </div>
                   <div
                     style={{
@@ -2623,7 +3993,7 @@ Wrapper components (local components built with DS) are excluded from this count
                         justifyContent: 'center',
                       }}
                     >
-                      {/* Tokens Row */}
+                      {/* Token-Bound Row */}
                       <div>
                         <div
                           style={{
@@ -2647,7 +4017,7 @@ Wrapper components (local components built with DS) are excluded from this count
                                 fontWeight: '500',
                               }}
                             >
-                              Tokens
+                              Token-Bound
                             </span>
                           </div>
                           <div
@@ -2658,30 +4028,25 @@ Wrapper components (local components built with DS) are excluded from this count
                               color: 'var(--text-tertiary)',
                             }}
                           >
-                            {filtered.tokenBoundCount}
+                            {formatPercent(filtered.variableCoverage)}
                           </div>
                         </div>
                         <div
                           style={{
                             height: '2px',
                             width: '100%',
-                            background: 'var(--track-bg)',
+                            background: 'var(--track-bg-card)',
                             borderRadius: '4px',
                           }}
                         >
                           <div
                             style={{
                               height: '100%',
-                              width: `${
-                                filtered.totalOpportunities > 0
-                                  ? (filtered.tokenBoundCount /
-                                      filtered.totalOpportunities) *
-                                    100
-                                  : 0
-                              }%`,
+                              width: `${filtered.variableCoverage}%`,
                               background: 'var(--progress-fill)',
                               borderRadius: '4px',
-                              transition: 'width 0.3s',
+                              transformOrigin: 'left',
+                              animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                             }}
                           />
                         </div>
@@ -2722,32 +4087,26 @@ Wrapper components (local components built with DS) are excluded from this count
                               color: 'var(--text-tertiary)',
                             }}
                           >
-                            {filtered.totalOpportunities -
-                              filtered.tokenBoundCount}
+                            {formatPercent(100 - filtered.variableCoverage)}
                           </div>
                         </div>
                         <div
                           style={{
                             height: '2px',
                             width: '100%',
-                            background: 'var(--track-bg)',
+                            background: 'var(--track-bg-card)',
                             borderRadius: '4px',
                           }}
                         >
                           <div
                             style={{
                               height: '100%',
-                              width: `${
-                                filtered.totalOpportunities > 0
-                                  ? ((filtered.totalOpportunities -
-                                      filtered.tokenBoundCount) /
-                                      filtered.totalOpportunities) *
-                                    100
-                                  : 0
-                              }%`,
+                              width: `${100 - filtered.variableCoverage}%`,
                               background: 'var(--progress-fill)',
                               borderRadius: '4px',
-                              transition: 'width 0.3s',
+                              transformOrigin: 'left',
+                              animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                              animationDelay: '0.1s',
                             }}
                           />
                         </div>
@@ -2758,14 +4117,12 @@ Wrapper components (local components built with DS) are excluded from this count
                       <DonutChart
                         segments={[
                           {
-                            value: filtered.tokenBoundCount,
+                            value: filtered.variableCoverage,
                             color: 'var(--progress-fill)',
                           },
                           {
-                            value:
-                              filtered.totalOpportunities -
-                              filtered.tokenBoundCount,
-                            color: 'rgba(0, 0, 0, 0.06)',
+                            value: 100 - filtered.variableCoverage,
+                            color: 'var(--track-bg-card)',
                           },
                         ]}
                         centerValue={formatPercent(filtered.variableCoverage)}
@@ -2916,7 +4273,7 @@ This measures token adoption at the property level, not component level. Each co
                       </p>
                       <p
                         style={{
-                          fontSize: '26px',
+                          fontSize: '18px',
                           fontWeight: '700',
                           color: 'var(--text-primary)',
                           lineHeight: 'normal',
@@ -2950,7 +4307,7 @@ This measures token adoption at the property level, not component level. Each co
                       </p>
                       <p
                         style={{
-                          fontSize: '26px',
+                          fontSize: '18px',
                           fontWeight: '700',
                           color: 'var(--text-primary)',
                           lineHeight: 'normal',
@@ -2984,7 +4341,7 @@ This measures token adoption at the property level, not component level. Each co
                       </p>
                       <p
                         style={{
-                          fontSize: '26px',
+                          fontSize: '18px',
                           fontWeight: '700',
                           color: 'var(--text-primary)',
                           lineHeight: 'normal',
@@ -3018,7 +4375,7 @@ This measures token adoption at the property level, not component level. Each co
                       </p>
                       <p
                         style={{
-                          fontSize: '26px',
+                          fontSize: '18px',
                           fontWeight: '700',
                           color: 'var(--text-primary)',
                           lineHeight: 'normal',
@@ -3089,7 +4446,7 @@ This measures token adoption at the property level, not component level. Each co
                                 style={{
                                   height: '2px',
                                   width: '100%',
-                                  background: 'var(--track-bg)',
+                                  background: 'var(--track-bg-tab)',
                                   borderRadius: '4px',
                                 }}
                               >
@@ -3099,7 +4456,8 @@ This measures token adoption at the property level, not component level. Each co
                                     width: lib.percentage + '%',
                                     background: 'var(--progress-fill)',
                                     borderRadius: '4px',
-                                    transition: 'width 0.3s',
+                                    transformOrigin: 'left',
+                                    animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                                   }}
                                 />
                               </div>
@@ -3203,7 +4561,7 @@ This measures token adoption at the property level, not component level. Each co
                                 style={{
                                   height: '2px',
                                   width: '100%',
-                                  background: 'var(--track-bg)',
+                                  background: 'var(--track-bg-tab)',
                                   borderRadius: '4px',
                                 }}
                               >
@@ -3213,7 +4571,8 @@ This measures token adoption at the property level, not component level. Each co
                                     width: percentage + '%',
                                     background: 'var(--progress-fill)',
                                     borderRadius: '4px',
-                                    transition: 'width 0.3s',
+                                    transformOrigin: 'left',
+                                    animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                                   }}
                                 />
                               </div>
@@ -3330,7 +4689,7 @@ This measures token adoption at the property level, not component level. Each co
                                 style={{
                                   height: '2px',
                                   width: '100%',
-                                  background: 'var(--track-bg)',
+                                  background: 'var(--track-bg-tab)',
                                   borderRadius: '4px',
                                 }}
                               >
@@ -3340,7 +4699,8 @@ This measures token adoption at the property level, not component level. Each co
                                     width: lib.percentage + '%',
                                     background: 'var(--progress-fill)',
                                     borderRadius: '4px',
-                                    transition: 'width 0.3s',
+                                    transformOrigin: 'left',
+                                    animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                                   }}
                                 />
                               </div>
@@ -3376,9 +4736,7 @@ This measures token adoption at the property level, not component level. Each co
                   </div>
                   {data.hardcodedValues.details &&
                   data.hardcodedValues.details.length > 0 ? (
-                    <div>
-                      {renderOrphanDetails()}
-                    </div>
+                    <div>{renderOrphanDetails()}</div>
                   ) : (
                     <div
                       style={{
@@ -3810,7 +5168,7 @@ This measures token adoption at the property level, not component level. Each co
               bottom: 0,
               left: 0,
               right: 0,
-              padding: '16px 20px',
+              padding: '0',
               background: 'var(--figma-color-bg)',
               zIndex: 100,
             }}
@@ -3818,9 +5176,19 @@ This measures token adoption at the property level, not component level. Each co
             <button
               onClick={handleAnalyze}
               disabled={!hasSelection}
+              onMouseEnter={(e) => {
+                if (hasSelection) {
+                  e.currentTarget.style.opacity = '0.85';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (hasSelection) {
+                  e.currentTarget.style.opacity = '1';
+                }
+              }}
               style={{
                 width: '100%',
-                height: '44px',
+                height: '52px',
                 background: hasSelection
                   ? 'var(--button-bg)'
                   : 'var(--button-disabled-bg)',
@@ -3828,16 +5196,18 @@ This measures token adoption at the property level, not component level. Each co
                   ? 'var(--button-text)'
                   : 'var(--button-disabled-text)',
                 border: 'none',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: '500',
-                letterSpacing: '0.05em',
+                borderRadius: '0',
+                fontSize: '11px',
+                fontWeight: '300',
+                letterSpacing: '0.1em',
                 cursor: hasSelection ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                justifyContent: 'flex-start',
                 gap: '8px',
-                transition: 'background 0.2s',
+                paddingLeft: '20px',
+                transition: 'opacity 0.2s',
+                opacity: 1,
               }}
             >
               <svg
@@ -3854,10 +5224,10 @@ This measures token adoption at the property level, not component level. Each co
                 <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
               </svg>
               {data
-                ? `Re-analyze ${selectionCount} ${
-                    selectionCount === 1 ? 'item' : 'items'
+                ? `RE-ANALYZE ${selectionCount} ${
+                    selectionCount === 1 ? 'ITEM' : 'ITEMS'
                   }`
-                : 'Analyze Selection'}
+                : 'ANALYZE SELECTION'}
             </button>
           </div>
         </div>
@@ -3880,27 +5250,68 @@ This measures token adoption at the property level, not component level. Each co
       <div
         style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
       >
+        {/* Header with help button */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            zIndex: 1000,
+          }}
+        >
+          <button
+            onClick={() => setShowOnboarding(true)}
+            style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              border: '1px solid var(--figma-color-border)',
+              background: 'var(--figma-color-bg)',
+              color: 'var(--figma-color-text-secondary)',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--figma-color-bg-hover)';
+              e.currentTarget.style.borderColor =
+                'var(--figma-color-text-tertiary)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--figma-color-bg)';
+              e.currentTarget.style.borderColor = 'var(--figma-color-border)';
+            }}
+          >
+            ?
+          </button>
+        </div>
+
         <div
           style={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'center',
             padding: '20px',
           }}
         >
-          <div style={{ textAlign: 'center', maxWidth: '320px' }}>
+          <div style={{ textAlign: 'left', maxWidth: '320px' }}>
             <div
               style={{
-                fontSize: '14px',
+                fontSize: '11px',
                 fontWeight: '600',
                 color: 'var(--text-primary)',
                 marginBottom: '8px',
               }}
             >
-              {selectionCount} {selectionCount === 1 ? 'item' : 'items'}{' '}
-              selected
+              {selectionCount} {selectionCount === 1 ? 'ITEM' : 'ITEMS'}{' '}
+              SELECTED
             </div>
             <div
               style={{
@@ -3921,32 +5332,54 @@ This measures token adoption at the property level, not component level. Each co
             bottom: 0,
             left: 0,
             right: 0,
-            padding: '16px 20px',
+            padding: '16px 0 0 0',
             background: 'var(--figma-color-bg)',
             zIndex: 100,
           }}
         >
           <button
             onClick={handleAnalyze}
+            onMouseEnter={(e) => {
+              if (hasSelection) {
+                e.currentTarget.style.opacity = '0.85';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = '1';
+            }}
             style={{
               width: '100%',
-              height: '44px',
+              height: '52px',
               background: 'var(--button-bg)',
               color: 'var(--button-text)',
               border: 'none',
-              borderRadius: '4px',
-              fontSize: '12px',
-              fontWeight: '500',
-              letterSpacing: '0.05em',
+              borderRadius: '0',
+              fontSize: '11px',
+              fontWeight: '300',
+              letterSpacing: '0.1em',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'flex-start',
               gap: '8px',
-              transition: 'background 0.2s',
+              paddingLeft: '20px',
+              transition: 'opacity 0.2s',
             }}
           >
-            Analyze Selection
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 3v18h18" />
+              <path d="M18 17V9M13 17V5M8 17v-3" />
+            </svg>
+            ANALYZE SELECTION
           </button>
         </div>
       </div>
@@ -3957,6 +5390,18 @@ This measures token adoption at the property level, not component level. Each co
         onClose={() => setModalContent(null)}
         title={modalContent?.title || ''}
         content={modalContent?.content || ''}
+      />
+
+      {/* Onboarding Modal */}
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={handleCloseOnboarding}
+      />
+
+      {/* Help Modal */}
+      <HelpModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
       />
     </Fragment>
   );
