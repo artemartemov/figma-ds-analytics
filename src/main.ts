@@ -1,91 +1,16 @@
 // Design System Coverage Plugin
 // Calculates component and variable adoption metrics
 
-interface LibraryBreakdown {
-  name: string;
-  count: number;
-  percentage: number;
-}
-
-interface OrphanDetail {
-  nodeId: string;
-  nodeName: string;
-  nodeType: string;
-  category: 'colors' | 'typography' | 'spacing' | 'radius';
-  properties: string[];
-  values?: string[];
-  parentComponentId: string;
-  parentComponentName: string;
-  parentInstanceId: string; // Added to connect orphans to component instances
-}
-
-interface TokenBoundDetail {
-  nodeId: string;
-  nodeName: string;
-  nodeType: string;
-  category: 'colors' | 'typography' | 'spacing' | 'radius' | 'borders';
-  properties: string[];
-  parentComponentId: string;
-  parentComponentName: string;
-  parentInstanceId: string;
-}
-
-interface ComponentInstanceDetail {
-  instanceId: string;
-  instanceName: string;
-  componentId: string;
-  componentName: string;
-  librarySource: string;
-}
-
-interface CoverageMetrics {
-  componentCoverage: number;
-  variableCoverage: number;
-  stats: {
-    totalNodes: number;
-    libraryInstances: number;
-    localInstances: number;
-    nodesWithVariables: number;
-    nodesWithCustomStyles: number;
-  };
-  libraryBreakdown: LibraryBreakdown[];
-  variableBreakdown: LibraryBreakdown[];
-  componentDetails: ComponentInstanceDetail[];
-  ignoredInstances: string[];
-  hardcodedValues: {
-    colors: number;
-    typography: number;
-    spacing: number;
-    radius: number;
-    totalHardcoded: number;
-    totalOpportunities: number;
-    details: OrphanDetail[];
-    tokenBoundDetails: TokenBoundDetail[];
-    ignoredComponents: string[];
-    ignoredOrphans: string[];
-  };
-}
-
-interface CollectionMapping {
-  collectionKey: string;
-  collectionName: string;
-  libraryName: string;
-}
-
-interface DetectedCollection {
-  key: string;
-  name: string;
-  remote: boolean;
-  variableCount: number;
-}
-
-interface TeamLibrary {
-  key: string;
-  name: string;
-  enabled: boolean;
-  hasVariables?: boolean;
-  hasComponents?: boolean;
-}
+import type {
+  LibraryBreakdown,
+  OrphanDetail,
+  TokenBoundDetail,
+  ComponentInstanceDetail,
+  CoverageMetrics,
+  CollectionMapping,
+  DetectedCollection,
+  TeamLibrary,
+} from './types';
 
 // ========================================
 // CONFIGURATION: Component Key Mapping

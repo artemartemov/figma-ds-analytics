@@ -24,78 +24,15 @@ import { Modal, OnboardingModal, HelpModal } from './components/modals';
 import { StatCard } from './components/cards';
 import { OverviewTab, ComponentsTab, TokensTab } from './components/tabs';
 import { themeStyles } from './styles/theme';
-
-// TypeScript interfaces
-interface CoverageMetrics {
-  componentCoverage: number;
-  variableCoverage: number;
-  stats: {
-    totalNodes: number;
-    libraryInstances: number;
-    localInstances: number;
-    nodesWithVariables: number;
-    nodesWithCustomStyles: number;
-  };
-  libraryBreakdown: LibraryBreakdown[];
-  variableBreakdown: LibraryBreakdown[];
-  componentDetails: ComponentInstanceDetail[];
-  ignoredInstances: string[];
-  hardcodedValues: HardcodedValues;
-}
-
-interface LibraryBreakdown {
-  name: string;
-  count: number;
-  percentage: number;
-}
-
-interface HardcodedValues {
-  colors: number;
-  typography: number;
-  spacing: number;
-  radius: number;
-  totalHardcoded: number;
-  totalOpportunities: number;
-  details: OrphanDetail[];
-  tokenBoundDetails: TokenBoundDetail[];
-  ignoredComponents: string[];
-  ignoredOrphans: string[];
-}
-
-interface OrphanDetail {
-  nodeId: string;
-  nodeName: string;
-  nodeType: string;
-  parentComponentId: string;
-  parentComponentName: string;
-  parentInstanceId: string;
-  category: string;
-  properties: string[];
-}
-
-interface TokenBoundDetail {
-  nodeId: string;
-  nodeName: string;
-  nodeType: string;
-  parentComponentId: string;
-  parentComponentName: string;
-  parentInstanceId: string;
-  category: string;
-  properties: string[];
-}
-
-interface ComponentInstanceDetail {
-  instanceId: string;
-  instanceName: string;
-  componentId: string;
-  componentName: string;
-  librarySource: string;
-}
-
-interface ProgressMessage {
-  step: string;
-  percent: number;
-}
+import type {
+  CoverageMetrics,
+  LibraryBreakdown,
+  HardcodedValues,
+  OrphanDetail,
+  TokenBoundDetail,
+  ComponentInstanceDetail,
+  ProgressMessage,
+} from './types';
 // Custom Checkbox Component
 function Plugin() {
   // State management
