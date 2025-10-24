@@ -87,25 +87,30 @@ interface ProgressMessage {
   percent: number;
 }
 
-// Centered layout wrapper for consistent states
-function CenteredLayout({ children }: { children: any }) {
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '80px 20px',
-      minHeight: '400px'
-    }}>
-      {children}
-    </div>
-  );
-}
-
 // Custom Tooltip component
-function Tooltip({ content, dark = false }: { content: string; dark?: boolean }) {
+function Tooltip({ content, dark = false, position = 'right' }: { content: string; dark?: boolean; position?: 'right' | 'bottom' }) {
   const [isVisible, setIsVisible] = useState(false);
+
+  // Positioning styles based on position prop
+  const tooltipStyles = position === 'bottom' ? {
+    top: '20px',
+    left: '50%',
+    transform: 'translateX(-50%)'
+  } : {
+    top: '50%',
+    left: '20px',
+    transform: 'translateY(-50%)'
+  };
+
+  const arrowStyles = position === 'bottom' ? {
+    left: '50%',
+    top: '-4px',
+    transform: 'translateX(-50%) rotate(45deg)'
+  } : {
+    left: '-4px',
+    top: '50%',
+    transform: 'translateY(-50%) rotate(45deg)'
+  };
 
   return (
     <div
@@ -129,15 +134,13 @@ function Tooltip({ content, dark = false }: { content: string; dark?: boolean })
           flexShrink: 0
         }}
       >
-        i
+        ?
       </span>
       {isVisible && (
         <div
           style={{
             position: 'absolute',
-            top: '50%',
-            left: '20px',
-            transform: 'translateY(-50%)',
+            ...tooltipStyles,
             background: 'rgba(0,0,0,0.9)',
             color: '#fff',
             padding: '8px 12px',
@@ -155,12 +158,10 @@ function Tooltip({ content, dark = false }: { content: string; dark?: boolean })
           <div
             style={{
               position: 'absolute',
-              left: '-4px',
-              top: '50%',
+              ...arrowStyles,
               width: '8px',
               height: '8px',
-              background: 'rgba(0,0,0,0.9)',
-              transform: 'translateY(-50%) rotate(45deg)'
+              background: 'rgba(0,0,0,0.9)'
             }}
           />
         </div>
@@ -177,22 +178,26 @@ interface DonutChartProps {
   centerValue?: string;
   centerLabel?: string;
   gapDegrees?: number;
+  tooltipContent?: string;
 }
 
-function DonutChart({ segments, size = 90, strokeWidth = 4, centerValue, centerLabel, gapDegrees = 0 }: DonutChartProps) {
+function DonutChart({ segments, size = 64, strokeWidth = 4, centerValue, centerLabel, gapDegrees = 0, tooltipContent }: DonutChartProps) {
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  // Chart dimensions
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const center = size / 2;
 
-  // Calculate gap in circumference units
+  // Calculate gap between segments
   const gapLength = (gapDegrees / 360) * circumference;
 
-  // Calculate total value
+  // Calculate total value for percentage calculations
   const total = segments.reduce((sum, seg) => sum + seg.value, 0);
 
-  // Generate arcs - simple, no effects
+  // Generate progress arcs
+  // Note: These use stroke-dasharray for animation-ready rendering
   let currentOffset = 0;
-  const arcs = segments.map((segment, index) => {
+  const progressArcs = segments.map((segment, index) => {
     const percentage = segment.value / total;
     const strokeLength = (circumference * percentage) - gapLength;
     const offset = currentOffset;
@@ -200,7 +205,7 @@ function DonutChart({ segments, size = 90, strokeWidth = 4, centerValue, centerL
 
     return (
       <circle
-        key={index}
+        key={`progress-${index}`}
         cx={center}
         cy={center}
         r={radius}
@@ -211,27 +216,46 @@ function DonutChart({ segments, size = 90, strokeWidth = 4, centerValue, centerL
         strokeDashoffset={-offset}
         strokeLinecap="butt"
         transform={`rotate(-90 ${center} ${center})`}
-        style={{
-          transition: 'stroke-dashoffset 0.3s ease, stroke-dasharray 0.3s ease'
-        }}
       />
     );
   });
 
   return (
-    <div style={{ position: 'relative', width: `${size}px`, height: `${size}px` }}>
-      <svg width={size} height={size}>
-        {/* Minimal background circle */}
+    <div
+      style={{
+        position: 'relative',
+        width: `${size}px`,
+        height: `${size}px`,
+        cursor: tooltipContent ? 'help' : 'default'
+      }}
+      onMouseEnter={() => tooltipContent && setIsTooltipVisible(true)}
+      onMouseLeave={() => tooltipContent && setIsTooltipVisible(false)}
+    >
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        style={{ display: 'block' }}
+      >
+        {/* Background track circle - adapts to theme */}
         <circle
           cx={center}
           cy={center}
           r={radius}
           fill="none"
-          stroke="rgba(0,0,0,0.1)"
-          strokeWidth={strokeWidth}
+          style={{
+            stroke: 'var(--track-bg)',
+            strokeWidth: `${strokeWidth}px`
+          }}
         />
-        {arcs}
+
+        {/* Progress segments group - rendered on top */}
+        <g>
+          {progressArcs}
+        </g>
       </svg>
+
+      {/* Center value display */}
       {centerValue && (
         <div style={{
           position: 'absolute',
@@ -241,14 +265,63 @@ function DonutChart({ segments, size = 90, strokeWidth = 4, centerValue, centerL
           textAlign: 'center',
           pointerEvents: 'none'
         }}>
-          <div style={{ fontSize: '26px', fontWeight: '500', lineHeight: '1', fontFeatureSettings: '"tnum"' }}>
+          <div style={{
+            fontSize: '18px',
+            fontWeight: '700',
+            lineHeight: '1',
+            fontFeatureSettings: '"tnum"',
+            color: 'var(--text-primary)'
+          }}>
             {centerValue}
           </div>
           {centerLabel && (
-            <div style={{ fontSize: '7px', marginTop: '2px', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div style={{
+              fontSize: '7px',
+              marginTop: '2px',
+              opacity: 0.6,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              color: 'var(--text-primary)'
+            }}>
               {centerLabel}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tooltip */}
+      {tooltipContent && isTooltipVisible && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            right: '100%',
+            transform: 'translateY(-50%)',
+            marginRight: '12px',
+            background: 'rgba(0,0,0,0.9)',
+            color: '#fff',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            fontSize: '10px',
+            whiteSpace: 'pre-line',
+            zIndex: 1000,
+            width: '320px',
+            lineHeight: '1.4',
+            pointerEvents: 'none'
+          }}
+        >
+          {tooltipContent}
+          <div
+            style={{
+              position: 'absolute',
+              right: '-4px',
+              top: '50%',
+              transform: 'translateY(-50%) rotate(45deg)',
+              width: '8px',
+              height: '8px',
+              background: 'rgba(0,0,0,0.9)'
+            }}
+          />
         </div>
       )}
     </div>
@@ -256,14 +329,6 @@ function DonutChart({ segments, size = 90, strokeWidth = 4, centerValue, centerL
 }
 
 function Plugin() {
-  // Import JetBrains Mono font
-  const fontStyle = `
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-    * {
-      font-family: 'JetBrains Mono', 'Monaco', 'Courier New', monospace !important;
-    }
-  `;
-
   // State management
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -271,6 +336,87 @@ function Plugin() {
   const [hasSelection, setHasSelection] = useState(false);
   const [selectionCount, setSelectionCount] = useState(0);
   const [progress, setProgress] = useState({ step: 'Initializing...', percent: 0 });
+
+  // Theme-aware CSS using Figma's native CSS variables
+  const themeStyles = `
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    :root {
+      /* Use Figma's native theme variables and add our custom ones */
+      --text-primary: var(--figma-color-text);
+      --text-secondary: var(--figma-color-text-secondary);
+      --text-tertiary: var(--figma-color-text-tertiary);
+      --card-bg: var(--figma-color-bg-secondary);
+      --border-color: var(--figma-color-border);
+    }
+
+    /* Light mode specific overrides */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --track-bg: #ffffff;
+        --progress-fill: #222222;
+        --progress-fill-secondary: #52525B;
+      }
+    }
+
+    /* Dark mode specific overrides */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --track-bg: #505050;
+        --progress-fill: #FFFFFF;
+        --progress-fill-secondary: #B8B8B8;
+        --button-bg: #FFFFFF;
+        --button-text: #222222;
+        --button-disabled-bg: rgba(255,255,255,0.1);
+        --button-disabled-text: rgba(255,255,255,0.3);
+        --tab-inactive-text: #B8B8B8;
+        --tab-container-bg: #242424;
+      }
+    }
+
+    /* Light mode button colors */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --button-bg: #222222;
+        --button-text: #ffffff;
+        --button-disabled-bg: rgba(0,0,0,0.1);
+        --button-disabled-text: rgba(0,0,0,0.3);
+        --tab-inactive-text: #222222;
+        --tab-container-bg: #F5F5F5;
+      }
+    }
+
+    /* Custom checkbox styling to match Figma design patterns */
+    input[type="checkbox"] {
+      width: 10px !important;
+      height: 10px !important;
+      min-width: 10px !important;
+      min-height: 10px !important;
+      margin: 0 !important;
+      margin-right: 6px !important;
+      border-radius: 2px !important;
+      border: 1px solid var(--border-color) !important;
+      background: transparent !important;
+      cursor: pointer !important;
+    }
+
+    input[type="checkbox"]:checked {
+      background: var(--figma-color-text) !important;
+      border-color: var(--figma-color-text) !important;
+    }
+
+    /* Checkbox label styling */
+    label {
+      display: flex !important;
+      align-items: center !important;
+      gap: 0 !important;
+      cursor: pointer !important;
+    }
+
+    * {
+      font-family: 'JetBrains Mono', 'Monaco', 'Courier New', monospace !important;
+    }
+  `;
 
   // Tab state
   const [activeTab, setActiveTab] = useState<'overview' | 'components' | 'tokens'>('overview');
@@ -319,8 +465,13 @@ function Plugin() {
 
     on('PROGRESS', (data: { step: string; percent: number }) => {
       setProgress({ step: data.step, percent: data.percent });
+      // When we receive progress, we know analysis has started AND there's a selection
+      if (!loading) {
+        setLoading(true);
+        setHasSelection(true);
+      }
     });
-  }, []);
+  }, [loading]);
 
   // Helper functions
   const formatPercent = (value: number) => Math.round(value) + '%';
@@ -639,11 +790,11 @@ function Plugin() {
     radius: '#f39c12'
   };
 
-  // Eye icon SVG
+  // Eye icon SVG (14x14 for better visibility)
   const eyeIconSVG = (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 3C3.5 3 1.5 5 1.5 6s2 3 4.5 3 4.5-2 4.5-3-2-3-4.5-3zm0 5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" fill="currentColor"/>
-      <circle cx="6" cy="6" r="1" fill="currentColor"/>
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 4C4 4 1.5 6.5 1.5 7s2.5 3 5.5 3 5.5-1.5 5.5-3-2.5-3-5.5-3zm0 5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" fill="currentColor"/>
+      <circle cx="7" cy="7" r="1" fill="currentColor"/>
     </svg>
   );
 
@@ -731,15 +882,26 @@ function Plugin() {
                         onClick={() => handleSelectNode(instance.instanceId)}
                         title="View in canvas"
                         style={{
-                          padding: '4px 6px',
-                          background: '#222222',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
+                          width: '20px',
+                          height: '20px',
+                          padding: '0',
+                          background: 'transparent',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '2px',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
+                          transition: 'background 0.15s ease, border-color 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--figma-color-bg-hover)';
+                          e.currentTarget.style.borderColor = 'var(--text-secondary)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.borderColor = 'var(--border-color)';
                         }}
                       >
                         {eyeIconSVG}
@@ -814,15 +976,26 @@ function Plugin() {
                 onClick={() => handleSelectNode(component.id)}
                 title="View in canvas"
                 style={{
-                  padding: '4px 6px',
-                  background: '#222222',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
+                  width: '20px',
+                  height: '20px',
+                  padding: '0',
+                  background: 'transparent',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '2px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  transition: 'background 0.15s ease, border-color 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--figma-color-bg-hover)';
+                  e.currentTarget.style.borderColor = 'var(--text-secondary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.borderColor = 'var(--border-color)';
                 }}
               >
                 {eyeIconSVG}
@@ -865,15 +1038,26 @@ function Plugin() {
                         onClick={() => handleSelectNode(detail.nodeId)}
                         title="View in canvas"
                         style={{
-                          padding: '4px 6px',
-                          background: '#222222',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
+                          width: '20px',
+                          height: '20px',
+                          padding: '0',
+                          background: 'transparent',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '2px',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
+                          transition: 'background 0.15s ease, border-color 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--figma-color-bg-hover)';
+                          e.currentTarget.style.borderColor = 'var(--text-secondary)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.borderColor = 'var(--border-color)';
                         }}
                       >
                         {eyeIconSVG}
@@ -891,29 +1075,60 @@ function Plugin() {
   };
 
   // Render loading state
-  if (loading) {
+  if (loading && hasSelection) {
     return (
       <Fragment>
-        <style dangerouslySetInnerHTML={{ __html: fontStyle }} />
-        <CenteredLayout>
-        <Text align="center">
-          <strong>{progress.step}</strong>
-        </Text>
-        <VerticalSpace space="medium" />
-        <div style={{ width: '240px', height: '4px', background: 'var(--figma-color-bg-tertiary)', borderRadius: '4px', overflow: 'hidden' }}>
-          <div style={{ width: progress.percent + '%', height: '100%', background: '#222', transition: 'width 0.4s ease' }} />
+        <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '16px' }}>
+                {progress.step}
+              </div>
+            </div>
+            <div style={{ width: '240px', height: '2px', background: 'var(--track-bg)', borderRadius: '4px' }}>
+              <div style={{ width: progress.percent + '%', height: '100%', background: 'var(--progress-fill)', borderRadius: '4px', transition: 'width 0.4s ease' }} />
+            </div>
+            <VerticalSpace space="small" />
+            <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+              {Math.round(progress.percent)}%
+            </div>
+          </div>
+
+          {/* Fixed button at bottom */}
+          <div style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '16px 20px',
+            background: 'var(--figma-color-bg)',
+            zIndex: 100
+          }}>
+            <button
+              onClick={handleCancelAnalysis}
+              style={{
+                width: '100%',
+                height: '44px',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '500',
+                letterSpacing: '0.05em',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'background 0.2s, border-color 0.2s'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
-        <VerticalSpace space="small" />
-        <Text align="center" style={{ color: 'var(--figma-color-text-secondary, #999)' }}>
-          {Math.round(progress.percent)}%
-        </Text>
-        <VerticalSpace space="extraLarge" />
-        <div style={{ width: '180px' }}>
-          <Button fullWidth secondary onClick={handleCancelAnalysis}>
-            Cancel
-          </Button>
-        </div>
-      </CenteredLayout>
       </Fragment>
     );
   }
@@ -922,18 +1137,49 @@ function Plugin() {
   if (error) {
     return (
       <Fragment>
-        <style dangerouslySetInnerHTML={{ __html: fontStyle }} />
-        <CenteredLayout>
-        <div style={{ width: '100%', maxWidth: '320px' }}>
-          <Banner icon="warning" variant="warning">{error}</Banner>
+        <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ width: '100%', maxWidth: '320px' }}>
+              <Banner icon="warning" variant="warning">{error}</Banner>
+            </div>
+          </div>
+
+          {/* Fixed button at bottom */}
+          <div style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '16px 20px',
+            background: 'var(--figma-color-bg)',
+            zIndex: 100
+          }}>
+            <button
+              onClick={handleAnalyze}
+              disabled={!hasSelection}
+              style={{
+                width: '100%',
+                height: '44px',
+                background: hasSelection ? 'var(--button-bg)' : 'var(--button-disabled-bg)',
+                color: hasSelection ? 'var(--button-text)' : 'var(--button-disabled-text)',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '500',
+                letterSpacing: '0.05em',
+                cursor: hasSelection ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'background 0.2s'
+              }}
+            >
+              Analyze Selection
+            </button>
+          </div>
         </div>
-        <VerticalSpace space="large" />
-        <div style={{ width: '180px' }}>
-          <Button fullWidth onClick={handleAnalyze} disabled={!hasSelection}>
-            Analyze Selection
-          </Button>
-        </div>
-      </CenteredLayout>
       </Fragment>
     );
   }
@@ -942,22 +1188,52 @@ function Plugin() {
   if (!data && !hasSelection) {
     return (
       <Fragment>
-        <style dangerouslySetInnerHTML={{ __html: fontStyle }} />
-        <CenteredLayout>
-        <Text align="center">
-          <strong>No Selection</strong>
-        </Text>
-        <VerticalSpace space="small" />
-        <Text align="center" style={{ color: 'var(--figma-color-text-secondary, #999)' }}>
-          Select frames, components, or sections on your canvas to analyze design system coverage
-        </Text>
-        <VerticalSpace space="extraLarge" />
-        <div style={{ width: '180px' }}>
-          <Button fullWidth disabled>
-            Analyze Selection
-          </Button>
+        <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ textAlign: 'center', maxWidth: '320px' }}>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '8px' }}>
+                No Selection
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', lineHeight: '1.5' }}>
+                Select frames, components, or sections on your canvas to analyze design system coverage
+              </div>
+            </div>
+          </div>
+
+          {/* Fixed button at bottom */}
+          <div style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '16px 20px',
+            background: 'var(--figma-color-bg)',
+            zIndex: 100
+          }}>
+            <button
+              disabled
+              style={{
+                width: '100%',
+                height: '44px',
+                background: 'var(--button-disabled-bg)',
+                color: 'var(--button-disabled-text)',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '500',
+                letterSpacing: '0.05em',
+                cursor: 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+            >
+              Analyze Selection
+            </button>
+          </div>
         </div>
-      </CenteredLayout>
       </Fragment>
     );
   }
@@ -1021,10 +1297,10 @@ function Plugin() {
 
     return (
       <Fragment>
-        <style dangerouslySetInnerHTML={{ __html: fontStyle }} />
+        <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
         <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         {/* Scrollable content */}
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingBottom: '76px' }}>
           <Container space="medium">
             <VerticalSpace space="medium" />
         {/* Metrics Cards - Ultra Minimal */}
@@ -1034,51 +1310,53 @@ function Plugin() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ fontSize: '16px', color: '#222', fontWeight: '500', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '500', textTransform: 'uppercase' }}>
                   Overall Adoption
                 </div>
                 <Tooltip
+                  position="bottom"
                   content={`Foundation-First Formula (55/45 weighting):\n\nToken Adoption: ${formatPercent(filtered.variableCoverage)} × 0.55 = ${formatPercent(filtered.variableCoverage * 0.55)}\nComponent Coverage: ${formatPercent(filtered.componentCoverage)} × 0.45 = ${formatPercent(filtered.componentCoverage * 0.45)}\n\nOverall Adoption: ${formatPercent(filtered.variableCoverage * 0.55)} + ${formatPercent(filtered.componentCoverage * 0.45)} = ${formatPercent(filtered.overallScore)}\n\nWhy 55/45? Research from IBM, Atlassian, and Pinterest shows that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.`}
                 />
               </div>
             </div>
             <div style={{
-              background: '#F9F9F9',
+              background: 'var(--card-bg)',
               padding: '20px',
               borderRadius: '4px',
               border: 'none',
               display: 'flex',
               justifyContent: 'space-between',
+              alignItems: 'center',
               gap: '24px'
             }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'center' }}>
                 {/* Tokens Row */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '12px', color: '#5D5D5D', fontWeight: '500' }}>Tokens</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500' }}>Tokens</span>
                     </div>
-                    <div style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: '#838383' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: 'var(--text-tertiary)' }}>
                       {formatPercent(filtered.variableCoverage)}
                     </div>
                   </div>
-                  <div style={{ height: '2px', width: '100%', background: 'white', borderRadius: '4px' }}>
-                    <div style={{ height: '100%', width: `${filtered.variableCoverage}%`, background: '#222', borderRadius: '4px', transition: 'width 0.3s' }} />
+                  <div style={{ height: '2px', width: '100%', background: 'var(--track-bg)', borderRadius: '4px' }}>
+                    <div style={{ height: '100%', width: `${filtered.variableCoverage}%`, background: 'var(--progress-fill)', borderRadius: '4px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
 
                 {/* Components Row */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '12px', color: '#5D5D5D', fontWeight: '500' }}>Components</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500' }}>Components</span>
                     </div>
-                    <div style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: '#838383' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: 'var(--text-tertiary)' }}>
                       {formatPercent(filtered.componentCoverage)}
                     </div>
                   </div>
-                  <div style={{ height: '2px', width: '100%', background: 'white', borderRadius: '4px' }}>
-                    <div style={{ height: '100%', width: `${filtered.componentCoverage}%`, background: '#222', borderRadius: '4px', transition: 'width 0.3s' }} />
+                  <div style={{ height: '2px', width: '100%', background: 'var(--track-bg)', borderRadius: '4px' }}>
+                    <div style={{ height: '100%', width: `${filtered.componentCoverage}%`, background: 'var(--progress-fill)', borderRadius: '4px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
               </div>
@@ -1086,10 +1364,11 @@ function Plugin() {
               <div style={{ flexShrink: 0 }}>
                 <DonutChart
                   segments={[
-                    { value: filtered.variableCoverage, color: '#222' },
-                    { value: filtered.componentCoverage, color: '#52525B' }
+                    { value: filtered.overallScore, color: 'var(--progress-fill)' },
+                    { value: 100 - filtered.overallScore, color: 'rgba(0, 0, 0, 0.06)' }
                   ]}
                   centerValue={formatPercent(filtered.overallScore)}
+                  tooltipContent={`Foundation-First Formula (55/45 weighting):\n\nToken Adoption: ${formatPercent(filtered.variableCoverage)} × 0.55 = ${formatPercent(filtered.variableCoverage * 0.55)}\nComponent Coverage: ${formatPercent(filtered.componentCoverage)} × 0.45 = ${formatPercent(filtered.componentCoverage * 0.45)}\n\nOverall Adoption: ${formatPercent(filtered.variableCoverage * 0.55)} + ${formatPercent(filtered.componentCoverage * 0.45)} = ${formatPercent(filtered.overallScore)}\n\nWhy 55/45? Research from IBM, Atlassian, and Pinterest shows that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.`}
                 />
               </div>
             </div>
@@ -1099,54 +1378,55 @@ function Plugin() {
           <div style={{ marginTop: '32px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ fontSize: '16px', color: '#222', fontWeight: '500', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '500', textTransform: 'uppercase' }}>
                   Component Coverage
                 </div>
                 <Tooltip
                   content={`Formula: Library Components ÷ Total Components\n\nLibrary Components: ${filtered.libraryInstances}\nLocal Components: ${filtered.totalInstances - filtered.libraryInstances}\nTotal: ${filtered.totalInstances}\n\nCalculation: ${filtered.libraryInstances} ÷ ${filtered.totalInstances} = ${formatPercent(filtered.componentCoverage)}\n\nNote: Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`}
                 />
               </div>
-              <div style={{ fontSize: '16px', color: '#838383', fontWeight: '500', fontFeatureSettings: '"tnum"' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '500', fontFeatureSettings: '"tnum"' }}>
                 {filtered.libraryInstances} / {filtered.totalInstances}
               </div>
             </div>
             <div style={{
-              background: '#F9F9F9',
+              background: 'var(--card-bg)',
               padding: '20px',
               borderRadius: '4px',
               border: 'none',
               display: 'flex',
               justifyContent: 'space-between',
+              alignItems: 'center',
               gap: '24px'
             }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'center' }}>
                 {/* DS Components Row */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '12px', color: '#5D5D5D', fontWeight: '500' }}>DS Components</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500' }}>DS Components</span>
                     </div>
-                    <div style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: '#838383' }}>
-                      {formatPercent(filtered.totalInstances > 0 ? (filtered.libraryInstances / filtered.totalInstances) * 100 : 0)}
+                    <div style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: 'var(--text-tertiary)' }}>
+                      {filtered.libraryInstances}
                     </div>
                   </div>
-                  <div style={{ height: '2px', width: '100%', background: 'white', borderRadius: '4px' }}>
-                    <div style={{ height: '100%', width: `${filtered.totalInstances > 0 ? (filtered.libraryInstances / filtered.totalInstances) * 100 : 0}%`, background: '#222', borderRadius: '4px', transition: 'width 0.3s' }} />
+                  <div style={{ height: '2px', width: '100%', background: 'var(--track-bg)', borderRadius: '4px' }}>
+                    <div style={{ height: '100%', width: `${filtered.totalInstances > 0 ? (filtered.libraryInstances / filtered.totalInstances) * 100 : 0}%`, background: 'var(--progress-fill)', borderRadius: '4px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
 
                 {/* Local Components Row */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '12px', color: '#5D5D5D', fontWeight: '500' }}>Local Components</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500' }}>Local Components</span>
                     </div>
-                    <div style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: '#838383' }}>
-                      {formatPercent(filtered.totalInstances > 0 ? ((filtered.totalInstances - filtered.libraryInstances) / filtered.totalInstances) * 100 : 0)}
+                    <div style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: 'var(--text-tertiary)' }}>
+                      {filtered.totalInstances - filtered.libraryInstances}
                     </div>
                   </div>
-                  <div style={{ height: '2px', width: '100%', background: 'white', borderRadius: '4px' }}>
-                    <div style={{ height: '100%', width: `${filtered.totalInstances > 0 ? ((filtered.totalInstances - filtered.libraryInstances) / filtered.totalInstances) * 100 : 0}%`, background: '#222', borderRadius: '4px', transition: 'width 0.3s' }} />
+                  <div style={{ height: '2px', width: '100%', background: 'var(--track-bg)', borderRadius: '4px' }}>
+                    <div style={{ height: '100%', width: `${filtered.totalInstances > 0 ? ((filtered.totalInstances - filtered.libraryInstances) / filtered.totalInstances) * 100 : 0}%`, background: 'var(--progress-fill)', borderRadius: '4px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
               </div>
@@ -1154,10 +1434,11 @@ function Plugin() {
               <div style={{ flexShrink: 0 }}>
                 <DonutChart
                   segments={[
-                    { value: filtered.libraryInstances, color: '#222' },
+                    { value: filtered.libraryInstances, color: 'var(--progress-fill)' },
                     { value: filtered.totalInstances - filtered.libraryInstances, color: 'rgba(0, 0, 0, 0.06)' }
                   ]}
                   centerValue={formatPercent(filtered.componentCoverage)}
+                  tooltipContent={`Formula: Library Components ÷ Total Components\n\nLibrary Components: ${filtered.libraryInstances}\nLocal Components: ${filtered.totalInstances - filtered.libraryInstances}\nTotal: ${filtered.totalInstances}\n\nCalculation: ${filtered.libraryInstances} ÷ ${filtered.totalInstances} = ${formatPercent(filtered.componentCoverage)}\n\nNote: Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`}
                 />
               </div>
             </div>
@@ -1167,54 +1448,55 @@ function Plugin() {
           <div style={{ marginTop: '32px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ fontSize: '16px', color: '#222', fontWeight: '500', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '500', textTransform: 'uppercase' }}>
                   Design Token Adoption
                 </div>
                 <Tooltip
                   content={`Formula: Token-Bound Properties ÷ Total Properties\n\nToken-Bound Properties: ${filtered.tokenBoundCount}\nHardcoded Properties: ${filtered.totalOpportunities - filtered.tokenBoundCount}\nTotal Properties: ${filtered.totalOpportunities}\n\nCalculation: ${filtered.tokenBoundCount} ÷ ${filtered.totalOpportunities} = ${formatPercent(filtered.variableCoverage)}\n\nNote: This measures token adoption at the property level, not component level. Each component has multiple properties (fills, strokes, typography, radius, borders) and we count how many individual properties use design tokens.`}
                 />
               </div>
-              <div style={{ fontSize: '16px', color: '#838383', fontWeight: '500', fontFeatureSettings: '"tnum"' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '500', fontFeatureSettings: '"tnum"' }}>
                 {filtered.tokenBoundCount} / {filtered.totalOpportunities}
               </div>
             </div>
             <div style={{
-              background: '#F9F9F9',
+              background: 'var(--card-bg)',
               padding: '20px',
               borderRadius: '4px',
               border: 'none',
               display: 'flex',
               justifyContent: 'space-between',
+              alignItems: 'center',
               gap: '24px'
             }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'center' }}>
                 {/* Tokens Row */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '12px', color: '#5D5D5D', fontWeight: '500' }}>Tokens</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500' }}>Tokens</span>
                     </div>
-                    <div style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: '#838383' }}>
-                      {formatPercent(filtered.totalOpportunities > 0 ? (filtered.tokenBoundCount / filtered.totalOpportunities) * 100 : 0)}
+                    <div style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: 'var(--text-tertiary)' }}>
+                      {filtered.tokenBoundCount}
                     </div>
                   </div>
-                  <div style={{ height: '2px', width: '100%', background: 'white', borderRadius: '4px' }}>
-                    <div style={{ height: '100%', width: `${filtered.totalOpportunities > 0 ? (filtered.tokenBoundCount / filtered.totalOpportunities) * 100 : 0}%`, background: '#222', borderRadius: '4px', transition: 'width 0.3s' }} />
+                  <div style={{ height: '2px', width: '100%', background: 'var(--track-bg)', borderRadius: '4px' }}>
+                    <div style={{ height: '100%', width: `${filtered.totalOpportunities > 0 ? (filtered.tokenBoundCount / filtered.totalOpportunities) * 100 : 0}%`, background: 'var(--progress-fill)', borderRadius: '4px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
 
                 {/* Hardcoded Row */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '12px', color: '#5D5D5D', fontWeight: '500' }}>Hardcoded</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500' }}>Hardcoded</span>
                     </div>
-                    <div style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: '#838383' }}>
-                      {formatPercent(filtered.totalOpportunities > 0 ? ((filtered.totalOpportunities - filtered.tokenBoundCount) / filtered.totalOpportunities) * 100 : 0)}
+                    <div style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: 'var(--text-tertiary)' }}>
+                      {filtered.totalOpportunities - filtered.tokenBoundCount}
                     </div>
                   </div>
-                  <div style={{ height: '2px', width: '100%', background: 'white', borderRadius: '4px' }}>
-                    <div style={{ height: '100%', width: `${filtered.totalOpportunities > 0 ? ((filtered.totalOpportunities - filtered.tokenBoundCount) / filtered.totalOpportunities) * 100 : 0}%`, background: '#222', borderRadius: '4px', transition: 'width 0.3s' }} />
+                  <div style={{ height: '2px', width: '100%', background: 'var(--track-bg)', borderRadius: '4px' }}>
+                    <div style={{ height: '100%', width: `${filtered.totalOpportunities > 0 ? ((filtered.totalOpportunities - filtered.tokenBoundCount) / filtered.totalOpportunities) * 100 : 0}%`, background: 'var(--progress-fill)', borderRadius: '4px', transition: 'width 0.3s' }} />
                   </div>
                 </div>
               </div>
@@ -1222,10 +1504,11 @@ function Plugin() {
               <div style={{ flexShrink: 0 }}>
                 <DonutChart
                   segments={[
-                    { value: filtered.tokenBoundCount, color: '#222' },
+                    { value: filtered.tokenBoundCount, color: 'var(--progress-fill)' },
                     { value: filtered.totalOpportunities - filtered.tokenBoundCount, color: 'rgba(0, 0, 0, 0.06)' }
                   ]}
                   centerValue={formatPercent(filtered.variableCoverage)}
+                  tooltipContent={`Formula: Token-Bound Properties ÷ Total Properties\n\nToken-Bound Properties: ${filtered.tokenBoundCount}\nHardcoded Properties: ${filtered.totalOpportunities - filtered.tokenBoundCount}\nTotal Properties: ${filtered.totalOpportunities}\n\nCalculation: ${filtered.tokenBoundCount} ÷ ${filtered.totalOpportunities} = ${formatPercent(filtered.variableCoverage)}\n\nNote: This measures token adoption at the property level, not component level. Each component has multiple properties (fills, strokes, typography, radius, borders) and we count how many individual properties use design tokens.`}
                 />
               </div>
             </div>
@@ -1234,7 +1517,7 @@ function Plugin() {
 
         {/* Figma-style Tabs */}
         <div style={{
-          background: '#f5f5f5',
+          background: 'var(--tab-container-bg, #242424)',
           padding: '0',
           borderRadius: '4px',
           marginTop: '32px',
@@ -1256,28 +1539,28 @@ function Plugin() {
                 onClick={() => setActiveTab(tab)}
                 style={{
                   flex: 1,
-                  padding: '8px 12px',
-                  background: isActive ? '#222' : 'transparent',
+                  padding: '10px 16px',
+                  background: isActive ? 'var(--button-bg)' : 'transparent',
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '10px',
-                  fontWeight: '500',
-                  letterSpacing: '0.1em',
-                  color: isActive ? '#fff' : '#222',
+                  fontWeight: '400',
+                  letterSpacing: '0.4px',
+                  color: isActive ? 'var(--button-text)' : 'var(--tab-inactive-text)',
                   fontFamily: 'inherit',
                   outline: 'none',
                   transition: 'all 0.15s',
-                  boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)' : 'none'
+                  boxShadow: 'none'
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.color = '#000';
+                    e.currentTarget.style.opacity = '0.7';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.color = '#222';
+                    e.currentTarget.style.opacity = '1';
                   }
                 }}
               >
@@ -1291,7 +1574,7 @@ function Plugin() {
         {activeTab === 'overview' && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-              <p style={{ fontSize: '16px', fontWeight: '500', color: '#222', textTransform: 'uppercase', margin: 0, lineHeight: 'normal' }}>
+              <p style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-primary)', textTransform: 'uppercase', margin: 0, lineHeight: 'normal' }}>
                 Summary
               </p>
             </div>
@@ -1299,37 +1582,37 @@ function Plugin() {
             {/* Mini summary cards */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '12px', height: '142px' }}>
               <div style={{ gridArea: '1 / 1', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'nowrap' }}>
-                <p style={{ fontSize: '16px', color: '#878787', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
                   Components
                 </p>
-                <p style={{ fontSize: '32px', fontWeight: '700', color: '#222', lineHeight: 'normal', margin: 0, fontFeatureSettings: '"tnum"' }}>
+                <p style={{ fontSize: '26px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 'normal', margin: 0, fontFeatureSettings: '"tnum"' }}>
                   {filtered.totalInstances}
                 </p>
               </div>
 
               <div style={{ gridArea: '1 / 2', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'nowrap' }}>
-                <p style={{ fontSize: '16px', color: '#878787', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
                   Design Tokens
                 </p>
-                <p style={{ fontSize: '32px', fontWeight: '700', color: '#222', lineHeight: 'normal', margin: 0, fontFeatureSettings: '"tnum"' }}>
+                <p style={{ fontSize: '26px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 'normal', margin: 0, fontFeatureSettings: '"tnum"' }}>
                   {filtered.totalOpportunities}
                 </p>
               </div>
 
               <div style={{ gridArea: '2 / 1', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'nowrap' }}>
-                <p style={{ fontSize: '16px', color: '#878787', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
                   Libraries
                 </p>
-                <p style={{ fontSize: '32px', fontWeight: '700', color: '#222', lineHeight: 'normal', margin: 0, fontFeatureSettings: '"tnum"' }}>
+                <p style={{ fontSize: '26px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 'normal', margin: 0, fontFeatureSettings: '"tnum"' }}>
                   {filtered.libraryBreakdown.length}
                 </p>
               </div>
 
               <div style={{ gridArea: '2 / 2', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'nowrap' }}>
-                <p style={{ fontSize: '16px', color: '#878787', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '400', lineHeight: 'normal', margin: 0 }}>
                   Orphans
                 </p>
-                <p style={{ fontSize: '32px', fontWeight: '700', color: '#222', lineHeight: 'normal', margin: 0, fontFeatureSettings: '"tnum"' }}>
+                <p style={{ fontSize: '26px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 'normal', margin: 0, fontFeatureSettings: '"tnum"' }}>
                   {filtered.orphanCount}
                 </p>
               </div>
@@ -1339,32 +1622,29 @@ function Plugin() {
 
         {activeTab === 'components' && (
           <div>
-            <Text style={{ fontSize: '13px', fontWeight: '600', letterSpacing: '-0.2px', marginBottom: '16px' }}>Component Sources Overview</Text>
+            <div style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '500', textTransform: 'uppercase', marginBottom: '16px' }}>
+              Component Sources Overview
+            </div>
 
             {/* Minimal bar charts */}
             {filtered.libraryBreakdown && filtered.libraryBreakdown.length > 0 && (
               <div style={{ marginBottom: '20px' }}>
                 {filtered.libraryBreakdown.map((lib, index) => {
-                  // Assign colors from palette based on index
-                  const colors = ['#c900b5', '#7b64ef', '#008cff', '#00a5f4', '#00b6d2', '#14c1b0'];
-                  const startColor = colors[index % colors.length];
-                  const endColor = colors[(index + 1) % colors.length];
-
                   return (
                     <div key={lib.name} style={{ marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <Text style={{ fontSize: '11px', fontWeight: '500' }}>{lib.name}</Text>
-                        <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>
-                          {lib.count} ({formatPercent(lib.percentage)})
-                        </Text>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-secondary)' }}>{lib.name}</span>
+                        <span style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: 'var(--text-tertiary)' }}>
+                          {lib.count}
+                        </span>
                       </div>
-                      <div style={{ width: '100%', height: '4px', background: 'var(--figma-color-bg-tertiary)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ height: '2px', width: '100%', background: 'var(--track-bg)', borderRadius: '4px' }}>
                         <div style={{
-                          width: lib.percentage + '%',
                           height: '100%',
-                          background: `linear-gradient(90deg, ${startColor} 0%, ${startColor}dd 50%, ${endColor}aa 100%)`,
+                          width: lib.percentage + '%',
+                          background: 'var(--progress-fill)',
                           borderRadius: '4px',
-                          transition: 'width 0.3s ease'
+                          transition: 'width 0.3s'
                         }} />
                       </div>
                     </div>
@@ -1373,8 +1653,12 @@ function Plugin() {
               </div>
             )}
 
-            <Divider />
             <VerticalSpace space="medium" />
+
+            {/* Component Details Header */}
+            <div style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '500', textTransform: 'uppercase', marginBottom: '16px' }}>
+              Component Details
+            </div>
 
             {renderComponentDetails()}
           </div>
@@ -1383,7 +1667,9 @@ function Plugin() {
         {activeTab === 'tokens' && (
           <div>
             {/* Hardcoded Values Breakdown */}
-            <Text style={{ fontSize: '13px', fontWeight: '600', letterSpacing: '-0.2px', marginBottom: '16px' }}>Hardcoded by Type</Text>
+            <div style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '500', textTransform: 'uppercase', marginBottom: '16px' }}>
+              Hardcoded by Type
+            </div>
             {data.hardcodedValues && data.hardcodedValues.totalHardcoded > 0 ? (
               <Fragment>
                 {[
@@ -1393,25 +1679,22 @@ function Plugin() {
                   { label: 'Radius', count: data.hardcodedValues.radius }
                 ].filter(item => item.count > 0).map((item, index) => {
                   const percentage = data.hardcodedValues.totalHardcoded > 0 ? (item.count / data.hardcodedValues.totalHardcoded) * 100 : 0;
-                  const colors = ['#c900b5', '#7b64ef', '#008cff', '#00a5f4', '#00b6d2', '#14c1b0'];
-                  const startColor = colors[index % colors.length];
-                  const endColor = colors[(index + 1) % colors.length];
 
                   return (
                     <div key={item.label} style={{ marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <Text style={{ fontSize: '11px', fontWeight: '500' }}>{item.label}</Text>
-                        <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>
-                          {item.count} ({formatPercent(percentage)})
-                        </Text>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-secondary)' }}>{item.label}</span>
+                        <span style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: 'var(--text-tertiary)' }}>
+                          {item.count}
+                        </span>
                       </div>
-                      <div style={{ width: '100%', height: '4px', background: 'var(--figma-color-bg-tertiary)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ height: '2px', width: '100%', background: 'var(--track-bg)', borderRadius: '4px' }}>
                         <div style={{
-                          width: percentage + '%',
                           height: '100%',
-                          background: `linear-gradient(90deg, ${startColor} 0%, ${startColor}dd 50%, ${endColor}aa 100%)`,
+                          width: percentage + '%',
+                          background: 'var(--progress-fill)',
                           borderRadius: '4px',
-                          transition: 'width 0.3s ease'
+                          transition: 'width 0.3s'
                         }} />
                       </div>
                     </div>
@@ -1423,73 +1706,72 @@ function Plugin() {
             )}
 
             <VerticalSpace space="medium" />
-            <Divider />
-            <VerticalSpace space="medium" />
 
-            {/* Token Sources with Orphan Rate Badge */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <Text style={{ fontSize: '13px', fontWeight: '600', letterSpacing: '-0.2px' }}>Token Sources</Text>
-              {/* Orphan Rate Badge */}
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                background: 'var(--figma-color-bg)',
-                border: '1px solid var(--figma-color-border)'
-              }}>
-                <Text style={{
-                  fontSize: '10px',
-                  fontWeight: '600',
-                  color: 'var(--figma-color-text-tertiary)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
-                }}>Orphan Rate</Text>
-                <Text style={{
-                  fontSize: '11px',
-                  fontWeight: '700',
-                  color: 'var(--figma-color-text)'
-                }}>{formatPercent(filtered.orphanRate)}</Text>
+            {/* Token Sources - Hidden for now */}
+            <div style={{ display: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '500', textTransform: 'uppercase' }}>
+                  Token Sources
+                </div>
+                {/* Orphan Rate Badge */}
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  background: 'var(--figma-color-bg)',
+                  border: '1px solid var(--figma-color-border)'
+                }}>
+                  <span style={{
+                    fontSize: '10px',
+                    fontWeight: '600',
+                    color: 'var(--figma-color-text-tertiary)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>Orphan Rate</span>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    color: 'var(--figma-color-text)'
+                  }}>{formatPercent(filtered.orphanRate)}</span>
+                </div>
               </div>
+              {data.variableBreakdown && data.variableBreakdown.length > 0 ? (
+                <div style={{ marginBottom: '20px' }}>
+                  {data.variableBreakdown.map((lib, index) => {
+                    return (
+                      <div key={lib.name} style={{ marginBottom: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-secondary)' }}>{lib.name}</span>
+                          <span style={{ fontSize: '12px', fontWeight: '500', fontFeatureSettings: '"tnum"', color: 'var(--text-tertiary)' }}>
+                            {lib.count}
+                          </span>
+                        </div>
+                        <div style={{ height: '2px', width: '100%', background: 'var(--track-bg)', borderRadius: '4px' }}>
+                          <div style={{
+                            height: '100%',
+                            width: lib.percentage + '%',
+                            background: 'var(--progress-fill)',
+                            borderRadius: '4px',
+                            transition: 'width 0.3s'
+                          }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>No design tokens found</Text>
+              )}
+
+              <VerticalSpace space="medium" />
             </div>
-            {data.variableBreakdown && data.variableBreakdown.length > 0 ? (
-              data.variableBreakdown.map((lib, index) => {
-                // Assign colors from palette based on index
-                const colors = ['#c900b5', '#7b64ef', '#008cff', '#00a5f4', '#00b6d2', '#14c1b0'];
-                const startColor = colors[index % colors.length];
-                const endColor = colors[(index + 1) % colors.length];
-
-                return (
-                  <div key={lib.name} style={{ marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                      <Text style={{ fontSize: '11px', fontWeight: '500' }}>{lib.name}</Text>
-                      <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>
-                        {lib.count} ({formatPercent(lib.percentage)})
-                      </Text>
-                    </div>
-                    <div style={{ width: '100%', height: '4px', background: 'var(--figma-color-bg-tertiary)', borderRadius: '20px', overflow: 'hidden' }}>
-                      <div style={{
-                        width: lib.percentage + '%',
-                        height: '100%',
-                        background: `linear-gradient(90deg, ${startColor} 0%, ${startColor}dd 50%, ${endColor}aa 100%)`,
-                        borderRadius: '20px',
-                        transition: 'width 0.3s ease'
-                      }} />
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <Text style={{ color: "var(--figma-color-text-tertiary)", fontSize: '11px' }}>No design tokens found</Text>
-            )}
-
-            <VerticalSpace space="medium" />
-            <Divider />
-            <VerticalSpace space="medium" />
 
             {/* Orphan Details */}
-            <Text style={{ fontSize: '13px', fontWeight: '600', letterSpacing: '-0.2px', marginBottom: '16px' }}>Orphan Details by Component</Text>
+            <div style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '500', textTransform: 'uppercase', marginBottom: '16px' }}>
+              Orphan Details by Component
+            </div>
             {data.hardcodedValues.details && data.hardcodedValues.details.length > 0 ? (
               <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
                 {renderOrphanDetails()}
@@ -1685,10 +1967,15 @@ function Plugin() {
       </Container>
     </div>
 
-    {/* Sticky button at bottom */}
+    {/* Sticky button at bottom - fixed to bottom of viewport */}
     <div style={{
+      position: 'fixed',
+      bottom: 0,
+      left: 0,
+      right: 0,
       padding: '16px 20px',
-      background: '#fff'
+      background: 'var(--figma-color-bg)',
+      zIndex: 100
     }}>
       <button
         onClick={handleAnalyze}
@@ -1696,8 +1983,8 @@ function Plugin() {
         style={{
           width: '100%',
           height: '44px',
-          background: hasSelection ? '#222' : 'rgba(0,0,0,0.1)',
-          color: hasSelection ? '#fff' : 'rgba(0,0,0,0.3)',
+          background: hasSelection ? 'var(--button-bg)' : 'var(--button-disabled-bg)',
+          color: hasSelection ? 'var(--button-text)' : 'var(--button-disabled-text)',
           border: 'none',
           borderRadius: '4px',
           fontSize: '12px',
@@ -1726,22 +2013,53 @@ function Plugin() {
   // Default render (when selection exists but not analyzed)
   return (
     <Fragment>
-      <style dangerouslySetInnerHTML={{ __html: fontStyle }} />
-      <CenteredLayout>
-      <Text align="center">
-        <strong>{selectionCount} {selectionCount === 1 ? 'item' : 'items'} selected</strong>
-      </Text>
-      <VerticalSpace space="small" />
-      <Text align="center" style={{ color: 'var(--figma-color-text-secondary, #999)' }}>
-        Ready to analyze design system coverage
-      </Text>
-      <VerticalSpace space="extraLarge" />
-      <div style={{ width: '180px' }}>
-        <Button fullWidth onClick={handleAnalyze}>
-          Analyze Selection
-        </Button>
+      <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ textAlign: 'center', maxWidth: '320px' }}>
+            <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '8px' }}>
+              {selectionCount} {selectionCount === 1 ? 'item' : 'items'} selected
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', lineHeight: '1.5' }}>
+              Ready to analyze design system coverage
+            </div>
+          </div>
+        </div>
+
+        {/* Fixed button at bottom */}
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          padding: '16px 20px',
+          background: 'var(--figma-color-bg)',
+          zIndex: 100
+        }}>
+          <button
+            onClick={handleAnalyze}
+            style={{
+              width: '100%',
+              height: '44px',
+              background: 'var(--button-bg)',
+              color: 'var(--button-text)',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontWeight: '500',
+              letterSpacing: '0.05em',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'background 0.2s'
+            }}
+          >
+            Analyze Selection
+          </button>
+        </div>
       </div>
-    </CenteredLayout>
     </Fragment>
   );
 }
