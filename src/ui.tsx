@@ -401,7 +401,10 @@ interface CustomCheckboxProps {
 function CustomCheckbox({ checked, onChange }: CustomCheckboxProps) {
   return (
     <div
-      onClick={onChange}
+      onClick={(e) => {
+        e.stopPropagation();
+        onChange();
+      }}
       style={{
         width: '14px',
         height: '14px',
@@ -675,6 +678,9 @@ function Plugin() {
   const [ignoredInstances, setIgnoredInstances] = useState<Set<string>>(
     new Set()
   );
+  const [ignoredLibraries, setIgnoredLibraries] = useState<Set<string>>(
+    new Set()
+  );
 
   // Listen for messages from plugin backend
   useEffect(() => {
@@ -812,6 +818,39 @@ function Plugin() {
       emit('IGNORE_INSTANCE', instanceId);
     }
     setIgnoredInstances(newSet);
+
+    // Trigger re-render
+    if (data) {
+      setData({ ...data });
+    }
+  };
+
+  const handleToggleIgnoreLibrary = (librarySource: string, instanceIds: string[]) => {
+    const newIgnoredLibraries = new Set(ignoredLibraries);
+    const newIgnoredInstances = new Set(ignoredInstances);
+
+    if (newIgnoredLibraries.has(librarySource)) {
+      // Unignore the library and all its instances
+      newIgnoredLibraries.delete(librarySource);
+      instanceIds.forEach(id => {
+        if (newIgnoredInstances.has(id)) {
+          newIgnoredInstances.delete(id);
+          emit('UNIGNORE_INSTANCE', id);
+        }
+      });
+    } else {
+      // Ignore the library and all its instances
+      newIgnoredLibraries.add(librarySource);
+      instanceIds.forEach(id => {
+        if (!newIgnoredInstances.has(id)) {
+          newIgnoredInstances.add(id);
+          emit('IGNORE_INSTANCE', id);
+        }
+      });
+    }
+
+    setIgnoredLibraries(newIgnoredLibraries);
+    setIgnoredInstances(newIgnoredInstances);
 
     // Trigger re-render
     if (data) {
@@ -1114,6 +1153,9 @@ function Plugin() {
           librarySource.includes('Local (built with DS)');
         const isCollapsed = collapsedSections.has(librarySource);
 
+        const isLibraryIgnored = ignoredLibraries.has(librarySource);
+        const instanceIds = instances.map(i => i.instanceId);
+
         return (
           <div
             key={librarySource}
@@ -1126,14 +1168,15 @@ function Plugin() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 gap: '12px',
-                cursor: 'pointer',
                 borderBottom: !isCollapsed
                   ? '1px solid var(--figma-color-border)'
                   : 'none',
               }}
-              onClick={() => handleToggleCollapse(librarySource)}
             >
-              <div style={{ flex: 1 }}>
+              <div
+                style={{ flex: 1, cursor: 'pointer' }}
+                onClick={() => handleToggleCollapse(librarySource)}
+              >
                 <div
                   style={{
                     fontWeight: 600,
@@ -1168,6 +1211,36 @@ function Plugin() {
                   {instances.length} instance{instances.length > 1 ? 's' : ''}
                 </div>
               </div>
+              {!isWrapper && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <CustomCheckbox
+                    checked={isLibraryIgnored}
+                    onChange={() => handleToggleIgnoreLibrary(librarySource, instanceIds)}
+                  />
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      color: 'var(--text-secondary)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleIgnoreLibrary(librarySource, instanceIds);
+                    }}
+                  >
+                    Ignore All
+                  </span>
+                </div>
+              )}
             </div>
             {!isCollapsed && (
               <div style={{ paddingTop: '8px' }}>
@@ -1308,19 +1381,16 @@ function Plugin() {
               padding: '8px 0',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
+              gap: '12px',
               borderBottom: !isCollapsed
                 ? '1px solid var(--figma-color-border)'
                 : 'none',
             }}
-            onClick={() => handleToggleCollapse(`orphan-${component.id}`)}
           >
-            <CustomCheckbox
-              checked={isComponentIgnored}
-              onChange={() => handleToggleIgnoreComponent(component.id)}
-            />
-            <div style={{ flex: 1 }}>
+            <div
+              style={{ flex: 1, cursor: 'pointer' }}
+              onClick={() => handleToggleCollapse(`orphan-${component.id}`)}
+            >
               <div
                 style={{
                   fontWeight: 600,
@@ -1345,33 +1415,34 @@ function Plugin() {
                 {component.orphans.length > 1 ? 's' : ''}
               </div>
             </div>
-            <button
-              onClick={() => handleSelectNode(component.id)}
-              title="View in canvas"
+            <div
               style={{
-                width: '20px',
-                height: '20px',
-                padding: '0',
-                background: 'transparent',
-                color: 'var(--text-secondary)',
-                border: 'none',
-                borderRadius: '2px',
-                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'background 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background =
-                  'var(--figma-color-bg-hover)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
+                gap: '8px',
               }}
             >
-              {eyeIconSVG}
-            </button>
+              <CustomCheckbox
+                checked={isComponentIgnored}
+                onChange={() => handleToggleIgnoreComponent(component.id)}
+              />
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: 'var(--text-secondary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleIgnoreComponent(component.id);
+                }}
+              >
+                Ignore All
+              </span>
+            </div>
           </div>
           {!isCollapsed && (
             <div style={{ paddingTop: '8px' }}>
@@ -1384,7 +1455,7 @@ function Plugin() {
                   <div
                     key={detail.nodeId}
                     style={{
-                      paddingLeft: '20px',
+                      paddingLeft: '0px',
                       paddingTop: '8px',
                       paddingBottom: '8px',
                       fontSize: '10px',
@@ -3205,7 +3276,7 @@ This measures token adoption at the property level, not component level. Each co
                   </div>
                   {data.hardcodedValues.details &&
                   data.hardcodedValues.details.length > 0 ? (
-                    <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                    <div>
                       {renderOrphanDetails()}
                     </div>
                   ) : (
