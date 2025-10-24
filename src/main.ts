@@ -11,6 +11,20 @@ import type {
   DetectedCollection,
   TeamLibrary,
 } from './types';
+import {
+  loadEnabledLibraries,
+  saveEnabledLibraries,
+  loadCollectionMappings,
+  saveCollectionMappings,
+  loadIgnoredComponents,
+  saveIgnoredComponents,
+  loadIgnoredOrphans,
+  saveIgnoredOrphans,
+  loadIgnoredInstances,
+  saveIgnoredInstances,
+  loadOnboardingStatus,
+  saveOnboardingStatus,
+} from './utils/storage';
 
 // ========================================
 // CONFIGURATION: Component Key Mapping
@@ -35,22 +49,6 @@ function getLibraryNameFromVariableId(id: string): string | null {
 // ========================================
 // Team Library Management
 // ========================================
-
-const ENABLED_LIBRARIES_KEY = 'enabledLibraries';
-
-// Load enabled libraries from client storage
-async function loadEnabledLibraries(): Promise<Set<string>> {
-  const stored = await figma.clientStorage.getAsync(ENABLED_LIBRARIES_KEY);
-  if (stored && Array.isArray(stored)) {
-    return new Set(stored);
-  }
-  return new Set();
-}
-
-// Save enabled libraries to client storage
-async function saveEnabledLibraries(libraries: Set<string>): Promise<void> {
-  await figma.clientStorage.setAsync(ENABLED_LIBRARIES_KEY, Array.from(libraries));
-}
 
 // Get all available team libraries with their variable collections and components
 async function getAvailableLibraries(): Promise<TeamLibrary[]> {
@@ -132,86 +130,6 @@ async function isFromEnabledLibrary(collectionKey: string): Promise<{ enabled: b
 // Legacy Collection-Based Variable Mapping (Deprecated)
 // ========================================
 
-const COLLECTION_MAPPINGS_KEY = 'collectionMappings';
-
-// Load collection mappings from client storage
-async function loadCollectionMappings(): Promise<Map<string, string>> {
-  const stored = await figma.clientStorage.getAsync(COLLECTION_MAPPINGS_KEY);
-  if (stored) {
-    return new Map(Object.entries(stored));
-  }
-  return new Map();
-}
-
-// Save collection mappings to client storage
-async function saveCollectionMappings(mappings: Map<string, string>): Promise<void> {
-  const obj = Object.fromEntries(mappings);
-  await figma.clientStorage.setAsync(COLLECTION_MAPPINGS_KEY, obj);
-}
-
-// ========================================
-// IGNORED COMPONENTS STORAGE
-// ========================================
-
-const IGNORED_COMPONENTS_KEY = 'ignoredComponents';
-const IGNORED_ORPHANS_KEY = 'ignoredOrphans';
-
-// Load ignored component IDs from client storage
-async function loadIgnoredComponents(): Promise<Set<string>> {
-  const stored = await figma.clientStorage.getAsync(IGNORED_COMPONENTS_KEY);
-  if (stored && Array.isArray(stored)) {
-    return new Set(stored);
-  }
-  return new Set();
-}
-
-// Save ignored component IDs to client storage
-async function saveIgnoredComponents(componentIds: Set<string>): Promise<void> {
-  await figma.clientStorage.setAsync(IGNORED_COMPONENTS_KEY, Array.from(componentIds));
-}
-
-// Load ignored orphan node IDs from client storage
-async function loadIgnoredOrphans(): Promise<Set<string>> {
-  const stored = await figma.clientStorage.getAsync(IGNORED_ORPHANS_KEY);
-  if (stored && Array.isArray(stored)) {
-    return new Set(stored);
-  }
-  return new Set();
-}
-
-// Save ignored orphan node IDs to client storage
-async function saveIgnoredOrphans(nodeIds: Set<string>): Promise<void> {
-  await figma.clientStorage.setAsync(IGNORED_ORPHANS_KEY, Array.from(nodeIds));
-}
-
-const IGNORED_INSTANCES_KEY = 'ignoredInstances';
-
-// Load ignored instance IDs from client storage
-async function loadIgnoredInstances(): Promise<Set<string>> {
-  const stored = await figma.clientStorage.getAsync(IGNORED_INSTANCES_KEY);
-  if (stored && Array.isArray(stored)) {
-    return new Set(stored);
-  }
-  return new Set();
-}
-
-// Save ignored instance IDs to client storage
-async function saveIgnoredInstances(instanceIds: Set<string>): Promise<void> {
-  await figma.clientStorage.setAsync(IGNORED_INSTANCES_KEY, Array.from(instanceIds));
-}
-
-const ONBOARDING_SEEN_KEY = 'onboardingSeen';
-
-// Load onboarding status from client storage
-async function loadOnboardingStatus(): Promise<boolean> {
-  const stored = await figma.clientStorage.getAsync(ONBOARDING_SEEN_KEY);
-  return stored === true;
-}
-
-// Save onboarding status to client storage
-async function saveOnboardingStatus(seen: boolean): Promise<void> {
-  await figma.clientStorage.setAsync(ONBOARDING_SEEN_KEY, seen);
-}
 
 // Get library name from variable by checking its collection
 async function getLibraryNameFromVariable(variable: Variable): Promise<string | null> {
