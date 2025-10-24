@@ -16,6 +16,7 @@ import { emit, on } from '@create-figma-plugin/utilities';
 import { Tooltip, Checkbox, DonutChart } from './components/common';
 import { useAnimatedCounter } from './hooks/useAnimatedCounter';
 import { Modal, OnboardingModal, HelpModal } from './components/modals';
+import { StatCard } from './components/cards';
 import { themeStyles } from './styles/theme';
 
 // TypeScript interfaces
