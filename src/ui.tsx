@@ -160,15 +160,15 @@ function Tooltip({
             position: 'absolute',
             ...tooltipStyles,
             background: 'rgba(0,0,0,0.9)',
-            color: '#fff',
-            padding: '8px 12px',
+            color: '#f0f0f0ff',
+            padding: '12px 16px',
             borderRadius: '8px',
-            fontSize: '10px',
+            fontSize: '11px',
             whiteSpace: 'pre-line',
             zIndex: 1000,
-            minWidth: '200px',
-            maxWidth: '280px',
-            lineHeight: '1.4',
+            minWidth: '250px',
+            maxWidth: '320px',
+            lineHeight: '1.6',
             pointerEvents: 'none',
           }}
         >
@@ -329,14 +329,14 @@ function DonutChart({
             transform: 'translateY(-50%)',
             marginRight: '12px',
             background: 'rgba(0,0,0,0.9)',
-            color: '#fff',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            fontSize: '10px',
+            color: '#f0f0f0ff',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            fontSize: '11px',
             whiteSpace: 'pre-line',
             zIndex: 1000,
             width: '320px',
-            lineHeight: '1.4',
+            lineHeight: '1.6',
             pointerEvents: 'none',
           }}
         >
@@ -1997,6 +1997,7 @@ function Plugin() {
                         Component Coverage
                       </div>
                       <Tooltip
+                        position="bottom"
                         content={`Formula: Library Components ÷ Total Components\n\nLibrary Components: ${
                           filtered.libraryInstances
                         }\nLocal Components: ${
@@ -2228,6 +2229,7 @@ function Plugin() {
                         Design Token Adoption
                       </div>
                       <Tooltip
+                        position="bottom"
                         content={`Formula: Token-Bound Properties ÷ Total Properties\n\nToken-Bound Properties: ${
                           filtered.tokenBoundCount
                         }\nHardcoded Properties: ${
