@@ -2142,461 +2142,87 @@ GETTING STARTED
                 }}
               >
                 {/* Overall Score Card */}
-                <div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '12px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: '12px',
-                          color: 'var(--text-primary)',
-                          fontWeight: '500',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        Overall Adoption
-                      </div>
-                      <Tooltip
-                        position="bottom"
-                        content={`Foundation-First Formula (55/45 weighting):\n\nToken Adoption: ${formatPercent(
-                          filtered.variableCoverage
-                        )} × 0.55 = ${formatPercent(
-                          filtered.variableCoverage * 0.55
-                        )}\nComponent Coverage: ${formatPercent(
-                          filtered.componentCoverage
-                        )} × 0.45 = ${formatPercent(
-                          filtered.componentCoverage * 0.45
-                        )}\n\nOverall Adoption: ${formatPercent(
-                          filtered.variableCoverage * 0.55
-                        )} + ${formatPercent(
-                          filtered.componentCoverage * 0.45
-                        )} = ${formatPercent(
-                          filtered.overallScore
-                        )}\n\nWhy 55/45? Research from IBM, Atlassian, and Pinterest shows that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.`}
-                      />
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      background: 'var(--card-bg)',
-                      padding: '20px',
-                      borderRadius: '4px',
-                      border: 'none',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '24px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '16px',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {/* Tokens Row */}
-                      <div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: '6px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                color: 'var(--text-secondary)',
-                                fontWeight: '500',
-                              }}
-                            >
-                              Tokens
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              fontFeatureSettings: '"tnum"',
-                              color: 'var(--text-tertiary)',
-                            }}
-                          >
-                            {formatPercent(filtered.variableCoverage)}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            height: '2px',
-                            width: '100%',
-                            background: 'var(--track-bg-card)',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${filtered.variableCoverage}%`,
-                              background: 'var(--progress-fill)',
-                              borderRadius: '4px',
-                              transformOrigin: 'left',
-                              animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Components Row */}
-                      <div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: '6px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                color: 'var(--text-secondary)',
-                                fontWeight: '500',
-                              }}
-                            >
-                              Components
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              fontFeatureSettings: '"tnum"',
-                              color: 'var(--text-tertiary)',
-                            }}
-                          >
-                            {formatPercent(filtered.componentCoverage)}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            height: '2px',
-                            width: '100%',
-                            background: 'var(--track-bg-card)',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${filtered.componentCoverage}%`,
-                              background: 'var(--progress-fill)',
-                              borderRadius: '4px',
-                              transformOrigin: 'left',
-                              animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                              animationDelay: '0.1s',
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ flexShrink: 0 }}>
-                      <DonutChart
-                        segments={[
-                          {
-                            value: filtered.overallScore,
-                            color: 'var(--progress-fill)',
-                          },
-                          {
-                            value: 100 - filtered.overallScore,
-                            color: 'var(--track-bg-card)',
-                          },
-                        ]}
-                        centerValue={formatPercent(filtered.overallScore)}
-                        onClick={() =>
-                          setModalContent({
-                            title: 'Overall Adoption Score',
-                            content: `FOUNDATION FIRST FORMULA
+                <StatCard
+                  title="Overall Adoption"
+                  tooltipContent={`Foundation-First Formula (55/45 weighting):\n\nToken Adoption: ${formatPercent(
+                    filtered.variableCoverage
+                  )} × 0.55 = ${formatPercent(
+                    filtered.variableCoverage * 0.55
+                  )}\nComponent Coverage: ${formatPercent(
+                    filtered.componentCoverage
+                  )} × 0.45 = ${formatPercent(
+                    filtered.componentCoverage * 0.45
+                  )}\n\nOverall Adoption: ${formatPercent(
+                    filtered.variableCoverage * 0.55
+                  )} + ${formatPercent(
+                    filtered.componentCoverage * 0.45
+                  )} = ${formatPercent(
+                    filtered.overallScore
+                  )}\n\nWhy 55/45? Research from IBM, Atlassian, and Pinterest shows that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.`}
+                  tokensLabel="Tokens"
+                  tokensValue={filtered.variableCoverage}
+                  componentsLabel="Components"
+                  componentsValue={filtered.componentCoverage}
+                  donutValue={filtered.overallScore}
+                  onDonutClick={() =>
+                    setModalContent({
+                      title: 'Overall Adoption Score',
+                      content: `FOUNDATION FIRST FORMULA
 (55/45 weighting)
 
 TOKEN ADOPTION
 ${formatPercent(filtered.variableCoverage)} × 0.55 = ${formatPercent(
-                              filtered.variableCoverage * 0.55
-                            )}
+                        filtered.variableCoverage * 0.55
+                      )}
 
 COMPONENT COVERAGE
 ${formatPercent(filtered.componentCoverage)} × 0.45 = ${formatPercent(
-                              filtered.componentCoverage * 0.45
-                            )}
+                        filtered.componentCoverage * 0.45
+                      )}
 
 OVERALL ADOPTION
 ${formatPercent(filtered.variableCoverage * 0.55)} + ${formatPercent(
-                              filtered.componentCoverage * 0.45
-                            )} = ${formatPercent(filtered.overallScore)}
+                        filtered.componentCoverage * 0.45
+                      )} = ${formatPercent(filtered.overallScore)}
 
 WHY 55/45
 Research from IBM, Atlassian, and Pinterest shows that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.`,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
+                    })
+                  }
+                />
 
                 {/* Component Coverage Card */}
                 <div style={{ marginTop: '32px' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '12px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: '12px',
-                          color: 'var(--text-primary)',
-                          fontWeight: '500',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        Component Coverage
-                      </div>
-                      <Tooltip
-                        position="bottom"
-                        content={`Formula: Library Components ÷ Total Components\n\nLibrary Components: ${
-                          filtered.libraryInstances
-                        }\nLocal Components: ${
-                          filtered.totalInstances - filtered.libraryInstances
-                        }\nTotal: ${filtered.totalInstances}\n\nCalculation: ${
-                          filtered.libraryInstances
-                        } ÷ ${filtered.totalInstances} = ${formatPercent(
-                          filtered.componentCoverage
-                        )}\n\nNote: Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`}
-                      />
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      background: 'var(--card-bg)',
-                      padding: '20px',
-                      borderRadius: '4px',
-                      border: 'none',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '24px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '16px',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {/* DS Components Row */}
-                      <div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: '6px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                color: 'var(--text-secondary)',
-                                fontWeight: '500',
-                              }}
-                            >
-                              DS Components
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              fontFeatureSettings: '"tnum"',
-                              color: 'var(--text-tertiary)',
-                            }}
-                          >
-                            {formatPercent(
-                              filtered.totalInstances > 0
-                                ? (filtered.libraryInstances /
-                                    filtered.totalInstances) *
-                                  100
-                                : 0
-                            )}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            height: '2px',
-                            width: '100%',
-                            background: 'var(--track-bg-card)',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${
-                                filtered.totalInstances > 0
-                                  ? (filtered.libraryInstances /
-                                      filtered.totalInstances) *
-                                    100
-                                  : 0
-                              }%`,
-                              background: 'var(--progress-fill)',
-                              borderRadius: '4px',
-                              transformOrigin: 'left',
-                              animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Local Components Row */}
-                      <div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: '6px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                color: 'var(--text-secondary)',
-                                fontWeight: '500',
-                              }}
-                            >
-                              Local Components
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              fontFeatureSettings: '"tnum"',
-                              color: 'var(--text-tertiary)',
-                            }}
-                          >
-                            {formatPercent(
-                              filtered.totalInstances > 0
-                                ? ((filtered.totalInstances -
-                                    filtered.libraryInstances) /
-                                    filtered.totalInstances) *
-                                  100
-                                : 0
-                            )}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            height: '2px',
-                            width: '100%',
-                            background: 'var(--track-bg-card)',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${
-                                filtered.totalInstances > 0
-                                  ? ((filtered.totalInstances -
-                                      filtered.libraryInstances) /
-                                      filtered.totalInstances) *
-                                    100
-                                  : 0
-                              }%`,
-                              background: 'var(--progress-fill)',
-                              borderRadius: '4px',
-                              transformOrigin: 'left',
-                              animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                              animationDelay: '0.1s',
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ flexShrink: 0 }}>
-                      <DonutChart
-                        segments={[
-                          {
-                            value: filtered.componentCoverage,
-                            color: 'var(--progress-fill)',
-                          },
-                          {
-                            value: 100 - filtered.componentCoverage,
-                            color: 'var(--track-bg-card)',
-                          },
-                        ]}
-                        centerValue={formatPercent(filtered.componentCoverage)}
-                        onClick={() =>
-                          setModalContent({
-                            title: 'Component Coverage',
-                            content: `FORMULA
+                  <StatCard
+                    title="Component Coverage"
+                    tooltipContent={`Formula: Library Components ÷ Total Components\n\nLibrary Components: ${
+                      filtered.libraryInstances
+                    }\nLocal Components: ${
+                      filtered.totalInstances - filtered.libraryInstances
+                    }\nTotal: ${filtered.totalInstances}\n\nCalculation: ${
+                      filtered.libraryInstances
+                    } ÷ ${filtered.totalInstances} = ${formatPercent(
+                      filtered.componentCoverage
+                    )}\n\nNote: Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`}
+                    tokensLabel="DS Components"
+                    tokensValue={
+                      filtered.totalInstances > 0
+                        ? (filtered.libraryInstances / filtered.totalInstances) * 100
+                        : 0
+                    }
+                    componentsLabel="Local Components"
+                    componentsValue={
+                      filtered.totalInstances > 0
+                        ? ((filtered.totalInstances - filtered.libraryInstances) /
+                            filtered.totalInstances) *
+                          100
+                        : 0
+                    }
+                    donutValue={filtered.componentCoverage}
+                    onDonutClick={() =>
+                      setModalContent({
+                        title: 'Component Coverage',
+                        content: `FORMULA
 Library Components ÷ Total Components
 
 LIBRARY COMPONENTS
@@ -2610,219 +2236,40 @@ ${filtered.totalInstances}
 
 CALCULATION
 ${filtered.libraryInstances} ÷ ${filtered.totalInstances} = ${formatPercent(
-                              filtered.componentCoverage
-                            )}
+                          filtered.componentCoverage
+                        )}
 
 NOTE
 Wrapper components (local components built with DS) are excluded from this count because their nested DS components are already counted. This prevents double-counting.`,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
+                      })
+                    }
+                  />
                 </div>
 
                 {/* Design Token Adoption Card */}
                 <div style={{ marginTop: '32px' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '12px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: '12px',
-                          color: 'var(--text-primary)',
-                          fontWeight: '500',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        Design Token Adoption
-                      </div>
-                      <Tooltip
-                        position="bottom"
-                        content={`Formula: Token-Bound Properties ÷ Total Properties\n\nToken-Bound Properties: ${
-                          filtered.tokenBoundCount
-                        }\nHardcoded Properties: ${
-                          filtered.totalOpportunities - filtered.tokenBoundCount
-                        }\nTotal Properties: ${
-                          filtered.totalOpportunities
-                        }\n\nCalculation: ${filtered.tokenBoundCount} ÷ ${
-                          filtered.totalOpportunities
-                        } = ${formatPercent(
-                          filtered.variableCoverage
-                        )}\n\nNote: This measures token adoption at the property level, not component level. Each component has multiple properties (fills, strokes, typography, radius, borders) and we count how many individual properties use design tokens.`}
-                      />
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      background: 'var(--card-bg)',
-                      padding: '20px',
-                      borderRadius: '4px',
-                      border: 'none',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '24px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '16px',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {/* Token-Bound Row */}
-                      <div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: '6px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                color: 'var(--text-secondary)',
-                                fontWeight: '500',
-                              }}
-                            >
-                              Token-Bound
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              fontFeatureSettings: '"tnum"',
-                              color: 'var(--text-tertiary)',
-                            }}
-                          >
-                            {formatPercent(filtered.variableCoverage)}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            height: '2px',
-                            width: '100%',
-                            background: 'var(--track-bg-card)',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${filtered.variableCoverage}%`,
-                              background: 'var(--progress-fill)',
-                              borderRadius: '4px',
-                              transformOrigin: 'left',
-                              animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Hardcoded Row */}
-                      <div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: '6px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                color: 'var(--text-secondary)',
-                                fontWeight: '500',
-                              }}
-                            >
-                              Hardcoded
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              fontFeatureSettings: '"tnum"',
-                              color: 'var(--text-tertiary)',
-                            }}
-                          >
-                            {formatPercent(100 - filtered.variableCoverage)}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            height: '2px',
-                            width: '100%',
-                            background: 'var(--track-bg-card)',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${100 - filtered.variableCoverage}%`,
-                              background: 'var(--progress-fill)',
-                              borderRadius: '4px',
-                              transformOrigin: 'left',
-                              animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                              animationDelay: '0.1s',
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ flexShrink: 0 }}>
-                      <DonutChart
-                        segments={[
-                          {
-                            value: filtered.variableCoverage,
-                            color: 'var(--progress-fill)',
-                          },
-                          {
-                            value: 100 - filtered.variableCoverage,
-                            color: 'var(--track-bg-card)',
-                          },
-                        ]}
-                        centerValue={formatPercent(filtered.variableCoverage)}
-                        onClick={() =>
-                          setModalContent({
-                            title: 'Design Token Adoption',
-                            content: `FORMULA
+                  <StatCard
+                    title="Design Token Adoption"
+                    tooltipContent={`Formula: Token-Bound Properties ÷ Total Properties\n\nToken-Bound Properties: ${
+                      filtered.tokenBoundCount
+                    }\nHardcoded Properties: ${
+                      filtered.totalOpportunities - filtered.tokenBoundCount
+                    }\nTotal Properties: ${
+                      filtered.totalOpportunities
+                    }\n\nCalculation: ${filtered.tokenBoundCount} ÷ ${
+                      filtered.totalOpportunities
+                    } = ${formatPercent(
+                      filtered.variableCoverage
+                    )}\n\nNote: This measures token adoption at the property level, not component level. Each component has multiple properties (fills, strokes, typography, radius, borders) and we count how many individual properties use design tokens.`}
+                    tokensLabel="Token-Bound"
+                    tokensValue={filtered.variableCoverage}
+                    componentsLabel="Hardcoded"
+                    componentsValue={100 - filtered.variableCoverage}
+                    donutValue={filtered.variableCoverage}
+                    onDonutClick={() =>
+                      setModalContent({
+                        title: 'Design Token Adoption',
+                        content: `FORMULA
 Token-Bound Properties ÷ Total Properties
 
 TOKEN BOUND PROPERTIES
@@ -2836,16 +2283,14 @@ ${filtered.totalOpportunities}
 
 CALCULATION
 ${filtered.tokenBoundCount} ÷ ${filtered.totalOpportunities} = ${formatPercent(
-                              filtered.variableCoverage
-                            )}
+                          filtered.variableCoverage
+                        )}
 
 NOTE
 This measures token adoption at the property level, not component level. Each component has multiple properties (fills, strokes, typography, radius, borders) and we count how many individual properties use design tokens.`,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
+                      })
+                    }
+                  />
                 </div>
               </div>
 
