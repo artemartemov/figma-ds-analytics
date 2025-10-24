@@ -214,7 +214,7 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
           <div
             key={index}
             style={{
-              marginTop: index === 0 ? '0' : '16px',
+              marginTop: index === 0 ? '0' : '12px',
               marginBottom: '6px',
               fontSize: '10px',
               whiteSpace: 'nowrap',
@@ -281,13 +281,13 @@ function Modal({ isOpen, onClose, title, content }: ModalProps) {
       // Check if line is part of a longer paragraph (allow wrapping)
       const isLongText = line.length > 80 || line.includes('Wrapper') || line.includes('Research') || line.includes('property');
 
-      // Regular text
+      // Regular text - paragraphs in primary color, short text in secondary
       return (
         <div
           key={index}
           style={{
             marginBottom: '4px',
-            color: 'var(--text-secondary)',
+            color: isLongText ? 'var(--text-primary)' : 'var(--text-secondary)',
             fontSize: '10px',
             whiteSpace: isLongText ? 'normal' : 'nowrap',
           }}
