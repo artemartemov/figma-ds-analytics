@@ -21,13 +21,6 @@ export async function loadEnabledLibraries(): Promise<Set<string>> {
   return new Set();
 }
 
-export async function saveEnabledLibraries(libraries: Set<string>): Promise<void> {
-  await figma.clientStorage.setAsync(
-    ENABLED_LIBRARIES_KEY,
-    Array.from(libraries)
-  );
-}
-
 // ========================================
 // Collection Mappings (Legacy/Deprecated)
 // ========================================
@@ -38,13 +31,6 @@ export async function loadCollectionMappings(): Promise<Map<string, string>> {
     return new Map(Object.entries(stored));
   }
   return new Map();
-}
-
-export async function saveCollectionMappings(
-  mappings: Map<string, string>
-): Promise<void> {
-  const obj = Object.fromEntries(mappings);
-  await figma.clientStorage.setAsync(COLLECTION_MAPPINGS_KEY, obj);
 }
 
 // ========================================
