@@ -12,12 +12,6 @@ import {
   loadIgnoredInstances,
 } from './utils/storage';
 import {
-  getAvailableLibraries,
-  isFromEnabledLibrary,
-  getLibraryNameFromVariable,
-  detectVariableCollections,
-} from './utils/libraryManager';
-import {
   resolveVariableId,
   collectVariableIds,
   collectVariableIdsRecursive,
