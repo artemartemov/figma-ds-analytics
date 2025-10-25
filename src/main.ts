@@ -55,6 +55,21 @@ import {
   detectHardcodedValuesRecursive,
   collectOrphanDetails,
 } from './analyzers/orphanDetector';
+import {
+  collectComponentInstances,
+  categorizeInstances,
+} from './analyzers/instanceCollector';
+import {
+  trackVariableUsage,
+} from './analyzers/variableTracker';
+import {
+  calculateVariableUsage,
+  calculateCoverage,
+  createLibraryBreakdown,
+  analyzeTokens,
+  analyzeOrphans,
+  calculateTokenAdoption,
+} from './analyzers/metricsCalculator';
 
 // ========================================
 // CONFIGURATION: Component Key Mapping
@@ -285,394 +300,96 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
   await sendProgress('Initializing analysis...', 0);
   await sendProgress('Finding component instances...', 5);
 
-  // Find all component instances within the selection
-  const componentInstances: InstanceNode[] = [];
-  let hiddenInstancesSkipped = 0;
-
-  for (const selectedNode of selection) {
-    // If the selected node itself is an instance, include it (if visible)
-    if (selectedNode.type === 'INSTANCE') {
-      const instance = selectedNode as InstanceNode;
-      if (!isNodeOrAncestorHidden(instance)) {
-        componentInstances.push(instance);
-      } else {
-        hiddenInstancesSkipped++;
-      }
-    }
-
-    // Find all instances within the selected node
-    if ('findAll' in selectedNode) {
-      const childInstances = selectedNode.findAll(
-        (node) => node.type === 'INSTANCE'
-      ) as InstanceNode[];
-
-      // Filter out hidden instances
-      for (const instance of childInstances) {
-        if (!isNodeOrAncestorHidden(instance)) {
-          componentInstances.push(instance);
-        } else {
-          hiddenInstancesSkipped++;
-        }
-      }
-    }
-  }
+  // Step 1: Collect all component instances from selection
+  const { componentInstances } = collectComponentInstances(selection);
 
   await sendProgress(`Categorizing ${componentInstances.length} components...`, 15);
 
-  let libraryInstances = 0;
-  let localInstances = 0;
-  let componentsWithVariables = 0;
-  let componentsWithoutVariables = 0;
+  // Step 2: Categorize instances into library, local, and wrapper types
+  const {
+    libraryInstances,
+    localInstances,
+    librarySourceCounts,
+    componentInstanceDetails,
+    wrapperInstanceIds,
+  } = categorizeInstances(componentInstances, getLibraryNameFromKey);
 
-  // Track components by library source
-  const librarySourceCounts = new Map<string, number>();
+  // Step 3: Calculate variable usage (component-level)
+  const { componentsWithVariables, componentsWithoutVariables } = calculateVariableUsage(
+    componentInstances,
+    wrapperInstanceIds
+  );
 
-  // Helper: Check if a component instance contains DS components internally
-  const containsDSComponents = (instance: InstanceNode): boolean => {
-    if (!('findAll' in instance)) return false;
+  // Step 4: Calculate coverage percentages
+  const coverage = calculateCoverage(
+    libraryInstances,
+    localInstances,
+    componentsWithVariables,
+    componentsWithoutVariables
+  );
 
-    const internalInstances = instance.findAll(
-      (node) => node.type === 'INSTANCE'
-    ) as InstanceNode[];
+  // Step 5: Create library breakdown
+  const libraryBreakdown = createLibraryBreakdown(librarySourceCounts, coverage.totalInstances);
 
-    for (const internal of internalInstances) {
-      const mainComp = internal.mainComponent;
-      if (mainComp?.remote && mainComp.key) {
-        const mappedLib = getLibraryNameFromKey(mainComp.key);
-        if (mappedLib) {
-          return true; // Contains at least one DS component
-        }
-      }
-    }
-    return false;
-  };
+  // Step 6: Track variable usage by library source
+  const { variableBreakdown } = await trackVariableUsage(componentInstances);
 
-  // Process all instances
-  const localWithDSCount = { count: 0 };
-  const localStandaloneCount = { count: 0 };
-  const componentInstanceDetails: ComponentInstanceDetail[] = [];
-
-  // Step 1: Identify wrapper instances (local components containing DS components)
-  // We'll build a map of wrapper instance IDs that should be excluded from counts
-  const wrapperInstanceIds = new Set<string>();
-
-  for (const instance of componentInstances) {
-    const mainComponent = instance.mainComponent;
-    const isRemote = mainComponent?.remote === true;
-
-    if (!isRemote) {
-      // Check if this local component contains DS components
-      const usesDS = containsDSComponents(instance);
-      if (usesDS) {
-        // This is a wrapper - mark it for exclusion from counts
-        wrapperInstanceIds.add(instance.id);
-      }
-    }
-  }
-
-  // Step 2: Process all instances for categorization and counting
-  for (const instance of componentInstances) {
-    const mainComponent = instance.mainComponent;
-    const isRemote = mainComponent?.remote === true;
-    const isWrapper = wrapperInstanceIds.has(instance.id);
-
-    let libraryName = 'Local Components';
-    let isDesignSystemComponent = false;
-
-    if (isRemote && mainComponent) {
-      // Try to identify the specific library file using component key mapping
-      const componentKey = mainComponent.key;
-
-      if (componentKey) {
-        const mappedLibrary = getLibraryNameFromKey(componentKey);
-
-        if (mappedLibrary) {
-          // Found in our mapping - this is a design system component
-          libraryName = mappedLibrary;
-          isDesignSystemComponent = true;
-        } else {
-          // Not in mapping - it's from another team library, not part of design system
-          libraryName = 'Other Library (not mapped)';
-          isDesignSystemComponent = false;
-        }
-      } else {
-        libraryName = 'Other Library (no key)';
-        isDesignSystemComponent = false;
-      }
-    } else if (!isRemote) {
-      // Local component - check if it uses DS components internally
-      if (isWrapper) {
-        libraryName = 'Local (built with DS) - Wrapper';
-        localWithDSCount.count++;
-      } else {
-        libraryName = 'Local (standalone)';
-        localStandaloneCount.count++;
-      }
-    }
-
-    // Collect instance details (keep all for UI display)
-    componentInstanceDetails.push({
-      instanceId: instance.id,
-      instanceName: instance.name,
-      componentId: mainComponent?.id || '',
-      componentName: mainComponent?.name || instance.name,
-      librarySource: libraryName
-    });
-
-    // NEW COUNTING LOGIC: Exclude wrappers from counts
-    // Wrappers are excluded because their nested DS components are already counted
-    if (isWrapper) {
-      // Don't count wrappers in metrics
-    } else {
-      // Count only non-wrapper instances
-      if (isDesignSystemComponent) {
-        libraryInstances++;
-      } else {
-        localInstances++;
-      }
-    }
-
-    // Track count by library source (for breakdown display, excluding wrappers)
-    if (!isWrapper) {
-      const currentCount = librarySourceCounts.get(libraryName) || 0;
-      librarySourceCounts.set(libraryName, currentCount + 1);
-    }
-
-    // Count variable usage - check instance AND all children
-    // Include wrappers in variable counts since they may have their own variable usage
-    const hasVariables = checkInstanceForVariables(instance);
-    if (hasVariables) {
-      componentsWithVariables++;
-    } else {
-      componentsWithoutVariables++;
-    }
-  }
-
-  // Calculate coverage percentages
-  // NEW APPROACH: Count DS atomic components / (DS atomic + standalone local)
-  // Wrappers are excluded because their nested DS components are already counted
-  const totalInstances = libraryInstances + localInstances;
-  const componentCoverage =
-    totalInstances > 0 ? (libraryInstances / totalInstances) * 100 : 0;
-
-  const totalComponents = componentsWithVariables + componentsWithoutVariables;
-  const variableCoverage =
-    totalComponents > 0 ? (componentsWithVariables / totalComponents) * 100 : 0;
-
-  // Create library breakdown with percentages
-  const libraryBreakdown: LibraryBreakdown[] = Array.from(
-    librarySourceCounts.entries()
-  )
-    .map(([name, count]) => ({
-      name,
-      count,
-      percentage: totalInstances > 0 ? (count / totalInstances) * 100 : 0,
-    }))
-    .sort((a, b) => b.count - a.count); // Sort by count descending
-
-  // Collect unique component keys
-  const uniqueKeys = new Set<string>();
-  const unmappedKeys: string[] = [];
-
-  for (const instance of componentInstances) {
-    const mainComponent = instance.mainComponent;
-    if (mainComponent?.remote === true && mainComponent.key) {
-      uniqueKeys.add(mainComponent.key);
-      if (!getLibraryNameFromKey(mainComponent.key)) {
-        unmappedKeys.push(mainComponent.key);
-      }
-    }
-  }
-
-  // ===================================================================
-  // Variable Source Tracking (Library-Based)
-  // ===================================================================
-  const variableSourceCounts = new Map<string, number>();
-  const allVariableIds = new Set<string>();
-  const unmappedVariableIds = new Set<string>();
-  const unmappedCollections = new Set<string>();
-
-  // Collect all variable IDs from component instances
-  for (const instance of componentInstances) {
-    const variableIds = collectVariableIdsRecursive(instance);
-
-    for (const id of variableIds) {
-      allVariableIds.add(id);
-
-      const variable = figma.variables.getVariableById(id);
-      if (!variable) {
-        unmappedVariableIds.add(id);
-        continue;
-      }
-
-      const collection = figma.variables.getVariableCollectionById(variable.variableCollectionId);
-      if (!collection) {
-        unmappedVariableIds.add(id);
-        continue;
-      }
-
-      const collectionKey = collection.key || collection.id;
-
-      // Check if this variable is from an enabled library
-      const libraryInfo = await isFromEnabledLibrary(collectionKey);
-
-      if (libraryInfo.enabled && libraryInfo.libraryName) {
-        const currentCount = variableSourceCounts.get(libraryInfo.libraryName) || 0;
-        variableSourceCounts.set(libraryInfo.libraryName, currentCount + 1);
-      } else {
-        unmappedVariableIds.add(id);
-        if (collection.remote) {
-          unmappedCollections.add(`${collection.name} (from library - not enabled)`);
-        }
-        // Track unmapped variables as "Other Library (not enabled)"
-        const currentCount = variableSourceCounts.get('Other Library (not enabled)') || 0;
-        variableSourceCounts.set('Other Library (not enabled)', currentCount + 1);
-      }
-    }
-  }
-
-  const enabledLibraries = await loadEnabledLibraries();
-
-  // Create variable breakdown with percentages
-  const totalVariableUsages = Array.from(variableSourceCounts.values()).reduce((sum, count) => sum + count, 0);
-  const variableBreakdown: LibraryBreakdown[] = Array.from(
-    variableSourceCounts.entries()
-  )
-    .map(([name, count]) => ({
-      name,
-      count,
-      percentage: totalVariableUsages > 0 ? (count / totalVariableUsages) * 100 : 0,
-    }))
-    .sort((a, b) => b.count - a.count); // Sort by count descending
-
-  // Count variable-bound properties (for accurate token adoption)
-  // Limit processing to prevent crashes on large files
+  // Step 7: Analyze token-bound properties (property-level)
   const MAX_INSTANCES_TO_ANALYZE = 10000;
   const instancesToAnalyze = componentInstances.slice(0, MAX_INSTANCES_TO_ANALYZE);
 
   await sendProgress(`Analyzing tokens in ${instancesToAnalyze.length} components...`, 30);
 
-  const variableBoundTotals = {
-    colors: 0,
-    typography: 0,
-    spacing: 0,
-    radius: 0,
-  };
+  const tokenAnalysis = await analyzeTokens(instancesToAnalyze, async (processed, total) => {
+    const progressPercent = 30 + (processed / total) * 30;
+    await sendProgress(`Analyzing tokens (${processed}/${total})...`, progressPercent);
+  });
 
-  let processedCount = 0;
-  const updateInterval = Math.max(20, Math.floor(instancesToAnalyze.length / 5)); // Update 5 times max during this phase
-
-  for (const instance of instancesToAnalyze) {
-    const bound = countVariableBoundPropertiesRecursive(instance);
-    variableBoundTotals.colors += bound.colors;
-    variableBoundTotals.typography += bound.typography;
-    variableBoundTotals.spacing += bound.spacing;
-    variableBoundTotals.radius += bound.radius;
-
-    processedCount++;
-    // Update progress at key intervals
-    if (processedCount % updateInterval === 0 || processedCount === instancesToAnalyze.length) {
-      // Report progress: 30% to 60% range
-      const progressPercent = 30 + (processedCount / instancesToAnalyze.length) * 30;
-      await sendProgress(`Analyzing tokens (${processedCount}/${instancesToAnalyze.length})...`, progressPercent);
-    }
-  }
-
-  const totalVariableBound = variableBoundTotals.colors + variableBoundTotals.typography +
-                             variableBoundTotals.spacing + variableBoundTotals.radius;
-
-  // Detect hardcoded values that should use variables
-  const hardcodedTotals = {
-    colors: 0,
-    typography: 0,
-    spacing: 0,
-    radius: 0,
-  };
-
-  processedCount = 0;
-  const updateInterval2 = Math.max(20, Math.floor(instancesToAnalyze.length / 4)); // Update 4 times max during this phase
-
-  for (const instance of instancesToAnalyze) {
-    const hardcoded = detectHardcodedValuesRecursive(instance);
-    hardcodedTotals.colors += hardcoded.colors;
-    hardcodedTotals.typography += hardcoded.typography;
-    hardcodedTotals.spacing += hardcoded.spacing;
-    hardcodedTotals.radius += hardcoded.radius;
-
-    processedCount++;
-    // Update progress at key intervals
-    if (processedCount % updateInterval2 === 0 || processedCount === instancesToAnalyze.length) {
-      // Report progress: 60% to 80% range
-      const progressPercent = 60 + (processedCount / instancesToAnalyze.length) * 20;
-      await sendProgress(`Detecting hardcoded values (${processedCount}/${instancesToAnalyze.length})...`, progressPercent);
-    }
-  }
-
-  const totalHardcoded = hardcodedTotals.colors + hardcodedTotals.typography +
-                         hardcodedTotals.spacing + hardcodedTotals.radius;
-
-  // Collect detailed orphan information (for troubleshooting)
-  const orphanDetails: OrphanDetail[] = [];
-  for (const instance of instancesToAnalyze) {
-    const componentId = instance.mainComponent?.id || instance.id;
-    const componentName = instance.mainComponent?.name || instance.name || 'Unknown Component';
-    const instanceId = instance.id;
-    collectOrphanDetails(instance, orphanDetails, 0, componentId, componentName, instanceId);
-    // No limit - collect details for ALL instances to ensure accurate filtering
-  }
-
-  // Collect token-bound property details
-  const tokenBoundDetails: TokenBoundDetail[] = [];
-  for (const instance of instancesToAnalyze) {
-    const componentId = instance.mainComponent?.id || instance.id;
-    const componentName = instance.mainComponent?.name || instance.name || 'Unknown Component';
-    const instanceId = instance.id;
-    collectTokenBoundDetails(instance, tokenBoundDetails, 0, componentId, componentName, instanceId);
-    // No limit - collect details for ALL instances to ensure accurate filtering
-  }
+  // Step 8: Detect hardcoded (orphan) values
+  const orphanAnalysis = await analyzeOrphans(instancesToAnalyze, async (processed, total) => {
+    const progressPercent = 60 + (processed / total) * 20;
+    await sendProgress(`Detecting hardcoded values (${processed}/${total})...`, progressPercent);
+  });
 
   await sendProgress('Loading ignored items...', 85);
 
-  // Load ignored components, orphans, and instances (but don't filter - let UI handle it)
+  // Step 9: Load ignored items
   const ignoredComponents = await loadIgnoredComponents();
   const ignoredOrphans = await loadIgnoredOrphans();
   const ignoredInstances = await loadIgnoredInstances();
 
-  // Calculate TRUE total opportunities (variable-bound + hardcoded)
-  // This is the research-backed approach: count ALL properties that could use tokens
-  const totalOpportunities = totalVariableBound + totalHardcoded;
-
-  // Calculate ACCURATE Token Adoption (research formula)
-  // Token Adoption = Variable Instances / (Variable Instances + Custom Style Values) × 100
-  const accurateVariableCoverage = totalOpportunities > 0
-    ? (totalVariableBound / totalOpportunities) * 100
-    : 0;
+  // Step 10: Calculate accurate token adoption (property-level)
+  const totalOpportunities = tokenAnalysis.totalVariableBound + orphanAnalysis.totalHardcoded;
+  const accurateVariableCoverage = calculateTokenAdoption(
+    tokenAnalysis.totalVariableBound,
+    orphanAnalysis.totalHardcoded
+  );
 
   await sendProgress('Finalizing results...', 95);
 
   return {
-    componentCoverage,
-    variableCoverage: accurateVariableCoverage, // Use accurate property-level token adoption
+    componentCoverage: coverage.componentCoverage,
+    variableCoverage: accurateVariableCoverage,
     stats: {
       totalNodes: componentInstances.length,
       libraryInstances,
       localInstances,
-      nodesWithVariables: totalVariableBound, // Now showing property count, not component count
-      nodesWithCustomStyles: totalHardcoded, // Now showing hardcoded property count
+      nodesWithVariables: tokenAnalysis.totalVariableBound,
+      nodesWithCustomStyles: orphanAnalysis.totalHardcoded,
     },
     libraryBreakdown,
     variableBreakdown,
     componentDetails: componentInstanceDetails,
     ignoredInstances: Array.from(ignoredInstances),
     hardcodedValues: {
-      colors: hardcodedTotals.colors,
-      typography: hardcodedTotals.typography,
-      spacing: hardcodedTotals.spacing,
-      radius: hardcodedTotals.radius,
-      totalHardcoded,
+      colors: orphanAnalysis.hardcodedTotals.colors,
+      typography: orphanAnalysis.hardcodedTotals.typography,
+      spacing: orphanAnalysis.hardcodedTotals.spacing,
+      radius: orphanAnalysis.hardcodedTotals.radius,
+      totalHardcoded: orphanAnalysis.totalHardcoded,
       totalOpportunities,
-      details: orphanDetails,
-      tokenBoundDetails: tokenBoundDetails,
+      details: orphanAnalysis.orphanDetails,
+      tokenBoundDetails: tokenAnalysis.tokenBoundDetails,
       ignoredComponents: Array.from(ignoredComponents),
       ignoredOrphans: Array.from(ignoredOrphans),
     },
