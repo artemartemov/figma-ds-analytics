@@ -327,5 +327,3 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
     </div>
   );
 }
-
-// Custom Checkbox Component
