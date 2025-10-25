@@ -13,13 +13,6 @@ export function setAnalysisCancelled(cancelled: boolean): void {
 }
 
 /**
- * Get the current analysis cancellation status
- */
-export function isAnalysisCancelled(): boolean {
-  return analysisCancelled;
-}
-
-/**
  * Send progress update to UI with delay for rendering
  * Throws error if analysis has been cancelled
  */

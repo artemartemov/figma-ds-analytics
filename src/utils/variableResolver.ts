@@ -282,13 +282,6 @@ export function checkInstanceForVariables(instance: InstanceNode): boolean {
 }
 
 /**
- * Get alias resolutions map for debugging
- */
-export function getAliasResolutions(): Map<string, string> {
-  return new Map(aliasResolutions);
-}
-
-/**
  * Clear alias resolutions tracking (call at start of analysis)
  */
 export function clearAliasResolutions(): void {
