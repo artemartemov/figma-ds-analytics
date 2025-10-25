@@ -7,11 +7,7 @@ interface HelpModalProps {
   onClose: () => void;
 }
 
-export let helpModalRenderCount = 0;
-
 export function HelpModal({ isOpen, onClose }: HelpModalProps) {
-  helpModalRenderCount++;
-
   if (!isOpen) {
     return null;
   }
