@@ -1,26 +1,42 @@
 {
   "name": "figma-ds-coverage",
   "version": "1.0.0",
+  "type": "module",
   "description": "Quick design system adoption tracking for Figma",
   "scripts": {
     "build": "build-figma-plugin --typecheck",
-    "watch": "build-figma-plugin --typecheck --watch"
+    "watch": "build-figma-plugin --typecheck --watch",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "figma-plugin": {
-    "editorType": ["figma"],
+    "editorType": [
+      "figma"
+    ],
     "id": "ds-coverage-tracker",
     "name": "Design System Coverage",
     "main": "src/main.ts",
     "ui": "src/ui.tsx",
-    "permissions": ["teamlibrary"],
+    "permissions": [
+      "teamlibrary"
+    ],
     "networkAccess": {
-      "allowedDomains": ["https://api.figma.com"]
+      "allowedDomains": [
+        "https://api.figma.com"
+      ]
     }
   },
   "devDependencies": {
     "@create-figma-plugin/build": "^4.0.3",
     "@create-figma-plugin/tsconfig": "^4.0.3",
     "@figma/plugin-typings": "^1.99.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {

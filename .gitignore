@@ -3,6 +3,7 @@ node_modules/
 
 # Build outputs
 *.js
+!eslint.config.js
 *.js.map
 
 # System files
