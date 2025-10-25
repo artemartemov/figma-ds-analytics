@@ -3,13 +3,8 @@
 
 import type {
   LibraryBreakdown,
-  OrphanDetail,
-  TokenBoundDetail,
   ComponentInstanceDetail,
   CoverageMetrics,
-  CollectionMapping,
-  DetectedCollection,
-  TeamLibrary,
 } from './types';
 import {
   loadEnabledLibraries,
