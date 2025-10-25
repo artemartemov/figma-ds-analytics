@@ -82,12 +82,7 @@ export function Modal({ isOpen, onClose, title, content }: ModalProps) {
 
       // Empty lines
       if (line.trim() === '') {
-        return (
-          <div
-            key={index}
-            style={{ height: '8px' }}
-          />
-        );
+        return <div key={index} style={{ height: '8px' }} />;
       }
 
       // Check if line is a number (primary color)

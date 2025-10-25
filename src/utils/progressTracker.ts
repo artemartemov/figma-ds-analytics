@@ -25,5 +25,5 @@ export async function sendProgress(step: string, percent: number): Promise<void>
   emit('PROGRESS', { step, percent });
 
   // Delay to allow UI to render the update smoothly
-  await new Promise(resolve => setTimeout(resolve, 200));
+  await new Promise((resolve) => setTimeout(resolve, 200));
 }

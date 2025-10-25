@@ -32,7 +32,10 @@ function detectHardcodedValues(node: SceneNode): {
   // Check for hardcoded fills (colors)
   if ('fills' in node && node.fills !== figma.mixed) {
     const fills = node.fills as readonly Paint[];
-    const hasFillVariable = node.boundVariables?.fills && Array.isArray(node.boundVariables.fills) && node.boundVariables.fills.length > 0;
+    const hasFillVariable =
+      node.boundVariables?.fills &&
+      Array.isArray(node.boundVariables.fills) &&
+      node.boundVariables.fills.length > 0;
 
     // Count fills that are actually visible and have content
     const visibleFills = fills.filter((fill: any) => {
@@ -54,7 +57,10 @@ function detectHardcodedValues(node: SceneNode): {
   if ('strokes' in node && node.strokes) {
     const strokes = node.strokes;
     if (Array.isArray(strokes)) {
-      const hasStrokeVariable = node.boundVariables?.strokes && Array.isArray(node.boundVariables.strokes) && node.boundVariables.strokes.length > 0;
+      const hasStrokeVariable =
+        node.boundVariables?.strokes &&
+        Array.isArray(node.boundVariables.strokes) &&
+        node.boundVariables.strokes.length > 0;
 
       // Count strokes that are actually visible and have content
       const visibleStrokes = strokes.filter((stroke: any) => {
@@ -73,11 +79,12 @@ function detectHardcodedValues(node: SceneNode): {
   // Check for hardcoded corner radius
   if ('cornerRadius' in node && typeof node.cornerRadius === 'number') {
     const boundVars = node.boundVariables as any;
-    const hasRadiusVariable = boundVars?.cornerRadius ||
-                               boundVars?.topLeftRadius ||
-                               boundVars?.topRightRadius ||
-                               boundVars?.bottomLeftRadius ||
-                               boundVars?.bottomRightRadius;
+    const hasRadiusVariable =
+      boundVars?.cornerRadius ||
+      boundVars?.topLeftRadius ||
+      boundVars?.topRightRadius ||
+      boundVars?.bottomLeftRadius ||
+      boundVars?.bottomRightRadius;
 
     if (node.cornerRadius > 0 && !hasRadiusVariable) {
       hardcoded.radius++;
@@ -135,7 +142,12 @@ function detectHardcodedValues(node: SceneNode): {
  * Detect hardcoded values WITH details for troubleshooting
  * Internal helper function
  */
-function detectHardcodedValuesWithDetails(node: SceneNode, parentComponentId: string = '', parentComponentName: string = '', parentInstanceId: string = ''): OrphanDetail | null {
+function detectHardcodedValuesWithDetails(
+  node: SceneNode,
+  parentComponentId: string = '',
+  parentComponentName: string = '',
+  parentInstanceId: string = ''
+): OrphanDetail | null {
   // Skip hidden layers (check node and all ancestors)
   if (isNodeOrAncestorHidden(node)) {
     return null;
@@ -163,20 +175,40 @@ function detectHardcodedValuesWithDetails(node: SceneNode, parentComponentId: st
       if (!textNode.boundVariables?.lineHeight && textNode.lineHeight !== figma.mixed) {
         const lh = textNode.lineHeight;
         properties.push('lineHeight');
-        values.push(typeof lh === 'object' && 'value' in lh ? `${lh.value}${lh.unit === 'PIXELS' ? 'px' : '%'}` : String(lh));
+        values.push(
+          typeof lh === 'object' && 'value' in lh
+            ? `${lh.value}${lh.unit === 'PIXELS' ? 'px' : '%'}`
+            : String(lh)
+        );
       }
       if (!textNode.boundVariables?.letterSpacing && textNode.letterSpacing !== figma.mixed) {
         const ls = textNode.letterSpacing;
         properties.push('letterSpacing');
-        values.push(typeof ls === 'object' && 'value' in ls ? `${ls.value}${ls.unit === 'PIXELS' ? 'px' : '%'}` : String(ls));
+        values.push(
+          typeof ls === 'object' && 'value' in ls
+            ? `${ls.value}${ls.unit === 'PIXELS' ? 'px' : '%'}`
+            : String(ls)
+        );
       }
       if (!textNode.boundVariables?.fontFamily && textNode.fontName !== figma.mixed) {
         properties.push('fontFamily');
-        values.push(textNode.fontName ? (typeof textNode.fontName === 'object' ? textNode.fontName.family : String(textNode.fontName)) : 'mixed');
+        values.push(
+          textNode.fontName
+            ? typeof textNode.fontName === 'object'
+              ? textNode.fontName.family
+              : String(textNode.fontName)
+            : 'mixed'
+        );
       }
       if (!textNode.boundVariables?.fontWeight && textNode.fontName !== figma.mixed) {
         properties.push('fontWeight');
-        values.push(textNode.fontName ? (typeof textNode.fontName === 'object' ? textNode.fontName.style : 'mixed') : 'mixed');
+        values.push(
+          textNode.fontName
+            ? typeof textNode.fontName === 'object'
+              ? textNode.fontName.style
+              : 'mixed'
+            : 'mixed'
+        );
       }
 
       if (properties.length > 0) {
@@ -188,7 +220,10 @@ function detectHardcodedValuesWithDetails(node: SceneNode, parentComponentId: st
   // Check for hardcoded colors
   if ('fills' in node && node.fills !== figma.mixed) {
     const fills = node.fills as readonly Paint[];
-    const hasFillVariable = node.boundVariables?.fills && Array.isArray(node.boundVariables.fills) && node.boundVariables.fills.length > 0;
+    const hasFillVariable =
+      node.boundVariables?.fills &&
+      Array.isArray(node.boundVariables.fills) &&
+      node.boundVariables.fills.length > 0;
 
     // Count fills that are actually visible and have content
     const visibleFills = fills.filter((fill: any) => {
@@ -218,9 +253,12 @@ function detectHardcodedValuesWithDetails(node: SceneNode, parentComponentId: st
   // Check for hardcoded radius
   if ('cornerRadius' in node && typeof node.cornerRadius === 'number' && node.cornerRadius > 0) {
     const boundVars = node.boundVariables as any;
-    const hasRadiusVariable = boundVars?.cornerRadius || boundVars?.topLeftRadius ||
-                               boundVars?.topRightRadius || boundVars?.bottomLeftRadius ||
-                               boundVars?.bottomRightRadius;
+    const hasRadiusVariable =
+      boundVars?.cornerRadius ||
+      boundVars?.topLeftRadius ||
+      boundVars?.topRightRadius ||
+      boundVars?.bottomLeftRadius ||
+      boundVars?.bottomRightRadius;
 
     if (!hasRadiusVariable) {
       if (!category) category = 'radius';
@@ -247,7 +285,10 @@ function detectHardcodedValuesWithDetails(node: SceneNode, parentComponentId: st
 }
 
 // Recursively detect hardcoded values in node tree
-export function detectHardcodedValuesRecursive(node: SceneNode, depth: number = 0): {
+export function detectHardcodedValuesRecursive(
+  node: SceneNode,
+  depth: number = 0
+): {
   colors: number;
   typography: number;
   spacing: number;
@@ -282,7 +323,14 @@ export function detectHardcodedValuesRecursive(node: SceneNode, depth: number = 
 }
 
 // Recursively collect detailed orphan information
-export function collectOrphanDetails(node: SceneNode, details: OrphanDetail[], depth: number = 0, parentComponentId: string = '', parentComponentName: string = '', parentInstanceId: string = ''): void {
+export function collectOrphanDetails(
+  node: SceneNode,
+  details: OrphanDetail[],
+  depth: number = 0,
+  parentComponentId: string = '',
+  parentComponentName: string = '',
+  parentInstanceId: string = ''
+): void {
   const MAX_DEPTH = 50;
   const MAX_DETAILS = 100; // Limit to prevent performance issues
 
@@ -294,7 +342,12 @@ export function collectOrphanDetails(node: SceneNode, details: OrphanDetail[], d
   }
 
   // Check this node for orphans
-  const orphan = detectHardcodedValuesWithDetails(node, parentComponentId, parentComponentName, parentInstanceId);
+  const orphan = detectHardcodedValuesWithDetails(
+    node,
+    parentComponentId,
+    parentComponentName,
+    parentInstanceId
+  );
   if (orphan) {
     details.push(orphan);
   }
@@ -308,7 +361,14 @@ export function collectOrphanDetails(node: SceneNode, details: OrphanDetail[], d
       if (isNodeOrAncestorHidden(child) || isSkippedNode(child)) {
         continue;
       }
-      collectOrphanDetails(child, details, depth + 1, parentComponentId, parentComponentName, parentInstanceId);
+      collectOrphanDetails(
+        child,
+        details,
+        depth + 1,
+        parentComponentId,
+        parentComponentName,
+        parentInstanceId
+      );
     }
   }
 }

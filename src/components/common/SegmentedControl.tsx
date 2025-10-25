@@ -45,9 +45,7 @@ export function SegmentedControl<T extends string>({
               fontSize: '10px',
               fontWeight: '400',
               letterSpacing: '0.4px',
-              color: isActive
-                ? 'var(--button-text)'
-                : 'var(--tab-inactive-text)',
+              color: isActive ? 'var(--button-text)' : 'var(--tab-inactive-text)',
               fontFamily: 'inherit',
               outline: 'none',
               transition: 'all 0.15s',

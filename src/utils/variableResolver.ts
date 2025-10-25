@@ -142,14 +142,14 @@ export function collectVariableIdsRecursive(node: any): Set<string> {
 
   // Collect from this node
   const nodeIds = collectVariableIds(node);
-  nodeIds.forEach(id => allIds.add(id));
+  nodeIds.forEach((id) => allIds.add(id));
 
   // Recursively collect from children
   if ('children' in node) {
     const children = node.children as SceneNode[];
     for (const child of children) {
       const childIds = collectVariableIdsRecursive(child);
-      childIds.forEach(id => allIds.add(id));
+      childIds.forEach((id) => allIds.add(id));
     }
   }
 
@@ -230,10 +230,7 @@ function checkNodeForVariables(node: any): boolean {
   if (boundVariables.paragraphIndent) return true;
 
   // Check text range fills
-  if (
-    boundVariables.textRangeFills &&
-    Array.isArray(boundVariables.textRangeFills)
-  ) {
+  if (boundVariables.textRangeFills && Array.isArray(boundVariables.textRangeFills)) {
     if (boundVariables.textRangeFills.length > 0) return true;
   }
 

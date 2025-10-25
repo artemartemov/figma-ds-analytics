@@ -24,9 +24,7 @@ export function DonutChart({
 }: DonutChartProps) {
   // Parse and animate percentage values
   const isPercentage = centerValue?.includes('%');
-  const numericValue = isPercentage
-    ? parseFloat(centerValue?.replace('%', '') || '0')
-    : 0;
+  const numericValue = isPercentage ? parseFloat(centerValue?.replace('%', '') || '0') : 0;
   const animatedValue = useAnimatedCounter(numericValue, 800);
   const displayValue = isPercentage ? `${animatedValue}%` : centerValue;
 
@@ -45,7 +43,7 @@ export function DonutChart({
   // Note: These use stroke-dasharray for animation-ready rendering
   let currentOffset = 0;
   const progressArcs = segments
-    .filter(segment => segment.value > 0) // Only render segments with positive values
+    .filter((segment) => segment.value > 0) // Only render segments with positive values
     .map((segment, index) => {
       // Safety checks to prevent NaN
       const safeValue = segment.value || 0;
@@ -87,12 +85,7 @@ export function DonutChart({
       }}
       onClick={onClick}
     >
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        style={{ display: 'block' }}
-      >
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block' }}>
         {/* Background track circle - adapts to theme */}
         <circle
           cx={center}

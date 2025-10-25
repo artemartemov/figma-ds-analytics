@@ -1,12 +1,6 @@
 // Metrics calculation for component coverage and token adoption
-import {
-  countVariableBoundPropertiesRecursive,
-  collectTokenBoundDetails,
-} from './tokenDetector';
-import {
-  detectHardcodedValuesRecursive,
-  collectOrphanDetails,
-} from './orphanDetector';
+import { countVariableBoundPropertiesRecursive, collectTokenBoundDetails } from './tokenDetector';
+import { detectHardcodedValuesRecursive, collectOrphanDetails } from './orphanDetector';
 import { checkInstanceForVariables } from '../utils/variableResolver';
 import type { OrphanDetail, TokenBoundDetail, LibraryBreakdown } from '../types';
 
@@ -81,8 +75,7 @@ export function calculateCoverage(
 ): CoverageCalculationResult {
   // Component coverage: DS atomic components / (DS atomic + standalone local)
   const totalInstances = libraryInstances + localInstances;
-  const componentCoverage =
-    totalInstances > 0 ? (libraryInstances / totalInstances) * 100 : 0;
+  const componentCoverage = totalInstances > 0 ? (libraryInstances / totalInstances) * 100 : 0;
 
   // Old variable coverage metric (component-level)
   const totalComponents = componentsWithVariables + componentsWithoutVariables;
@@ -138,13 +131,19 @@ export async function analyzeTokens(
     variableBoundTotals.radius += bound.radius;
 
     processedCount++;
-    if (onProgress && (processedCount % updateInterval === 0 || processedCount === instancesToAnalyze.length)) {
+    if (
+      onProgress &&
+      (processedCount % updateInterval === 0 || processedCount === instancesToAnalyze.length)
+    ) {
       await onProgress(processedCount, instancesToAnalyze.length);
     }
   }
 
-  const totalVariableBound = variableBoundTotals.colors + variableBoundTotals.typography +
-                             variableBoundTotals.spacing + variableBoundTotals.radius;
+  const totalVariableBound =
+    variableBoundTotals.colors +
+    variableBoundTotals.typography +
+    variableBoundTotals.spacing +
+    variableBoundTotals.radius;
 
   // Collect token-bound property details
   const tokenBoundDetails: TokenBoundDetail[] = [];
@@ -152,7 +151,14 @@ export async function analyzeTokens(
     const componentId = instance.mainComponent?.id || instance.id;
     const componentName = instance.mainComponent?.name || instance.name || 'Unknown Component';
     const instanceId = instance.id;
-    collectTokenBoundDetails(instance, tokenBoundDetails, 0, componentId, componentName, instanceId);
+    collectTokenBoundDetails(
+      instance,
+      tokenBoundDetails,
+      0,
+      componentId,
+      componentName,
+      instanceId
+    );
   }
 
   return {
@@ -187,13 +193,19 @@ export async function analyzeOrphans(
     hardcodedTotals.radius += hardcoded.radius;
 
     processedCount++;
-    if (onProgress && (processedCount % updateInterval === 0 || processedCount === instancesToAnalyze.length)) {
+    if (
+      onProgress &&
+      (processedCount % updateInterval === 0 || processedCount === instancesToAnalyze.length)
+    ) {
       await onProgress(processedCount, instancesToAnalyze.length);
     }
   }
 
-  const totalHardcoded = hardcodedTotals.colors + hardcodedTotals.typography +
-                         hardcodedTotals.spacing + hardcodedTotals.radius;
+  const totalHardcoded =
+    hardcodedTotals.colors +
+    hardcodedTotals.typography +
+    hardcodedTotals.spacing +
+    hardcodedTotals.radius;
 
   // Collect detailed orphan information
   const orphanDetails: OrphanDetail[] = [];
@@ -214,12 +226,7 @@ export async function analyzeOrphans(
 /**
  * Calculate accurate token adoption using property-level measurement
  */
-export function calculateTokenAdoption(
-  totalVariableBound: number,
-  totalHardcoded: number
-): number {
+export function calculateTokenAdoption(totalVariableBound: number, totalHardcoded: number): number {
   const totalOpportunities = totalVariableBound + totalHardcoded;
-  return totalOpportunities > 0
-    ? (totalVariableBound / totalOpportunities) * 100
-    : 0;
+  return totalOpportunities > 0 ? (totalVariableBound / totalOpportunities) * 100 : 0;
 }

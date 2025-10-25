@@ -45,13 +45,8 @@ export async function loadIgnoredComponents(): Promise<Set<string>> {
   return new Set();
 }
 
-export async function saveIgnoredComponents(
-  componentIds: Set<string>
-): Promise<void> {
-  await figma.clientStorage.setAsync(
-    IGNORED_COMPONENTS_KEY,
-    Array.from(componentIds)
-  );
+export async function saveIgnoredComponents(componentIds: Set<string>): Promise<void> {
+  await figma.clientStorage.setAsync(IGNORED_COMPONENTS_KEY, Array.from(componentIds));
 }
 
 // ========================================
@@ -67,10 +62,7 @@ export async function loadIgnoredOrphans(): Promise<Set<string>> {
 }
 
 export async function saveIgnoredOrphans(nodeIds: Set<string>): Promise<void> {
-  await figma.clientStorage.setAsync(
-    IGNORED_ORPHANS_KEY,
-    Array.from(nodeIds)
-  );
+  await figma.clientStorage.setAsync(IGNORED_ORPHANS_KEY, Array.from(nodeIds));
 }
 
 // ========================================
@@ -85,13 +77,8 @@ export async function loadIgnoredInstances(): Promise<Set<string>> {
   return new Set();
 }
 
-export async function saveIgnoredInstances(
-  instanceIds: Set<string>
-): Promise<void> {
-  await figma.clientStorage.setAsync(
-    IGNORED_INSTANCES_KEY,
-    Array.from(instanceIds)
-  );
+export async function saveIgnoredInstances(instanceIds: Set<string>): Promise<void> {
+  await figma.clientStorage.setAsync(IGNORED_INSTANCES_KEY, Array.from(instanceIds));
 }
 
 // ========================================

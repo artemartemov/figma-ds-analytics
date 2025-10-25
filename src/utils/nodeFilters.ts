@@ -21,7 +21,7 @@ export function isSkippedNode(node: SceneNode): boolean {
     'wip',
   ];
 
-  return skipPatterns.some(pattern => name.includes(pattern.toLowerCase()));
+  return skipPatterns.some((pattern) => name.includes(pattern.toLowerCase()));
 }
 
 /**

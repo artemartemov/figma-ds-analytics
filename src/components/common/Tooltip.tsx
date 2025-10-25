@@ -7,11 +7,7 @@ interface TooltipProps {
   position?: 'right' | 'bottom';
 }
 
-export function Tooltip({
-  content,
-  dark = false,
-  position = 'right',
-}: TooltipProps) {
+export function Tooltip({ content, dark = false, position = 'right' }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   // Positioning styles based on position prop

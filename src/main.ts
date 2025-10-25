@@ -2,19 +2,10 @@
 // Calculates component and variable adoption metrics
 
 import type { CoverageMetrics } from './types';
-import {
-  loadIgnoredComponents,
-  loadIgnoredOrphans,
-  loadIgnoredInstances,
-} from './utils/storage';
+import { loadIgnoredComponents, loadIgnoredOrphans, loadIgnoredInstances } from './utils/storage';
 import { clearAliasResolutions } from './utils/variableResolver';
-import {
-  collectComponentInstances,
-  categorizeInstances,
-} from './analyzers/instanceCollector';
-import {
-  trackVariableUsage,
-} from './analyzers/variableTracker';
+import { collectComponentInstances, categorizeInstances } from './analyzers/instanceCollector';
+import { trackVariableUsage } from './analyzers/variableTracker';
 import {
   calculateVariableUsage,
   calculateCoverage,

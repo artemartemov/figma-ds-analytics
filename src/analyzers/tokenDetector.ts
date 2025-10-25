@@ -32,7 +32,10 @@ function countVariableBoundProperties(node: SceneNode): {
   // Count fills using variables
   if ('fills' in node && node.fills !== figma.mixed) {
     const fills = node.fills as readonly Paint[];
-    const hasFillVariable = node.boundVariables?.fills && Array.isArray(node.boundVariables.fills) && node.boundVariables.fills.length > 0;
+    const hasFillVariable =
+      node.boundVariables?.fills &&
+      Array.isArray(node.boundVariables.fills) &&
+      node.boundVariables.fills.length > 0;
     const visibleFills = fills.filter((fill: any) => fill.visible !== false);
     if (visibleFills.length > 0 && hasFillVariable) {
       variableBound.colors += visibleFills.length;
@@ -43,7 +46,10 @@ function countVariableBoundProperties(node: SceneNode): {
   if ('strokes' in node && node.strokes) {
     const strokes = node.strokes;
     if (Array.isArray(strokes)) {
-      const hasStrokeVariable = node.boundVariables?.strokes && Array.isArray(node.boundVariables.strokes) && node.boundVariables.strokes.length > 0;
+      const hasStrokeVariable =
+        node.boundVariables?.strokes &&
+        Array.isArray(node.boundVariables.strokes) &&
+        node.boundVariables.strokes.length > 0;
       const visibleStrokes = strokes.filter((stroke: any) => stroke.visible !== false);
 
       if (visibleStrokes.length > 0 && hasStrokeVariable) {
@@ -55,9 +61,12 @@ function countVariableBoundProperties(node: SceneNode): {
   // Count radius using variables
   if ('cornerRadius' in node && typeof node.cornerRadius === 'number') {
     const boundVars = node.boundVariables as any;
-    const hasRadiusVariable = boundVars?.cornerRadius || boundVars?.topLeftRadius ||
-                               boundVars?.topRightRadius || boundVars?.bottomLeftRadius ||
-                               boundVars?.bottomRightRadius;
+    const hasRadiusVariable =
+      boundVars?.cornerRadius ||
+      boundVars?.topLeftRadius ||
+      boundVars?.topRightRadius ||
+      boundVars?.bottomLeftRadius ||
+      boundVars?.bottomRightRadius;
     if (node.cornerRadius > 0 && hasRadiusVariable) {
       variableBound.radius++;
     }
@@ -100,7 +109,14 @@ function countVariableBoundProperties(node: SceneNode): {
 /**
  * Collect token-bound property details with instance tracking
  */
-export function collectTokenBoundDetails(node: SceneNode, details: TokenBoundDetail[], depth: number = 0, parentComponentId: string = '', parentComponentName: string = '', parentInstanceId: string = ''): void {
+export function collectTokenBoundDetails(
+  node: SceneNode,
+  details: TokenBoundDetail[],
+  depth: number = 0,
+  parentComponentId: string = '',
+  parentComponentName: string = '',
+  parentInstanceId: string = ''
+): void {
   const MAX_DEPTH = 50;
   if (depth > MAX_DEPTH) return;
 
@@ -117,7 +133,10 @@ export function collectTokenBoundDetails(node: SceneNode, details: TokenBoundDet
   // Collect fills using variables
   if ('fills' in node && node.fills !== figma.mixed) {
     const fills = node.fills as readonly Paint[];
-    const hasFillVariable = node.boundVariables?.fills && Array.isArray(node.boundVariables.fills) && node.boundVariables.fills.length > 0;
+    const hasFillVariable =
+      node.boundVariables?.fills &&
+      Array.isArray(node.boundVariables.fills) &&
+      node.boundVariables.fills.length > 0;
     const visibleFills = fills.filter((fill: any) => fill.visible !== false);
     if (visibleFills.length > 0 && hasFillVariable) {
       const properties = visibleFills.map((_, idx) => `fill[${idx}]`);
@@ -129,7 +148,7 @@ export function collectTokenBoundDetails(node: SceneNode, details: TokenBoundDet
         properties,
         parentComponentId,
         parentComponentName,
-        parentInstanceId
+        parentInstanceId,
       });
     }
   }
@@ -138,7 +157,10 @@ export function collectTokenBoundDetails(node: SceneNode, details: TokenBoundDet
   if ('strokes' in node && node.strokes) {
     const strokes = node.strokes;
     if (Array.isArray(strokes)) {
-      const hasStrokeVariable = node.boundVariables?.strokes && Array.isArray(node.boundVariables.strokes) && node.boundVariables.strokes.length > 0;
+      const hasStrokeVariable =
+        node.boundVariables?.strokes &&
+        Array.isArray(node.boundVariables.strokes) &&
+        node.boundVariables.strokes.length > 0;
       const visibleStrokes = strokes.filter((stroke: any) => stroke.visible !== false);
       if (visibleStrokes.length > 0 && hasStrokeVariable) {
         const properties = visibleStrokes.map((_, idx) => `stroke[${idx}]`);
@@ -150,7 +172,7 @@ export function collectTokenBoundDetails(node: SceneNode, details: TokenBoundDet
           properties,
           parentComponentId,
           parentComponentName,
-          parentInstanceId
+          parentInstanceId,
         });
       }
     }
@@ -159,9 +181,12 @@ export function collectTokenBoundDetails(node: SceneNode, details: TokenBoundDet
   // Collect radius using variables
   if ('cornerRadius' in node && typeof node.cornerRadius === 'number') {
     const boundVars = node.boundVariables as any;
-    const hasRadiusVariable = boundVars?.cornerRadius || boundVars?.topLeftRadius ||
-                               boundVars?.topRightRadius || boundVars?.bottomLeftRadius ||
-                               boundVars?.bottomRightRadius;
+    const hasRadiusVariable =
+      boundVars?.cornerRadius ||
+      boundVars?.topLeftRadius ||
+      boundVars?.topRightRadius ||
+      boundVars?.bottomLeftRadius ||
+      boundVars?.bottomRightRadius;
     if (node.cornerRadius > 0 && hasRadiusVariable) {
       details.push({
         nodeId,
@@ -171,7 +196,7 @@ export function collectTokenBoundDetails(node: SceneNode, details: TokenBoundDet
         properties: ['cornerRadius'],
         parentComponentId,
         parentComponentName,
-        parentInstanceId
+        parentInstanceId,
       });
     }
   }
@@ -198,7 +223,7 @@ export function collectTokenBoundDetails(node: SceneNode, details: TokenBoundDet
           properties,
           parentComponentId,
           parentComponentName,
-          parentInstanceId
+          parentInstanceId,
         });
       }
     }
@@ -208,7 +233,14 @@ export function collectTokenBoundDetails(node: SceneNode, details: TokenBoundDet
   if ('children' in node) {
     const children = node.children as SceneNode[];
     for (const child of children) {
-      collectTokenBoundDetails(child, details, depth + 1, parentComponentId, parentComponentName, parentInstanceId);
+      collectTokenBoundDetails(
+        child,
+        details,
+        depth + 1,
+        parentComponentId,
+        parentComponentName,
+        parentInstanceId
+      );
     }
   }
 }
@@ -216,7 +248,10 @@ export function collectTokenBoundDetails(node: SceneNode, details: TokenBoundDet
 /**
  * Recursively count variable-bound properties in node tree
  */
-export function countVariableBoundPropertiesRecursive(node: SceneNode, depth: number = 0): {
+export function countVariableBoundPropertiesRecursive(
+  node: SceneNode,
+  depth: number = 0
+): {
   colors: number;
   typography: number;
   spacing: number;

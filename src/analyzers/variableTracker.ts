@@ -62,10 +62,11 @@ export async function trackVariableUsage(
   }
 
   // Create variable breakdown with percentages
-  const totalVariableUsages = Array.from(variableSourceCounts.values()).reduce((sum, count) => sum + count, 0);
-  const variableBreakdown: LibraryBreakdown[] = Array.from(
-    variableSourceCounts.entries()
-  )
+  const totalVariableUsages = Array.from(variableSourceCounts.values()).reduce(
+    (sum, count) => sum + count,
+    0
+  );
+  const variableBreakdown: LibraryBreakdown[] = Array.from(variableSourceCounts.entries())
     .map(([name, count]) => ({
       name,
       count,

@@ -26,9 +26,7 @@ function containsDSComponents(
 ): boolean {
   if (!('findAll' in instance)) return false;
 
-  const internalInstances = instance.findAll(
-    (node) => node.type === 'INSTANCE'
-  ) as InstanceNode[];
+  const internalInstances = instance.findAll((node) => node.type === 'INSTANCE') as InstanceNode[];
 
   for (const internal of internalInstances) {
     const mainComp = internal.mainComponent;
@@ -167,7 +165,7 @@ export function categorizeInstances(
       instanceName: instance.name,
       componentId: mainComponent?.id || '',
       componentName: mainComponent?.name || instance.name,
-      librarySource: libraryName
+      librarySource: libraryName,
     });
 
     // NEW COUNTING LOGIC: Exclude wrappers from counts

@@ -13,12 +13,7 @@ import {
   IconChevronRight16,
 } from '@create-figma-plugin/ui';
 import { emit, on } from '@create-figma-plugin/utilities';
-import {
-  Tooltip,
-  Checkbox,
-  DonutChart,
-  SegmentedControl,
-} from './components/common';
+import { Tooltip, Checkbox, DonutChart, SegmentedControl } from './components/common';
 import { useAnimatedCounter } from './hooks/useAnimatedCounter';
 import { Modal, OnboardingModal, HelpModal } from './components/modals';
 import { StatCard } from './components/cards';
@@ -58,48 +53,28 @@ function Plugin() {
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<
-    'overview' | 'components' | 'tokens'
-  >('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'components' | 'tokens'>('overview');
 
   // Track collapsed sections (wrappers start collapsed)
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
-    new Set()
-  );
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   // Ignored items (used for orphans and components, but not wrappers)
-  const [ignoredComponents, setIgnoredComponents] = useState<Set<string>>(
-    new Set()
-  );
+  const [ignoredComponents, setIgnoredComponents] = useState<Set<string>>(new Set());
   // Track orphan instances by composite key: orphanNodeId:componentId
   // This allows ignoring an orphan in specific components or everywhere
-  const [ignoredOrphanInstances, setIgnoredOrphanInstances] = useState<
-    Set<string>
-  >(new Set());
-  const [ignoredInstances, setIgnoredInstances] = useState<Set<string>>(
-    new Set()
-  );
-  const [ignoredLibraries, setIgnoredLibraries] = useState<Set<string>>(
-    new Set()
-  );
+  const [ignoredOrphanInstances, setIgnoredOrphanInstances] = useState<Set<string>>(new Set());
+  const [ignoredInstances, setIgnoredInstances] = useState<Set<string>>(new Set());
+  const [ignoredLibraries, setIgnoredLibraries] = useState<Set<string>>(new Set());
 
   // Helper functions for orphan instance tracking
   const getOrphanInstanceKey = (orphanNodeId: string, componentId: string) =>
     `${orphanNodeId}:${componentId}`;
 
-  const isOrphanIgnoredInComponent = (
-    orphanNodeId: string,
-    componentId: string
-  ) =>
+  const isOrphanIgnoredInComponent = (orphanNodeId: string, componentId: string) =>
     ignoredOrphanInstances.has(getOrphanInstanceKey(orphanNodeId, componentId));
 
-  const isOrphanIgnoredEverywhere = (
-    orphanNodeId: string,
-    componentIds: string[]
-  ) =>
-    componentIds.every((compId) =>
-      isOrphanIgnoredInComponent(orphanNodeId, compId)
-    );
+  const isOrphanIgnoredEverywhere = (orphanNodeId: string, componentIds: string[]) =>
+    componentIds.every((compId) => isOrphanIgnoredInComponent(orphanNodeId, compId));
 
   // Listen for messages from plugin backend
   useEffect(() => {
@@ -117,9 +92,7 @@ function Plugin() {
 
       // Load ignored items from backend
       if (results.hardcodedValues) {
-        setIgnoredComponents(
-          new Set(results.hardcodedValues.ignoredComponents || [])
-        );
+        setIgnoredComponents(new Set(results.hardcodedValues.ignoredComponents || []));
         // Convert old ignoredOrphans format to new composite key format
         // Old format: Set<orphanNodeId>
         // New format: Set<orphanNodeId:componentId>
@@ -130,9 +103,7 @@ function Plugin() {
             // we need to mark them as ignored in all components
             results.hardcodedValues.details?.forEach((detail) => {
               if (detail.nodeId === orphanId) {
-                orphanInstances.add(
-                  getOrphanInstanceKey(orphanId, detail.parentComponentId)
-                );
+                orphanInstances.add(getOrphanInstanceKey(orphanId, detail.parentComponentId));
               }
             });
           });
@@ -278,15 +249,9 @@ function Plugin() {
   };
 
   // Toggle ignore for an orphan in ALL components
-  const handleToggleIgnoreOrphanEverywhere = (
-    orphanNodeId: string,
-    componentIds: string[]
-  ) => {
+  const handleToggleIgnoreOrphanEverywhere = (orphanNodeId: string, componentIds: string[]) => {
     const newSet = new Set(ignoredOrphanInstances);
-    const isCurrentlyIgnoredEverywhere = isOrphanIgnoredEverywhere(
-      orphanNodeId,
-      componentIds
-    );
+    const isCurrentlyIgnoredEverywhere = isOrphanIgnoredEverywhere(orphanNodeId, componentIds);
 
     if (isCurrentlyIgnoredEverywhere) {
       // Unignore in all components
@@ -312,10 +277,7 @@ function Plugin() {
   };
 
   // Toggle ignore for an orphan in a SPECIFIC component
-  const handleToggleIgnoreOrphanInComponent = (
-    orphanNodeId: string,
-    componentId: string
-  ) => {
+  const handleToggleIgnoreOrphanInComponent = (orphanNodeId: string, componentId: string) => {
     const newSet = new Set(ignoredOrphanInstances);
     const key = getOrphanInstanceKey(orphanNodeId, componentId);
 
@@ -351,10 +313,7 @@ function Plugin() {
     }
   };
 
-  const handleToggleIgnoreLibrary = (
-    librarySource: string,
-    instanceIds: string[]
-  ) => {
+  const handleToggleIgnoreLibrary = (librarySource: string, instanceIds: string[]) => {
     const newIgnoredLibraries = new Set(ignoredLibraries);
     const newIgnoredInstances = new Set(ignoredInstances);
 
@@ -405,22 +364,16 @@ function Plugin() {
 
     // Check if ANY filtering is active
     const hasActiveFilters =
-      ignoredInstances.size > 0 ||
-      ignoredComponents.size > 0 ||
-      ignoredOrphanInstances.size > 0;
+      ignoredInstances.size > 0 || ignoredComponents.size > 0 || ignoredOrphanInstances.size > 0;
 
     // If no filters active, use accurate backend totals (calculated from ALL instances)
     if (!hasActiveFilters) {
       const backendTokenBound = hv.totalOpportunities - hv.totalHardcoded;
       const variableCoverage =
-        hv.totalOpportunities > 0
-          ? (backendTokenBound / hv.totalOpportunities) * 100
-          : 0;
+        hv.totalOpportunities > 0 ? (backendTokenBound / hv.totalOpportunities) * 100 : 0;
 
       const orphanRate =
-        hv.totalOpportunities > 0
-          ? (hv.totalHardcoded / hv.totalOpportunities) * 100
-          : 0;
+        hv.totalOpportunities > 0 ? (hv.totalHardcoded / hv.totalOpportunities) * 100 : 0;
 
       // Count orphans from details for display
       const orphanCount = hv.details.length;
@@ -452,21 +405,15 @@ function Plugin() {
       });
 
       const filteredComponentCoverage =
-        filteredTotalInstances > 0
-          ? (filteredLibraryInstances / filteredTotalInstances) * 100
-          : 0;
+        filteredTotalInstances > 0 ? (filteredLibraryInstances / filteredTotalInstances) * 100 : 0;
 
-      const filteredOverallScore =
-        variableCoverage * 0.55 + filteredComponentCoverage * 0.45;
+      const filteredOverallScore = variableCoverage * 0.55 + filteredComponentCoverage * 0.45;
 
       const filteredBreakdown = data.libraryBreakdown
         .map((lib) => ({
           name: lib.name,
           count: lib.count,
-          percentage:
-            filteredTotalInstances > 0
-              ? (lib.count / filteredTotalInstances) * 100
-              : 0,
+          percentage: filteredTotalInstances > 0 ? (lib.count / filteredTotalInstances) * 100 : 0,
         }))
         .sort((a, b) => b.count - a.count);
 
@@ -491,13 +438,8 @@ function Plugin() {
 
     // Filter orphans - exclude if component ignored, orphan ignored, OR parent instance ignored
     hv.details.forEach((detail) => {
-      const isComponentIgnored = ignoredComponents.has(
-        detail.parentComponentId
-      );
-      const isOrphanIgnored = isOrphanIgnoredInComponent(
-        detail.nodeId,
-        detail.parentComponentId
-      );
+      const isComponentIgnored = ignoredComponents.has(detail.parentComponentId);
+      const isOrphanIgnored = isOrphanIgnoredInComponent(detail.nodeId, detail.parentComponentId);
       const isInstanceIgnored = ignoredInstances.has(detail.parentInstanceId);
 
       // Only count if NOT ignored at any level
@@ -510,9 +452,7 @@ function Plugin() {
     // Filter token-bound properties - exclude if component ignored OR parent instance ignored
     let filteredTokenBoundCount = 0;
     hv.tokenBoundDetails.forEach((detail) => {
-      const isComponentIgnored = ignoredComponents.has(
-        detail.parentComponentId
-      );
+      const isComponentIgnored = ignoredComponents.has(detail.parentComponentId);
       const isInstanceIgnored = ignoredInstances.has(detail.parentInstanceId);
 
       // Only count if NOT ignored at any level
@@ -521,8 +461,7 @@ function Plugin() {
       }
     });
 
-    const filteredTotalOpportunities =
-      filteredTokenBoundCount + filteredTotalHardcoded;
+    const filteredTotalOpportunities = filteredTokenBoundCount + filteredTotalHardcoded;
 
     const filteredVariableCoverage =
       filteredTotalOpportunities > 0
@@ -567,12 +506,9 @@ function Plugin() {
       }
     });
 
-    const filteredTotalInstances =
-      filteredLibraryInstances + filteredLocalInstances;
+    const filteredTotalInstances = filteredLibraryInstances + filteredLocalInstances;
     const filteredComponentCoverage =
-      filteredTotalInstances > 0
-        ? (filteredLibraryInstances / filteredTotalInstances) * 100
-        : 0;
+      filteredTotalInstances > 0 ? (filteredLibraryInstances / filteredTotalInstances) * 100 : 0;
 
     // Recalculate library breakdown excluding ignored instances AND wrappers
     const filteredLibraryBreakdown = new Map<string, number>();
@@ -583,10 +519,7 @@ function Plugin() {
         instance.librarySource.includes('Local (built with DS)');
       if (!isWrapper) {
         const source = instance.librarySource;
-        filteredLibraryBreakdown.set(
-          source,
-          (filteredLibraryBreakdown.get(source) || 0) + 1
-        );
+        filteredLibraryBreakdown.set(source, (filteredLibraryBreakdown.get(source) || 0) + 1);
       }
     });
 
@@ -594,17 +527,13 @@ function Plugin() {
       .map(([name, count]) => ({
         name,
         count,
-        percentage:
-          filteredTotalInstances > 0
-            ? (count / filteredTotalInstances) * 100
-            : 0,
+        percentage: filteredTotalInstances > 0 ? (count / filteredTotalInstances) * 100 : 0,
       }))
       .sort((a, b) => b.count - a.count);
 
     // Foundation-First weighting: 55% token adoption, 45% component coverage
     // Rationale: Tokens drive 80% of consistency value (IBM, Atlassian research)
-    const filteredOverallScore =
-      filteredVariableCoverage * 0.55 + filteredComponentCoverage * 0.45;
+    const filteredOverallScore = filteredVariableCoverage * 0.55 + filteredComponentCoverage * 0.45;
 
     return {
       overallScore: filteredOverallScore,
@@ -633,13 +562,7 @@ function Plugin() {
 
   // Eye icon SVG (16x12 with better stroke weight)
   const eyeIconSVG = (
-    <svg
-      width="16"
-      height="12"
-      viewBox="0 0 16 12"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M7.9812 3C6.32435 3 4.9812 4.34315 4.9812 6C4.9812 7.65685 6.32435 9 7.9812 9C9.63806 9 10.9812 7.65685 10.9812 6C10.9812 4.34315 9.63806 3 7.9812 3ZM6.2312 6C6.2312 5.0335 7.0147 4.25 7.9812 4.25C8.9477 4.25 9.7312 5.0335 9.7312 6C9.7312 6.9665 8.9477 7.75 7.9812 7.75C7.0147 7.75 6.2312 6.9665 6.2312 6Z"
         fill="currentColor"
@@ -677,226 +600,207 @@ function Plugin() {
       'Local Components': '#f39c12',
     };
 
-    return Array.from(instancesByLibrary.entries()).map(
-      ([librarySource, instances]) => {
-        const color = colorMap[librarySource] || '#666';
-        const isWrapper =
-          librarySource.includes('Wrapper') ||
-          librarySource.includes('Local (built with DS)');
-        const isCollapsed = collapsedSections.has(librarySource);
+    return Array.from(instancesByLibrary.entries()).map(([librarySource, instances]) => {
+      const color = colorMap[librarySource] || '#666';
+      const isWrapper =
+        librarySource.includes('Wrapper') || librarySource.includes('Local (built with DS)');
+      const isCollapsed = collapsedSections.has(librarySource);
 
-        const instanceIds = instances.map((i) => i.instanceId);
-        // Check if library is ignored OR if all instances are manually ignored
-        const allInstancesIgnored =
-          !isWrapper &&
-          instanceIds.length > 0 &&
-          instanceIds.every((id) => ignoredInstances.has(id));
-        const isLibraryIgnored =
-          ignoredLibraries.has(librarySource) || allInstancesIgnored;
+      const instanceIds = instances.map((i) => i.instanceId);
+      // Check if library is ignored OR if all instances are manually ignored
+      const allInstancesIgnored =
+        !isWrapper && instanceIds.length > 0 && instanceIds.every((id) => ignoredInstances.has(id));
+      const isLibraryIgnored = ignoredLibraries.has(librarySource) || allInstancesIgnored;
 
-        return (
+      return (
+        <div key={librarySource} style={{ marginBottom: '16px' }}>
           <div
-            key={librarySource}
-            style={{ marginBottom: '16px' }}
+            style={{
+              padding: '8px 0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '12px',
+              borderBottom: !isCollapsed ? '1px solid var(--figma-color-border)' : 'none',
+            }}
           >
             <div
               style={{
-                padding: '8px 0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '12px',
-                borderBottom: !isCollapsed
-                  ? '1px solid var(--figma-color-border)'
-                  : 'none',
+                flex: 1,
+                cursor: 'pointer',
+                opacity: isLibraryIgnored ? 0.5 : 1,
+                minWidth: 0,
               }}
+              onClick={() => handleToggleCollapse(librarySource)}
             >
               <div
                 style={{
-                  flex: 1,
-                  cursor: 'pointer',
-                  opacity: isLibraryIgnored ? 0.5 : 1,
-                  minWidth: 0,
+                  fontWeight: 600,
+                  color: 'var(--figma-color-text)',
+                  fontSize: '11px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  textTransform: 'uppercase',
+                  textDecoration: isLibraryIgnored ? 'line-through' : 'none',
                 }}
-                onClick={() => handleToggleCollapse(librarySource)}
               >
-                <div
-                  style={{
-                    fontWeight: 600,
-                    color: 'var(--figma-color-text)',
-                    fontSize: '11px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    textTransform: 'uppercase',
-                    textDecoration: isLibraryIgnored ? 'line-through' : 'none',
-                  }}
-                >
-                  {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
-                  {librarySource}
-                  {isWrapper && (
-                    <span
-                      style={{
-                        fontSize: '9px',
-                        color: 'var(--figma-color-text-tertiary)',
-                        fontWeight: 400,
-                        textTransform: 'lowercase',
-                      }}
-                    >
-                      (excluded from metrics)
-                    </span>
-                  )}
-                </div>
-                <div
-                  style={{
-                    fontSize: '10px',
-                    color: 'var(--figma-color-text-secondary)',
-                    marginTop: '2px',
-                  }}
-                >
-                  {instances.length} instance{instances.length > 1 ? 's' : ''}
-                </div>
-              </div>
-              {!isWrapper && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Checkbox
-                    checked={isLibraryIgnored}
-                    onChange={() =>
-                      handleToggleIgnoreLibrary(librarySource, instanceIds)
-                    }
-                  />
+                {isCollapsed ? <IconChevronRight16 /> : <IconChevronDown16 />}
+                {librarySource}
+                {isWrapper && (
                   <span
                     style={{
-                      fontSize: '10px',
-                      color: 'var(--text-secondary)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleIgnoreLibrary(librarySource, instanceIds);
+                      fontSize: '9px',
+                      color: 'var(--figma-color-text-tertiary)',
+                      fontWeight: 400,
+                      textTransform: 'lowercase',
                     }}
                   >
-                    Ignore All
+                    (excluded from metrics)
                   </span>
-                </div>
-              )}
+                )}
+              </div>
+              <div
+                style={{
+                  fontSize: '10px',
+                  color: 'var(--figma-color-text-secondary)',
+                  marginTop: '2px',
+                }}
+              >
+                {instances.length} instance{instances.length > 1 ? 's' : ''}
+              </div>
             </div>
-            {!isCollapsed && (
-              <div style={{ paddingTop: '8px' }}>
-                {instances.map((instance) => {
-                  const isIgnored = ignoredInstances.has(instance.instanceId);
-                  const instanceOpacity = isIgnored ? 0.4 : 1;
-
-                  return (
-                    <div
-                      key={instance.instanceId}
-                      style={{
-                        paddingLeft: '0px',
-                        paddingTop: '8px',
-                        paddingBottom: '8px',
-                        fontSize: '10px',
-                        borderBottom: '1px solid var(--figma-color-border)',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          marginBottom: '4px',
-                        }}
-                      >
-                        {!isWrapper && (
-                          <Checkbox
-                            checked={isIgnored}
-                            onChange={() =>
-                              handleToggleIgnoreInstance(instance.instanceId)
-                            }
-                          />
-                        )}
-                        <div style={{ flex: 1, opacity: instanceOpacity }}>
-                          <div
-                            style={{
-                              fontWeight: 600,
-                              color: 'var(--figma-color-text)',
-                              marginBottom: '2px',
-                              textDecoration: isIgnored
-                                ? 'line-through'
-                                : 'none',
-                            }}
-                          >
-                            {instance.instanceName}
-                          </div>
-                          <div
-                            style={{
-                              color: 'var(--figma-color-text-secondary)',
-                              fontSize: '9px',
-                            }}
-                          >
-                            <span
-                              style={{
-                                color: 'var(--figma-color-text-tertiary)',
-                              }}
-                            >
-                              Component:
-                            </span>{' '}
-                            {instance.componentName}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleSelectNode(instance.instanceId)}
-                          title="View in canvas"
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            padding: '0',
-                            background: 'transparent',
-                            color: 'var(--text-secondary)',
-                            border: 'none',
-                            borderRadius: '2px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'background 0.15s ease',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background =
-                              'var(--figma-color-bg-hover)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                          }}
-                        >
-                          {eyeIconSVG}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+            {!isWrapper && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  flexShrink: 0,
+                }}
+              >
+                <Checkbox
+                  checked={isLibraryIgnored}
+                  onChange={() => handleToggleIgnoreLibrary(librarySource, instanceIds)}
+                />
+                <span
+                  style={{
+                    fontSize: '10px',
+                    color: 'var(--text-secondary)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleIgnoreLibrary(librarySource, instanceIds);
+                  }}
+                >
+                  Ignore All
+                </span>
               </div>
             )}
           </div>
-        );
-      }
-    );
+          {!isCollapsed && (
+            <div style={{ paddingTop: '8px' }}>
+              {instances.map((instance) => {
+                const isIgnored = ignoredInstances.has(instance.instanceId);
+                const instanceOpacity = isIgnored ? 0.4 : 1;
+
+                return (
+                  <div
+                    key={instance.instanceId}
+                    style={{
+                      paddingLeft: '0px',
+                      paddingTop: '8px',
+                      paddingBottom: '8px',
+                      fontSize: '10px',
+                      borderBottom: '1px solid var(--figma-color-border)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      {!isWrapper && (
+                        <Checkbox
+                          checked={isIgnored}
+                          onChange={() => handleToggleIgnoreInstance(instance.instanceId)}
+                        />
+                      )}
+                      <div style={{ flex: 1, opacity: instanceOpacity }}>
+                        <div
+                          style={{
+                            fontWeight: 600,
+                            color: 'var(--figma-color-text)',
+                            marginBottom: '2px',
+                            textDecoration: isIgnored ? 'line-through' : 'none',
+                          }}
+                        >
+                          {instance.instanceName}
+                        </div>
+                        <div
+                          style={{
+                            color: 'var(--figma-color-text-secondary)',
+                            fontSize: '9px',
+                          }}
+                        >
+                          <span
+                            style={{
+                              color: 'var(--figma-color-text-tertiary)',
+                            }}
+                          >
+                            Component:
+                          </span>{' '}
+                          {instance.componentName}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleSelectNode(instance.instanceId)}
+                        title="View in canvas"
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          padding: '0',
+                          background: 'transparent',
+                          color: 'var(--text-secondary)',
+                          border: 'none',
+                          borderRadius: '2px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--figma-color-bg-hover)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                        }}
+                      >
+                        {eyeIconSVG}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    });
   };
 
   // Render orphan details grouped by unique orphan nodes
   const renderOrphanDetails = () => {
-    if (!data || !data.hardcodedValues || !data.hardcodedValues.details)
-      return null;
+    if (!data || !data.hardcodedValues || !data.hardcodedValues.details) return null;
 
     // Group by unique orphan nodeId, tracking which components contain each orphan
     const orphanGroups = new Map<
@@ -926,21 +830,13 @@ function Plugin() {
 
     return Array.from(orphanGroups.values()).map((group) => {
       const componentIds = group.components.map((c) => c.id);
-      const isIgnoredEverywhere = isOrphanIgnoredEverywhere(
-        group.orphan.nodeId,
-        componentIds
-      );
+      const isIgnoredEverywhere = isOrphanIgnoredEverywhere(group.orphan.nodeId, componentIds);
       const orphanOpacity = isIgnoredEverywhere ? 0.4 : 1;
-      const isCollapsed = collapsedSections.has(
-        `orphan-${group.orphan.nodeId}`
-      );
+      const isCollapsed = collapsedSections.has(`orphan-${group.orphan.nodeId}`);
       const color = categoryColors[group.orphan.category] || '#666';
 
       return (
-        <div
-          key={group.orphan.nodeId}
-          style={{ marginBottom: '16px' }}
-        >
+        <div key={group.orphan.nodeId} style={{ marginBottom: '16px' }}>
           {/* Orphan header with "Ignore All" checkbox */}
           <div
             style={{
@@ -948,9 +844,7 @@ function Plugin() {
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              borderBottom: !isCollapsed
-                ? '1px solid var(--figma-color-border)'
-                : 'none',
+              borderBottom: !isCollapsed ? '1px solid var(--figma-color-border)' : 'none',
             }}
           >
             <div
@@ -960,9 +854,7 @@ function Plugin() {
                 opacity: orphanOpacity,
                 minWidth: 0,
               }}
-              onClick={() =>
-                handleToggleCollapse(`orphan-${group.orphan.nodeId}`)
-              }
+              onClick={() => handleToggleCollapse(`orphan-${group.orphan.nodeId}`)}
             >
               <div
                 style={{
@@ -1039,10 +931,7 @@ function Plugin() {
               <Checkbox
                 checked={isIgnoredEverywhere}
                 onChange={() =>
-                  handleToggleIgnoreOrphanEverywhere(
-                    group.orphan.nodeId,
-                    componentIds
-                  )
+                  handleToggleIgnoreOrphanEverywhere(group.orphan.nodeId, componentIds)
                 }
               />
               <span
@@ -1057,10 +946,7 @@ function Plugin() {
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleToggleIgnoreOrphanEverywhere(
-                    group.orphan.nodeId,
-                    componentIds
-                  );
+                  handleToggleIgnoreOrphanEverywhere(group.orphan.nodeId, componentIds);
                 }}
               >
                 Ignore All
@@ -1100,10 +986,7 @@ function Plugin() {
                       <Checkbox
                         checked={isIgnoredInThisComponent}
                         onChange={() =>
-                          handleToggleIgnoreOrphanInComponent(
-                            group.orphan.nodeId,
-                            comp.id
-                          )
+                          handleToggleIgnoreOrphanInComponent(group.orphan.nodeId, comp.id)
                         }
                       />
                       <div style={{ flex: 1, opacity: componentOpacity }}>
@@ -1112,9 +995,7 @@ function Plugin() {
                             fontWeight: 600,
                             color: 'var(--figma-color-text)',
                             marginBottom: '2px',
-                            textDecoration: isIgnoredInThisComponent
-                              ? 'line-through'
-                              : 'none',
+                            textDecoration: isIgnoredInThisComponent ? 'line-through' : 'none',
                           }}
                         >
                           {comp.name}
@@ -1152,8 +1033,7 @@ function Plugin() {
                           transition: 'background 0.15s ease',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background =
-                            'var(--figma-color-bg-hover)';
+                          e.currentTarget.style.background = 'var(--figma-color-bg-hover)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = 'transparent';
@@ -1177,9 +1057,7 @@ function Plugin() {
     return (
       <Fragment>
         <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
-        <div
-          style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
-        >
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
           {/* Header with help button */}
           <div
             style={{
@@ -1230,7 +1108,7 @@ GETTING STARTED
 1. Select the frames, components, or sections you want to analyze
 2. Click "Analyze Selection" to see your metrics
 3. Use the tabs to explore components and design tokens in detail
-4. Mark intentional exceptions as "Ignored" to refine your metrics`
+4. Mark intentional exceptions as "Ignored" to refine your metrics`,
                 });
               }}
               onMouseEnter={(e) => {
@@ -1360,8 +1238,7 @@ GETTING STARTED
             <button
               onClick={handleCancelAnalysis}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background =
-                  'var(--figma-color-bg-hover)';
+                e.currentTarget.style.background = 'var(--figma-color-bg-hover)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'transparent';
@@ -1403,16 +1280,10 @@ GETTING STARTED
         </div>
 
         {/* Onboarding Modal */}
-        <OnboardingModal
-          isOpen={showOnboarding}
-          onClose={handleCloseOnboarding}
-        />
+        <OnboardingModal isOpen={showOnboarding} onClose={handleCloseOnboarding} />
 
         {/* Help Modal */}
-        <HelpModal
-          isOpen={showHelpModal}
-          onClose={() => setShowHelpModal(false)}
-        />
+        <HelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
       </Fragment>
     );
   }
@@ -1422,9 +1293,7 @@ GETTING STARTED
     return (
       <Fragment>
         <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
-        <div
-          style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
-        >
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
           {/* Header with help button */}
           <div
             style={{
@@ -1475,7 +1344,7 @@ GETTING STARTED
 1. Select the frames, components, or sections you want to analyze
 2. Click "Analyze Selection" to see your metrics
 3. Use the tabs to explore components and design tokens in detail
-4. Mark intentional exceptions as "Ignored" to refine your metrics`
+4. Mark intentional exceptions as "Ignored" to refine your metrics`,
                 });
               }}
               onMouseEnter={(e) => {
@@ -1536,10 +1405,7 @@ GETTING STARTED
             }}
           >
             <div style={{ width: '100%', maxWidth: '320px' }}>
-              <Banner
-                icon="warning"
-                variant="warning"
-              >
+              <Banner icon="warning" variant="warning">
                 {error}
               </Banner>
             </div>
@@ -1573,12 +1439,8 @@ GETTING STARTED
               style={{
                 width: '100%',
                 height: '52px',
-                background: hasSelection
-                  ? 'var(--button-bg)'
-                  : 'var(--button-disabled-bg)',
-                color: hasSelection
-                  ? 'var(--button-text)'
-                  : 'var(--button-disabled-text)',
+                background: hasSelection ? 'var(--button-bg)' : 'var(--button-disabled-bg)',
+                color: hasSelection ? 'var(--button-text)' : 'var(--button-disabled-text)',
                 border: 'none',
                 borderRadius: '0',
                 fontSize: '11px',
@@ -1613,16 +1475,10 @@ GETTING STARTED
         </div>
 
         {/* Onboarding Modal */}
-        <OnboardingModal
-          isOpen={showOnboarding}
-          onClose={handleCloseOnboarding}
-        />
+        <OnboardingModal isOpen={showOnboarding} onClose={handleCloseOnboarding} />
 
         {/* Help Modal */}
-        <HelpModal
-          isOpen={showHelpModal}
-          onClose={() => setShowHelpModal(false)}
-        />
+        <HelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
       </Fragment>
     );
   }
@@ -1632,9 +1488,7 @@ GETTING STARTED
     return (
       <Fragment>
         <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
-        <div
-          style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
-        >
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
           {/* Header with help button */}
           <div
             style={{
@@ -1685,7 +1539,7 @@ GETTING STARTED
 1. Select the frames, components, or sections you want to analyze
 2. Click "Analyze Selection" to see your metrics
 3. Use the tabs to explore components and design tokens in detail
-4. Mark intentional exceptions as "Ignored" to refine your metrics`
+4. Mark intentional exceptions as "Ignored" to refine your metrics`,
                 });
               }}
               onMouseEnter={(e) => {
@@ -1763,8 +1617,8 @@ GETTING STARTED
                   lineHeight: '1.5',
                 }}
               >
-                Select frames, components, or sections on your canvas to analyze
-                design system coverage
+                Select frames, components, or sections on your canvas to analyze design system
+                coverage
               </div>
             </div>
           </div>
@@ -1820,10 +1674,7 @@ GETTING STARTED
         </div>
 
         {/* Onboarding Modal */}
-        <OnboardingModal
-          isOpen={showOnboarding}
-          onClose={handleCloseOnboarding}
-        />
+        <OnboardingModal isOpen={showOnboarding} onClose={handleCloseOnboarding} />
       </Fragment>
     );
   }
@@ -1961,9 +1812,7 @@ GETTING STARTED
     return (
       <Fragment>
         <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
-        <div
-          style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
-        >
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
           {/* Header with help button */}
           <div
             style={{
@@ -2014,7 +1863,7 @@ GETTING STARTED
 1. Select the frames, components, or sections you want to analyze
 2. Click "Analyze Selection" to see your metrics
 3. Use the tabs to explore components and design tokens in detail
-4. Mark intentional exceptions as "Ignored" to refine your metrics`
+4. Mark intentional exceptions as "Ignored" to refine your metrics`,
                 });
               }}
               onMouseEnter={(e) => {
@@ -2097,9 +1946,7 @@ GETTING STARTED
                     filtered.componentCoverage * 0.45
                   )}\n\nOverall Adoption: ${formatPercent(
                     filtered.variableCoverage * 0.55
-                  )} + ${formatPercent(
-                    filtered.componentCoverage * 0.45
-                  )} = ${formatPercent(
+                  )} + ${formatPercent(filtered.componentCoverage * 0.45)} = ${formatPercent(
                     filtered.overallScore
                   )}\n\nWhy 55/45? Research from IBM, Atlassian, and Pinterest shows that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.`}
                   tokensLabel="Tokens"
@@ -2269,8 +2116,7 @@ This measures token adoption at the property level, not component level. Each co
                 <TokensTab
                   hardcodedValues={data.hardcodedValues}
                   hasOrphanDetails={
-                    data.hardcodedValues.details &&
-                    data.hardcodedValues.details.length > 0
+                    data.hardcodedValues.details && data.hardcodedValues.details.length > 0
                   }
                   renderOrphanDetails={renderOrphanDetails}
                 />
@@ -2298,8 +2144,7 @@ This measures token adoption at the property level, not component level. Each co
                   >
                     <div
                       style={{
-                        background:
-                          'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         width: '48px',
                         height: '48px',
                         borderRadius: '10px',
@@ -2399,8 +2244,7 @@ This measures token adoption at the property level, not component level. Each co
                           fontFamily: 'monospace',
                         }}
                       >
-                        {data.stats.libraryInstances +
-                          data.stats.localInstances}
+                        {data.stats.libraryInstances + data.stats.localInstances}
                       </div>
                     </div>
 
@@ -2483,8 +2327,7 @@ This measures token adoption at the property level, not component level. Each co
                   >
                     <div
                       style={{
-                        background:
-                          'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                        background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                         width: '48px',
                         height: '48px',
                         borderRadius: '10px',
@@ -2631,8 +2474,7 @@ This measures token adoption at the property level, not component level. Each co
                                 marginBottom: '4px',
                               }}
                             >
-                              Weight Applied (55% of total score -
-                              Foundation-First)
+                              Weight Applied (55% of total score - Foundation-First)
                             </div>
                             <div
                               style={{
@@ -2641,14 +2483,9 @@ This measures token adoption at the property level, not component level. Each co
                                 color: 'var(--figma-color-text)',
                               }}
                             >
-                              {formatPercent(filtered.variableCoverage)} × 0.55
-                              ={' '}
-                              <span
-                                style={{ color: '#f5576c', fontWeight: '700' }}
-                              >
-                                {formatPercent(
-                                  filtered.variableCoverage * 0.55
-                                )}
+                              {formatPercent(filtered.variableCoverage)} × 0.55 ={' '}
+                              <span style={{ color: '#f5576c', fontWeight: '700' }}>
+                                {formatPercent(filtered.variableCoverage * 0.55)}
                               </span>
                             </div>
                           </div>
@@ -2691,12 +2528,8 @@ This measures token adoption at the property level, not component level. Each co
               style={{
                 width: '100%',
                 height: '52px',
-                background: hasSelection
-                  ? 'var(--button-bg)'
-                  : 'var(--button-disabled-bg)',
-                color: hasSelection
-                  ? 'var(--button-text)'
-                  : 'var(--button-disabled-text)',
+                background: hasSelection ? 'var(--button-bg)' : 'var(--button-disabled-bg)',
+                color: hasSelection ? 'var(--button-text)' : 'var(--button-disabled-text)',
                 border: 'none',
                 borderRadius: '0',
                 fontSize: '11px',
@@ -2726,9 +2559,7 @@ This measures token adoption at the property level, not component level. Each co
                 <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
               </svg>
               {data
-                ? `RE-ANALYZE ${selectionCount} ${
-                    selectionCount === 1 ? 'ITEM' : 'ITEMS'
-                  }`
+                ? `RE-ANALYZE ${selectionCount} ${selectionCount === 1 ? 'ITEM' : 'ITEMS'}`
                 : 'ANALYZE SELECTION'}
             </button>
           </div>
@@ -2749,9 +2580,7 @@ This measures token adoption at the property level, not component level. Each co
   return (
     <Fragment>
       <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
-      <div
-        style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
-      >
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         {/* Header with help button */}
         <div
           style={{
@@ -2781,8 +2610,7 @@ This measures token adoption at the property level, not component level. Each co
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'var(--figma-color-bg-hover)';
-              e.currentTarget.style.borderColor =
-                'var(--figma-color-text-tertiary)';
+              e.currentTarget.style.borderColor = 'var(--figma-color-text-tertiary)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'var(--figma-color-bg)';
@@ -2812,8 +2640,7 @@ This measures token adoption at the property level, not component level. Each co
                 marginBottom: '8px',
               }}
             >
-              {selectionCount} {selectionCount === 1 ? 'ITEM' : 'ITEMS'}{' '}
-              SELECTED
+              {selectionCount} {selectionCount === 1 ? 'ITEM' : 'ITEMS'} SELECTED
             </div>
             <div
               style={{
@@ -2895,16 +2722,10 @@ This measures token adoption at the property level, not component level. Each co
       />
 
       {/* Onboarding Modal */}
-      <OnboardingModal
-        isOpen={showOnboarding}
-        onClose={handleCloseOnboarding}
-      />
+      <OnboardingModal isOpen={showOnboarding} onClose={handleCloseOnboarding} />
 
       {/* Help Modal */}
-      <HelpModal
-        isOpen={showHelpModal}
-        onClose={() => setShowHelpModal(false)}
-      />
+      <HelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
     </Fragment>
   );
 }

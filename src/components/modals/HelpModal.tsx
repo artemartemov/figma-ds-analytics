@@ -97,14 +97,11 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
             >
               What This Plugin Does
             </div>
-            <p
-              style={{ margin: '0 0 12px 0', color: 'var(--figma-color-text)' }}
-            >
-              This plugin measures how well your designs adopt your design
-              system by tracking two key metrics:
-              <strong> Component Coverage</strong> (are you using library
-              components?) and <strong>Token Adoption</strong> (are those
-              components using design tokens/variables?).
+            <p style={{ margin: '0 0 12px 0', color: 'var(--figma-color-text)' }}>
+              This plugin measures how well your designs adopt your design system by tracking two
+              key metrics:
+              <strong> Component Coverage</strong> (are you using library components?) and{' '}
+              <strong>Token Adoption</strong> (are those components using design tokens/variables?).
             </p>
           </div>
 
@@ -144,8 +141,8 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
                 Library Instances ÷ Total Instances × 100
               </div>
               <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
-                Measures what percentage of component instances come from your
-                design system libraries.
+                Measures what percentage of component instances come from your design system
+                libraries.
               </p>
             </div>
 
@@ -170,10 +167,9 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
                 Variable-bound Properties ÷ Total Properties × 100
               </div>
               <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
-                Counts individual properties (fills, strokes, typography,
-                radius, borders) that use design tokens. A button with 5
-                properties and only 1 token-bound property = 20% token adoption,
-                not 100%.
+                Counts individual properties (fills, strokes, typography, radius, borders) that use
+                design tokens. A button with 5 properties and only 1 token-bound property = 20%
+                token adoption, not 100%.
               </p>
             </div>
 
@@ -198,9 +194,8 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
                 (Token Adoption × 0.55) + (Component Coverage × 0.45)
               </div>
               <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
-                Tokens are weighted higher (55%) because they drive 80% of
-                design consistency. Based on research from IBM Carbon,
-                Atlassian, and Pinterest design systems.
+                Tokens are weighted higher (55%) because they drive 80% of design consistency. Based
+                on research from IBM Carbon, Atlassian, and Pinterest design systems.
               </p>
             </div>
 
@@ -225,8 +220,8 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
                 Hardcoded Properties ÷ Total Properties × 100
               </div>
               <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
-                Tracks hardcoded values (colors, typography, radius, borders)
-                that should be using tokens. Industry target: &lt;20% orphans.
+                Tracks hardcoded values (colors, typography, radius, borders) that should be using
+                tokens. Industry target: &lt;20% orphans.
               </p>
             </div>
           </div>
@@ -245,27 +240,19 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
             >
               What This Plugin Is NOT
             </div>
-            <p
-              style={{ margin: '0 0 12px 0', color: 'var(--figma-color-text)' }}
-            >
-              This plugin <strong>only analyzes what you select</strong>—it
-              cannot scan entire pages or files automatically. It measures
-              adoption of existing components and tokens, but{' '}
-              <strong>cannot detect which components are missing</strong> from
-              your design system.
+            <p style={{ margin: '0 0 12px 0', color: 'var(--figma-color-text)' }}>
+              This plugin <strong>only analyzes what you select</strong>—it cannot scan entire pages
+              or files automatically. It measures adoption of existing components and tokens, but{' '}
+              <strong>cannot detect which components are missing</strong> from your design system.
             </p>
-            <p
-              style={{ margin: '0 0 12px 0', color: 'var(--figma-color-text)' }}
-            >
-              The plugin <strong>does not analyze spacing</strong> (padding,
-              gaps) due to high false positive rates. It also{' '}
-              <strong>cannot track usage over time</strong>—you'll need to
+            <p style={{ margin: '0 0 12px 0', color: 'var(--figma-color-text)' }}>
+              The plugin <strong>does not analyze spacing</strong> (padding, gaps) due to high false
+              positive rates. It also <strong>cannot track usage over time</strong>—you'll need to
               export results and track them manually.
             </p>
             <p style={{ margin: 0, color: 'var(--figma-color-text)' }}>
-              Finally, it <strong>cannot auto-fix orphaned values</strong> or
-              enforce design system rules. It's a measurement tool, not an
-              enforcement tool.
+              Finally, it <strong>cannot auto-fix orphaned values</strong> or enforce design system
+              rules. It's a measurement tool, not an enforcement tool.
             </p>
           </div>
 
@@ -283,9 +270,7 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
             >
               Getting Started
             </div>
-            <p
-              style={{ margin: '0 0 8px 0', color: 'var(--figma-color-text)' }}
-            >
+            <p style={{ margin: '0 0 8px 0', color: 'var(--figma-color-text)' }}>
               1. Select the frames, components, or sections you want to analyze
               <br />
               2. Click "Analyze Selection" to see your metrics
