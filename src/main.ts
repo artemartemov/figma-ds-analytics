@@ -102,9 +102,7 @@ function getLibraryNameFromVariableId(id: string): string | null {
 // ========================================
 
 import { showUI, on, emit } from '@create-figma-plugin/utilities';
-
-// Cancellation flag for analysis (global scope)
-let analysisCancelled = false;
+import { sendProgress, setAnalysisCancelled } from './utils/progressTracker';
 
 export default function () {
   showUI({ width: 440, height: 800 });
@@ -131,9 +129,7 @@ export default function () {
   }, 150);
 
   // Register all event handlers
-  registerAnalysisHandlers(analyzeCoverage, (cancelled) => {
-    analysisCancelled = cancelled;
-  });
+  registerAnalysisHandlers(analyzeCoverage, setAnalysisCancelled);
   registerSelectionHandlers();
   registerIgnoreHandlers();
   registerOnboardingHandlers();
@@ -141,17 +137,6 @@ export default function () {
   // Send initial onboarding status and auto-run analysis if ready
   sendInitialOnboardingStatus();
   autoRunAnalysisIfReady(analyzeCoverage);
-}
-
-// Helper function to send progress updates to UI with a delay for rendering
-async function sendProgress(step: string, percent: number) {
-  // Check if analysis was cancelled
-  if (analysisCancelled) {
-    throw new Error('Analysis cancelled by user');
-  }
-  emit('PROGRESS', { step, percent });
-  // Delay to allow UI to render the update smoothly
-  await new Promise(resolve => setTimeout(resolve, 200));
 }
 
 async function analyzeCoverage(): Promise<CoverageMetrics> {
