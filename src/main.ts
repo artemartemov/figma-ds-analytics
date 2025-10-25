@@ -11,30 +11,7 @@ import {
   loadIgnoredOrphans,
   loadIgnoredInstances,
 } from './utils/storage';
-import {
-  resolveVariableId,
-  collectVariableIds,
-  collectVariableIdsRecursive,
-  checkNodeForVariables,
-  hasVariablesRecursive,
-  checkInstanceForVariables,
-  clearAliasResolutions,
-} from './utils/variableResolver';
-import {
-  isSkippedNode,
-  isNodeOrAncestorHidden,
-} from './utils/nodeFilters';
-import {
-  countVariableBoundProperties,
-  collectTokenBoundDetails,
-  countVariableBoundPropertiesRecursive,
-} from './analyzers/tokenDetector';
-import {
-  detectHardcodedValues,
-  detectHardcodedValuesWithDetails,
-  detectHardcodedValuesRecursive,
-  collectOrphanDetails,
-} from './analyzers/orphanDetector';
+import { clearAliasResolutions } from './utils/variableResolver';
 import {
   collectComponentInstances,
   categorizeInstances,
