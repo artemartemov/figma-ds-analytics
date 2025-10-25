@@ -45,20 +45,15 @@ import {
 
 // Import the mappings from data files
 import { COMPONENT_KEY_TO_LIBRARY } from './data/componentMappings';
-import { VARIABLE_ID_TO_LIBRARY } from './data/variableMappings';
+
 // Helper function to get library name from component key
 function getLibraryNameFromKey(key: string): string | null {
   return COMPONENT_KEY_TO_LIBRARY[key] || null;
 }
 
-// Helper function to get library name from variable ID (deprecated - use collection-based mapping)
-function getLibraryNameFromVariableId(id: string): string | null {
-  return VARIABLE_ID_TO_LIBRARY[id] || null;
-}
-
 // ========================================
 
-import { showUI, on, emit } from '@create-figma-plugin/utilities';
+import { showUI, emit } from '@create-figma-plugin/utilities';
 import { sendProgress, setAnalysisCancelled } from './utils/progressTracker';
 
 export default function () {
