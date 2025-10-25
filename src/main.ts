@@ -7,18 +7,9 @@ import type {
   CoverageMetrics,
 } from './types';
 import {
-  loadEnabledLibraries,
-  saveEnabledLibraries,
-  loadCollectionMappings,
-  saveCollectionMappings,
   loadIgnoredComponents,
-  saveIgnoredComponents,
   loadIgnoredOrphans,
-  saveIgnoredOrphans,
   loadIgnoredInstances,
-  saveIgnoredInstances,
-  loadOnboardingStatus,
-  saveOnboardingStatus,
 } from './utils/storage';
 import {
   getAvailableLibraries,
