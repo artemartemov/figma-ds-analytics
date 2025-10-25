@@ -70,6 +70,14 @@ import {
   analyzeOrphans,
   calculateTokenAdoption,
 } from './analyzers/metricsCalculator';
+import {
+  registerAnalysisHandlers,
+  registerSelectionHandlers,
+  registerIgnoreHandlers,
+  registerOnboardingHandlers,
+  sendInitialOnboardingStatus,
+  autoRunAnalysisIfReady,
+} from './handlers/eventHandlers';
 
 // ========================================
 // CONFIGURATION: Component Key Mapping
@@ -122,156 +130,17 @@ export default function () {
     checkAndSendSelectionStatus();
   }, 150);
 
-  // Listen for UI events
-  on('ANALYZE', async () => {
-    try {
-      // Reset cancellation flag when starting new analysis
-      analysisCancelled = false;
-      const metrics = await analyzeCoverage();
-      emit('RESULTS', metrics);
-    } catch (error) {
-      // Don't show error if user cancelled the analysis
-      if (error instanceof Error && error.message === 'Analysis cancelled by user') {
-        // Silently ignore cancellation
-        return;
-      }
-      emit('ERROR', error instanceof Error ? error.message : 'Unknown error occurred');
-    }
+  // Register all event handlers
+  registerAnalysisHandlers(analyzeCoverage, (cancelled) => {
+    analysisCancelled = cancelled;
   });
+  registerSelectionHandlers();
+  registerIgnoreHandlers();
+  registerOnboardingHandlers();
 
-  on('CANCEL', () => {
-    figma.closePlugin();
-  });
-
-  on('CANCEL_ANALYSIS', () => {
-    // Set flag to stop ongoing analysis
-    analysisCancelled = true;
-  });
-
-  on('SELECT_NODE', (nodeId: string) => {
-    try {
-      const node = figma.getNodeById(nodeId);
-      if (node && 'absoluteBoundingBox' in node) {
-        figma.currentPage.selection = [node as SceneNode];
-        figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
-      }
-    } catch (error) {
-      console.error('Failed to select node:', error);
-    }
-  });
-
-  on('IGNORE_COMPONENT', async (componentId: string) => {
-    try {
-      const ignoredComponents = await loadIgnoredComponents();
-      ignoredComponents.add(componentId);
-      await saveIgnoredComponents(ignoredComponents);
-    } catch (error) {
-      console.error('Failed to ignore component:', error);
-    }
-  });
-
-  on('UNIGNORE_COMPONENT', async (componentId: string) => {
-    try {
-      const ignoredComponents = await loadIgnoredComponents();
-      ignoredComponents.delete(componentId);
-      await saveIgnoredComponents(ignoredComponents);
-    } catch (error) {
-      console.error('Failed to unignore component:', error);
-    }
-  });
-
-  on('IGNORE_ORPHAN', async (nodeId: string) => {
-    try {
-      const ignoredOrphans = await loadIgnoredOrphans();
-      ignoredOrphans.add(nodeId);
-      await saveIgnoredOrphans(ignoredOrphans);
-    } catch (error) {
-      console.error('Failed to ignore orphan:', error);
-    }
-  });
-
-  on('UNIGNORE_ORPHAN', async (nodeId: string) => {
-    try {
-      const ignoredOrphans = await loadIgnoredOrphans();
-      ignoredOrphans.delete(nodeId);
-      await saveIgnoredOrphans(ignoredOrphans);
-    } catch (error) {
-      console.error('Failed to unignore orphan:', error);
-    }
-  });
-
-  on('IGNORE_INSTANCE', async (instanceId: string) => {
-    try {
-      const ignoredInstances = await loadIgnoredInstances();
-      ignoredInstances.add(instanceId);
-      await saveIgnoredInstances(ignoredInstances);
-    } catch (error) {
-      console.error('Failed to ignore instance:', error);
-    }
-  });
-
-  on('UNIGNORE_INSTANCE', async (instanceId: string) => {
-    try {
-      const ignoredInstances = await loadIgnoredInstances();
-      ignoredInstances.delete(instanceId);
-      await saveIgnoredInstances(ignoredInstances);
-    } catch (error) {
-      console.error('Failed to unignore instance:', error);
-    }
-  });
-
-  on('GET_ONBOARDING_STATUS', async () => {
-    try {
-      const hasSeenOnboarding = await loadOnboardingStatus();
-      emit('ONBOARDING_STATUS', hasSeenOnboarding);
-    } catch (error) {
-      console.error('Failed to load onboarding status:', error);
-      emit('ONBOARDING_STATUS', false);
-    }
-  });
-
-  on('SET_ONBOARDING_SEEN', async () => {
-    try {
-      await saveOnboardingStatus(true);
-    } catch (error) {
-      console.error('Failed to save onboarding status:', error);
-    }
-  });
-
-  on('RESET_ONBOARDING', async () => {
-    try {
-      await saveOnboardingStatus(false);
-      const hasSeenOnboarding = await loadOnboardingStatus();
-      emit('ONBOARDING_STATUS', hasSeenOnboarding);
-    } catch (error) {
-      console.error('Failed to reset onboarding:', error);
-    }
-  });
-
-  // Send onboarding status on plugin load (after UI handlers are registered)
-  setTimeout(async () => {
-    try {
-      const hasSeenOnboarding = await loadOnboardingStatus();
-      emit('ONBOARDING_STATUS', hasSeenOnboarding);
-    } catch (error) {
-      console.error('Failed to load onboarding status:', error);
-      emit('ONBOARDING_STATUS', false);
-    }
-  }, 150);
-
-  // Auto-run analysis on plugin load (only if onboarding has been seen)
-  setTimeout(async () => {
-    try {
-      const hasSeenOnboarding = await loadOnboardingStatus();
-      if (hasSeenOnboarding) {
-        const metrics = await analyzeCoverage();
-        emit('RESULTS', metrics);
-      }
-    } catch (error) {
-      // Silently fail on initial load if no selection
-    }
-  }, 200);
-
+  // Send initial onboarding status and auto-run analysis if ready
+  sendInitialOnboardingStatus();
+  autoRunAnalysisIfReady(analyzeCoverage);
 }
 
 // Helper function to send progress updates to UI with a delay for rendering
