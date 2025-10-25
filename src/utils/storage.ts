@@ -2,36 +2,10 @@
 // All functions that interact with figma.clientStorage
 
 // Storage keys
-const ENABLED_LIBRARIES_KEY = 'enabledLibraries';
-const COLLECTION_MAPPINGS_KEY = 'collectionMappings';
 const IGNORED_COMPONENTS_KEY = 'ignoredComponents';
 const IGNORED_ORPHANS_KEY = 'ignoredOrphans';
 const IGNORED_INSTANCES_KEY = 'ignoredInstances';
 const ONBOARDING_SEEN_KEY = 'onboardingSeen';
-
-// ========================================
-// Enabled Libraries
-// ========================================
-
-export async function loadEnabledLibraries(): Promise<Set<string>> {
-  const stored = await figma.clientStorage.getAsync(ENABLED_LIBRARIES_KEY);
-  if (stored && Array.isArray(stored)) {
-    return new Set(stored);
-  }
-  return new Set();
-}
-
-// ========================================
-// Collection Mappings (Legacy/Deprecated)
-// ========================================
-
-export async function loadCollectionMappings(): Promise<Map<string, string>> {
-  const stored = await figma.clientStorage.getAsync(COLLECTION_MAPPINGS_KEY);
-  if (stored) {
-    return new Map(Object.entries(stored));
-  }
-  return new Map();
-}
 
 // ========================================
 // Ignored Components
