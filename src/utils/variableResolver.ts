@@ -5,8 +5,9 @@ const aliasResolutions = new Map<string, string>();
 
 /**
  * Resolve a variable ID to its source (following alias chain)
+ * Internal helper function
  */
-export function resolveVariableId(id: string): string {
+function resolveVariableId(id: string): string {
   try {
     const variable = figma.variables.getVariableById(id);
     if (!variable) return id;
@@ -36,8 +37,9 @@ export function resolveVariableId(id: string): string {
 
 /**
  * Collect all variable IDs from a node's bound variables
+ * Internal helper function
  */
-export function collectVariableIds(node: any): Set<string> {
+function collectVariableIds(node: any): Set<string> {
   const variableIds = new Set<string>();
 
   if (!node.boundVariables) return variableIds;
@@ -156,8 +158,9 @@ export function collectVariableIdsRecursive(node: any): Set<string> {
 
 /**
  * Check if a single node has bound variables
+ * Internal helper function
  */
-export function checkNodeForVariables(node: any): boolean {
+function checkNodeForVariables(node: any): boolean {
   if (!node.boundVariables) return false;
 
   const boundVariables = node.boundVariables;
@@ -239,8 +242,9 @@ export function checkNodeForVariables(node: any): boolean {
 
 /**
  * Recursively check a node and its children for variables
+ * Internal helper function
  */
-export function hasVariablesRecursive(node: SceneNode): boolean {
+function hasVariablesRecursive(node: SceneNode): boolean {
   // Check this node
   if (checkNodeForVariables(node)) {
     return true;
