@@ -4,8 +4,10 @@
   "type": "module",
   "description": "Quick design system adoption tracking for Figma",
   "scripts": {
+    "prebuild": "npm run format:check && npm run lint",
     "build": "build-figma-plugin --typecheck",
     "watch": "build-figma-plugin --typecheck --watch",
+    "validate": "npm run format:check && npm run lint",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
