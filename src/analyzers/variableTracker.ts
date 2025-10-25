@@ -1,6 +1,6 @@
 // Variable usage tracking and breakdown for library-based analysis
 import { collectVariableIdsRecursive } from '../utils/variableResolver';
-import { isFromEnabledLibrary } from '../utils/libraryManager';
+import { VARIABLE_ID_TO_LIBRARY } from '../data/variableMappings';
 import type { LibraryBreakdown } from '../types';
 
 export interface VariableTrackingResult {
@@ -29,34 +29,28 @@ export async function trackVariableUsage(
     for (const id of variableIds) {
       allVariableIds.add(id);
 
-      const variable = figma.variables.getVariableById(id);
-      if (!variable) {
-        unmappedVariableIds.add(id);
-        continue;
-      }
+      // Look up variable in static mapping
+      const libraryName = VARIABLE_ID_TO_LIBRARY[id];
 
-      const collection = figma.variables.getVariableCollectionById(variable.variableCollectionId);
-      if (!collection) {
-        unmappedVariableIds.add(id);
-        continue;
-      }
-
-      const collectionKey = collection.key || collection.id;
-
-      // Check if this variable is from an enabled library
-      const libraryInfo = await isFromEnabledLibrary(collectionKey);
-
-      if (libraryInfo.enabled && libraryInfo.libraryName) {
-        const currentCount = variableSourceCounts.get(libraryInfo.libraryName) || 0;
-        variableSourceCounts.set(libraryInfo.libraryName, currentCount + 1);
+      if (libraryName) {
+        // Variable mapped to a known library
+        const currentCount = variableSourceCounts.get(libraryName) || 0;
+        variableSourceCounts.set(libraryName, currentCount + 1);
       } else {
+        // Variable not in mapping - try to get collection info for debugging
         unmappedVariableIds.add(id);
-        if (collection.remote) {
-          unmappedCollections.add(`${collection.name} (from library - not enabled)`);
+        const variable = figma.variables.getVariableById(id);
+        if (variable) {
+          const collection = figma.variables.getVariableCollectionById(
+            variable.variableCollectionId
+          );
+          if (collection && collection.remote) {
+            unmappedCollections.add(`${collection.name} (not in mapping)`);
+          }
         }
-        // Track unmapped variables as "Other Library (not enabled)"
-        const currentCount = variableSourceCounts.get('Other Library (not enabled)') || 0;
-        variableSourceCounts.set('Other Library (not enabled)', currentCount + 1);
+        // Track unmapped variables as "Other Library (not mapped)"
+        const currentCount = variableSourceCounts.get('Other Library (not mapped)') || 0;
+        variableSourceCounts.set('Other Library (not mapped)', currentCount + 1);
       }
     }
   }
