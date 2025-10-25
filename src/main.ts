@@ -1,11 +1,7 @@
 // Design System Coverage Plugin
 // Calculates component and variable adoption metrics
 
-import type {
-  LibraryBreakdown,
-  ComponentInstanceDetail,
-  CoverageMetrics,
-} from './types';
+import type { CoverageMetrics } from './types';
 import {
   loadIgnoredComponents,
   loadIgnoredOrphans,
