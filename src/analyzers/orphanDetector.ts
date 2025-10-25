@@ -239,7 +239,7 @@ function detectHardcodedValuesWithDetails(
     if (visibleFills.length > 0 && !hasFillVariable) {
       if (!category) category = 'colors';
       properties.push('fill');
-      visibleFills.forEach((fill: any, i) => {
+      visibleFills.forEach((fill: any, _i) => {
         if (fill.type === 'SOLID' && fill.color) {
           const r = Math.round(fill.color.r * 255);
           const g = Math.round(fill.color.g * 255);

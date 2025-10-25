@@ -1,6 +1,5 @@
 // Progress tracking utilities for analysis updates
 import { emit } from '@create-figma-plugin/utilities';
-import type { ProgressMessage } from '../types';
 
 // Cancellation flag for analysis (module scope)
 let analysisCancelled = false;

@@ -3,31 +3,18 @@ import { useState, useEffect } from 'preact/hooks';
 import {
   render,
   Container,
-  Text,
-  Button,
   VerticalSpace,
-  Divider,
   Banner,
-  IconButton,
   IconChevronDown16,
   IconChevronRight16,
 } from '@create-figma-plugin/ui';
 import { emit, on } from '@create-figma-plugin/utilities';
-import { Tooltip, Checkbox, DonutChart, SegmentedControl } from './components/common';
-import { useAnimatedCounter } from './hooks/useAnimatedCounter';
+import { Checkbox, SegmentedControl } from './components/common';
 import { Modal, OnboardingModal, HelpModal } from './components/modals';
 import { StatCard } from './components/cards';
 import { OverviewTab, ComponentsTab, TokensTab } from './components/tabs';
 import { themeStyles } from './styles/theme';
-import type {
-  CoverageMetrics,
-  LibraryBreakdown,
-  HardcodedValues,
-  OrphanDetail,
-  TokenBoundDetail,
-  ComponentInstanceDetail,
-  ProgressMessage,
-} from './types';
+import type { CoverageMetrics, OrphanDetail, ComponentInstanceDetail } from './types';
 // Custom Checkbox Component
 function Plugin() {
   // State management
@@ -155,30 +142,12 @@ function Plugin() {
   // Helper functions
   const formatPercent = (value: number) => Math.round(value) + '%';
 
-  const getBenchmark = (score: number) => {
-    if (score < 40) {
-      return 'Early adoption or struggling system. Requires intervention—likely missing key components, poor documentation, or lack of organizational support.';
-    } else if (score < 60) {
-      return 'Healthy early growth (Industry: 40-60%). Focus on education, adding missing components, and gathering feedback.';
-    } else if (score < 80) {
-      return 'Strong momentum (Industry: 60-80%). Focus on remaining holdouts, migration from legacy, and optimization.';
-    } else if (score < 95) {
-      return 'Mature success (Industry: 80-95%). Focus on sustainability, continuous improvement, and quality metrics beyond adoption.';
-    } else {
-      return "Exceptional achievement (>95%)! You're at industry-leading adoption levels. Note: 100% adoption is neither realistic nor desirable.";
-    }
-  };
-
   // Event handlers
   const handleAnalyze = () => {
     setLoading(true);
     setError(null);
     setProgress({ step: 'Initializing...', percent: 0 });
     emit('ANALYZE');
-  };
-
-  const handleClose = () => {
-    emit('CANCEL');
   };
 
   const handleCancelAnalysis = () => {
@@ -199,52 +168,6 @@ function Plugin() {
     // Trigger analysis after closing onboarding if user has selection
     if (hasSelection) {
       emit('ANALYZE');
-    }
-  };
-
-  const handleToggleIgnoreComponent = (componentId: string) => {
-    const newIgnoredComponents = new Set(ignoredComponents);
-    const newIgnoredOrphanInstances = new Set(ignoredOrphanInstances);
-
-    // Find all orphans for this component
-    const componentOrphans =
-      data?.hardcodedValues?.details?.filter(
-        (detail) => detail.parentComponentId === componentId
-      ) || [];
-
-    // Check if we should ignore or unignore based on the actual stored state
-    const isCurrentlyIgnored = ignoredComponents.has(componentId);
-
-    if (isCurrentlyIgnored) {
-      // Unignore the component and all its orphan instances
-      newIgnoredComponents.delete(componentId);
-      emit('UNIGNORE_COMPONENT', componentId);
-      componentOrphans.forEach((orphan) => {
-        const key = getOrphanInstanceKey(orphan.nodeId, componentId);
-        if (newIgnoredOrphanInstances.has(key)) {
-          newIgnoredOrphanInstances.delete(key);
-          emit('UNIGNORE_ORPHAN', orphan.nodeId);
-        }
-      });
-    } else {
-      // Ignore the component and all its orphan instances
-      newIgnoredComponents.add(componentId);
-      emit('IGNORE_COMPONENT', componentId);
-      componentOrphans.forEach((orphan) => {
-        const key = getOrphanInstanceKey(orphan.nodeId, componentId);
-        if (!newIgnoredOrphanInstances.has(key)) {
-          newIgnoredOrphanInstances.add(key);
-          emit('IGNORE_ORPHAN', orphan.nodeId);
-        }
-      });
-    }
-
-    setIgnoredComponents(newIgnoredComponents);
-    setIgnoredOrphanInstances(newIgnoredOrphanInstances);
-
-    // Trigger re-render with updated ignore state
-    if (data) {
-      setData({ ...data });
     }
   };
 
@@ -589,19 +512,7 @@ function Plugin() {
       instancesByLibrary.get(source)!.push(instance);
     });
 
-    const colorMap: { [key: string]: string } = {
-      'Spandex - Atomic Components': '#222',
-      'Spandex - Design Components': '#444', // Dark gray variant
-      'Spandex - Global Foundations': '#666', // Medium gray variant
-      'Local (built with DS) - Wrapper': '#999', // Light gray for wrappers (excluded from count)
-      'Local (built with DS)': '#999', // Light gray for wrappers (excluded from count)
-      'Local (standalone)': '#bbb', // Lighter gray for standalone
-      'Other Library (not mapped)': '#9b59b6',
-      'Local Components': '#f39c12',
-    };
-
     return Array.from(instancesByLibrary.entries()).map(([librarySource, instances]) => {
-      const color = colorMap[librarySource] || '#666';
       const isWrapper =
         librarySource.includes('Wrapper') || librarySource.includes('Local (built with DS)');
       const isCollapsed = collapsedSections.has(librarySource);
@@ -1681,134 +1592,6 @@ GETTING STARTED
 
   // Render results
   if (data && filtered) {
-    // Render compact stats header for orphans tab
-    const renderCompactStatsHeader = () => (
-      <div
-        style={{
-          background: 'var(--figma-color-bg)',
-          padding: '16px',
-          borderRadius: '4px',
-          marginBottom: '16px',
-          border: '1px solid var(--figma-color-border)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '12px',
-          }}
-        >
-          {/* Overall Score */}
-          <div style={{ textAlign: 'center' }}>
-            <div
-              style={{
-                fontSize: '28px',
-                fontWeight: '700',
-                color: 'var(--figma-color-text)',
-                lineHeight: '1',
-              }}
-            >
-              {formatPercent(filtered.overallScore)}
-            </div>
-            <div
-              style={{
-                fontSize: '9px',
-                color: 'var(--figma-color-text-secondary)',
-                marginTop: '4px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}
-            >
-              Overall
-            </div>
-          </div>
-
-          {/* Component Coverage */}
-          <div style={{ textAlign: 'center' }}>
-            <div
-              style={{
-                fontSize: '20px',
-                fontWeight: '700',
-                color: 'var(--figma-color-text)',
-                lineHeight: '1',
-              }}
-            >
-              {formatPercent(filtered.componentCoverage)}
-            </div>
-            <div
-              style={{
-                fontSize: '9px',
-                color: 'var(--figma-color-text-secondary)',
-                marginTop: '4px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}
-            >
-              Components
-            </div>
-          </div>
-
-          {/* Design Token Adoption */}
-          <div style={{ textAlign: 'center' }}>
-            <div
-              style={{
-                fontSize: '20px',
-                fontWeight: '700',
-                color: 'var(--figma-color-text)',
-                lineHeight: '1',
-              }}
-            >
-              {formatPercent(filtered.variableCoverage)}
-            </div>
-            <div
-              style={{
-                fontSize: '9px',
-                color: 'var(--figma-color-text-secondary)',
-                marginTop: '4px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}
-            >
-              Tokens
-            </div>
-          </div>
-
-          {/* Orphan Rate */}
-          <div style={{ textAlign: 'center' }}>
-            <div
-              style={{
-                fontSize: '20px',
-                fontWeight: '700',
-                color: 'var(--figma-color-text)',
-                lineHeight: '1',
-              }}
-            >
-              {formatPercent(filtered.orphanRate)}
-            </div>
-            <div
-              style={{
-                fontSize: '9px',
-                color: 'var(--figma-color-text-secondary)',
-                marginTop: '4px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}
-            >
-              Orphan Rate
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-    const overallFormula = `(Vars ${Math.round(
-      filtered.variableCoverage
-    )}% × 0.55) + (Comps ${Math.round(
-      data.componentCoverage
-    )}% × 0.45) = ${Math.round(filtered.overallScore)}%`;
-    const benchmark = getBenchmark(filtered.overallScore);
-
     return (
       <Fragment>
         <style dangerouslySetInnerHTML={{ __html: themeStyles }} />

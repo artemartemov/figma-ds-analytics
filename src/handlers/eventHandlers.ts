@@ -191,7 +191,7 @@ export async function autoRunAnalysisIfReady(
         const metrics = await analyzeCoverage();
         emit('RESULTS', metrics);
       }
-    } catch (error) {
+    } catch {
       // Silently fail on initial load if no selection
     }
   }, 200);

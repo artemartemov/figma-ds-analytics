@@ -29,7 +29,7 @@ function resolveVariableId(id: string): string {
     }
 
     return id;
-  } catch (error) {
+  } catch {
     // If we can't resolve, return the original ID
     return id;
   }

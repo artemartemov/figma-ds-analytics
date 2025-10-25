@@ -43,7 +43,7 @@ export interface CoverageCalculationResult {
  */
 export function calculateVariableUsage(
   componentInstances: InstanceNode[],
-  wrapperInstanceIds: Set<string>
+  _wrapperInstanceIds: Set<string>
 ): VariableUsageResult {
   let componentsWithVariables = 0;
   let componentsWithoutVariables = 0;

@@ -30,7 +30,7 @@ export function ComponentsTab({ libraryBreakdown, renderComponentDetails }: Comp
       {/* Minimal bar charts */}
       {libraryBreakdown && libraryBreakdown.length > 0 && (
         <div style={{ marginBottom: '20px' }}>
-          {libraryBreakdown.map((lib, index) => {
+          {libraryBreakdown.map((lib, _index) => {
             return (
               <div key={lib.name} style={{ marginBottom: '12px' }}>
                 <div

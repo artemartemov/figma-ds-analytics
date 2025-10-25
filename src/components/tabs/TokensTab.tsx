@@ -44,7 +44,7 @@ export function TokensTab({
             { label: 'Radius', count: hardcodedValues.radius },
           ]
             .filter((item) => item.count > 0)
-            .map((item, index) => {
+            .map((item, _index) => {
               const percentage =
                 hardcodedValues.totalHardcoded > 0
                   ? (item.count / hardcodedValues.totalHardcoded) * 100
