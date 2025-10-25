@@ -2,7 +2,11 @@
 import { isNodeOrAncestorHidden, isSkippedNode } from '../utils/nodeFilters';
 import type { OrphanDetail } from '../types';
 
-export function detectHardcodedValues(node: SceneNode): {
+/**
+ * Detect hardcoded values in a single node
+ * Internal helper function
+ */
+function detectHardcodedValues(node: SceneNode): {
   colors: number;
   typography: number;
   spacing: number;
@@ -127,8 +131,11 @@ export function detectHardcodedValues(node: SceneNode): {
   return hardcoded;
 }
 
-// Detect hardcoded values WITH details for troubleshooting
-export function detectHardcodedValuesWithDetails(node: SceneNode, parentComponentId: string = '', parentComponentName: string = '', parentInstanceId: string = ''): OrphanDetail | null {
+/**
+ * Detect hardcoded values WITH details for troubleshooting
+ * Internal helper function
+ */
+function detectHardcodedValuesWithDetails(node: SceneNode, parentComponentId: string = '', parentComponentName: string = '', parentInstanceId: string = ''): OrphanDetail | null {
   // Skip hidden layers (check node and all ancestors)
   if (isNodeOrAncestorHidden(node)) {
     return null;

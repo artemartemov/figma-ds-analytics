@@ -4,8 +4,9 @@ import type { TokenBoundDetail } from '../types';
 
 /**
  * Count properties using variables (for proper token adoption calculation)
+ * Internal helper function
  */
-export function countVariableBoundProperties(node: SceneNode): {
+function countVariableBoundProperties(node: SceneNode): {
   colors: number;
   typography: number;
   spacing: number;
