@@ -40,9 +40,9 @@ export function Modal({ isOpen, onClose, title, content }: ModalProps) {
           <div
             key={index}
             style={{
-              marginTop: index === 0 ? '0' : '12px',
-              marginBottom: '6px',
-              fontSize: '10px',
+              marginTop: index === 0 ? '0' : 'var(--spacing-lg)',
+              marginBottom: 'var(--spacing-xs)',
+              fontSize: 'var(--font-size-sm)',
               whiteSpace: 'normal',
               wordWrap: 'break-word',
             }}
@@ -50,8 +50,8 @@ export function Modal({ isOpen, onClose, title, content }: ModalProps) {
             <span
               style={{
                 color: 'var(--text-secondary)',
-                fontWeight: '500',
-                letterSpacing: '0.05em',
+                fontWeight: 'var(--font-weight-medium)',
+                letterSpacing: 'var(--letter-spacing-normal)',
               }}
             >
               {line}
@@ -66,10 +66,10 @@ export function Modal({ isOpen, onClose, title, content }: ModalProps) {
           <div
             key={index}
             style={{
-              marginBottom: '4px',
+              marginBottom: 'var(--spacing-xxs)',
               color: 'var(--text-primary)',
               fontFamily: 'JetBrains Mono, monospace',
-              fontSize: '10px',
+              fontSize: 'var(--font-size-sm)',
               whiteSpace: 'normal',
               wordWrap: 'break-word',
               overflowWrap: 'break-word',
@@ -82,7 +82,7 @@ export function Modal({ isOpen, onClose, title, content }: ModalProps) {
 
       // Empty lines
       if (line.trim() === '') {
-        return <div key={index} style={{ height: '8px' }} />;
+        return <div key={index} style={{ height: 'var(--spacing-sm)' }} />;
       }
 
       // Check if line is a number (primary color)
@@ -91,9 +91,9 @@ export function Modal({ isOpen, onClose, title, content }: ModalProps) {
           <div
             key={index}
             style={{
-              marginBottom: '4px',
+              marginBottom: 'var(--spacing-xxs)',
               color: 'var(--text-primary)',
-              fontSize: '10px',
+              fontSize: 'var(--font-size-sm)',
               whiteSpace: 'nowrap',
             }}
           >
@@ -107,12 +107,12 @@ export function Modal({ isOpen, onClose, title, content }: ModalProps) {
         <div
           key={index}
           style={{
-            marginBottom: '4px',
+            marginBottom: 'var(--spacing-xxs)',
             color: 'var(--text-primary)',
-            fontSize: '10px',
+            fontSize: 'var(--font-size-sm)',
             whiteSpace: 'normal',
             wordWrap: 'break-word',
-            lineHeight: '1.5',
+            lineHeight: 'var(--line-height-tight)',
           }}
         >
           {line}
@@ -129,23 +129,23 @@ export function Modal({ isOpen, onClose, title, content }: ModalProps) {
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(0, 0, 0, 0.75)',
+        background: 'var(--modal-overlay-bg)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 9999,
-        padding: '20px',
+        zIndex: 'var(--z-modal)',
+        padding: 'var(--spacing-xxl)',
       }}
       onClick={onClose}
     >
       <div
         style={{
           background: 'var(--figma-color-bg)',
-          borderRadius: '0',
-          padding: '24px',
-          maxWidth: '400px',
+          borderRadius: 'var(--border-radius-none)',
+          padding: 'var(--spacing-xxxl)',
+          maxWidth: 'var(--modal-max-width-sm)',
           width: '100%',
-          maxHeight: '80vh',
+          maxHeight: 'var(--modal-max-height)',
           overflowY: 'auto',
           position: 'relative',
         }}
@@ -153,13 +153,13 @@ export function Modal({ isOpen, onClose, title, content }: ModalProps) {
       >
         <div
           style={{
-            fontSize: '14px',
-            fontWeight: '600',
+            fontSize: 'var(--font-size-xxl)',
+            fontWeight: 'var(--font-weight-semibold)',
             color: 'var(--text-primary)',
-            marginBottom: '16px',
-            paddingRight: '24px',
+            marginBottom: 'var(--spacing-xl)',
+            paddingRight: 'var(--spacing-xxxl)',
             textTransform: 'uppercase',
-            letterSpacing: '0.05em',
+            letterSpacing: 'var(--letter-spacing-normal)',
           }}
         >
           {title}
@@ -167,8 +167,8 @@ export function Modal({ isOpen, onClose, title, content }: ModalProps) {
 
         <div
           style={{
-            fontSize: '12px',
-            lineHeight: '1.6',
+            fontSize: 'var(--font-size-lg)',
+            lineHeight: 'var(--line-height-normal)',
           }}
         >
           {formatContent(content)}
@@ -178,17 +178,17 @@ export function Modal({ isOpen, onClose, title, content }: ModalProps) {
           onClick={onClose}
           style={{
             position: 'absolute',
-            top: '20px',
-            right: '20px',
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
+            top: 'var(--spacing-xxl)',
+            right: 'var(--spacing-xxl)',
+            width: 'var(--icon-size)',
+            height: 'var(--icon-size)',
+            borderRadius: 'var(--border-radius-full)',
             border: 'none',
             background: 'transparent',
             color: 'var(--text-secondary)',
-            fontWeight: '600',
+            fontWeight: 'var(--font-weight-semibold)',
             cursor: 'pointer',
-            fontSize: '16px',
+            fontSize: 'var(--font-size-xxxl)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
