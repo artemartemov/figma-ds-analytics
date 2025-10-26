@@ -35,23 +35,23 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(0, 0, 0, 0.75)',
+        background: 'var(--modal-overlay-bg)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 9999,
-        padding: '20px',
+        zIndex: 'var(--z-modal)',
+        padding: 'var(--spacing-xxl)',
       }}
       onClick={onClose}
     >
       <div
         style={{
           background: 'var(--figma-color-bg)',
-          borderRadius: '0',
-          padding: '24px',
-          maxWidth: '480px',
+          borderRadius: 'var(--border-radius-none)',
+          padding: 'var(--spacing-xxxl)',
+          maxWidth: 'var(--modal-max-width-lg)',
           width: '100%',
-          maxHeight: '80vh',
+          maxHeight: 'var(--modal-max-height)',
           overflowY: 'auto',
           position: 'relative',
         }}
@@ -60,13 +60,13 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
         {/* Header */}
         <div
           style={{
-            fontSize: '13px',
-            fontWeight: '700',
+            fontSize: 'var(--font-size-xl)',
+            fontWeight: 'var(--font-weight-bold)',
             color: 'var(--figma-color-text)',
-            marginBottom: '20px',
-            paddingRight: '24px',
+            marginBottom: 'var(--spacing-xxl)',
+            paddingRight: 'var(--spacing-xxxl)',
             textTransform: 'uppercase',
-            letterSpacing: '0.1em',
+            letterSpacing: 'var(--letter-spacing-wide)',
           }}
         >
           Design System Coverage
@@ -80,15 +80,15 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
           onClick={onClose}
           style={{
             width: '100%',
-            height: '40px',
-            marginTop: '24px',
+            height: 'var(--button-height-md)',
+            marginTop: 'var(--spacing-xxxl)',
             background: 'var(--button-bg)',
             color: 'var(--button-text)',
             border: 'none',
-            borderRadius: '4px',
-            fontSize: '12px',
-            fontWeight: '600',
-            letterSpacing: '0.05em',
+            borderRadius: 'var(--border-radius-sm)',
+            fontSize: 'var(--font-size-lg)',
+            fontWeight: 'var(--font-weight-semibold)',
+            letterSpacing: 'var(--letter-spacing-normal)',
             textTransform: 'uppercase',
             cursor: 'pointer',
           }}
@@ -101,17 +101,17 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
           onClick={onClose}
           style={{
             position: 'absolute',
-            top: '20px',
-            right: '20px',
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
+            top: 'var(--spacing-xxl)',
+            right: 'var(--spacing-xxl)',
+            width: 'var(--icon-size)',
+            height: 'var(--icon-size)',
+            borderRadius: 'var(--border-radius-full)',
             border: 'none',
             background: 'transparent',
             color: 'var(--text-secondary)',
-            fontWeight: '600',
+            fontWeight: 'var(--font-weight-semibold)',
             cursor: 'pointer',
-            fontSize: '16px',
+            fontSize: 'var(--font-size-xxxl)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
