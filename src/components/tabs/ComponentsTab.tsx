@@ -1,6 +1,8 @@
-import { h, ComponentChild } from 'preact';
+import { h } from 'preact';
 import { VerticalSpace } from '@create-figma-plugin/ui';
 import { Text } from '../common';
+import { ComponentDetailsSection } from '../sections';
+import type { ComponentInstanceDetail } from '../../types';
 
 interface LibraryBreakdown {
   name: string;
@@ -10,10 +12,27 @@ interface LibraryBreakdown {
 
 interface ComponentsTabProps {
   libraryBreakdown: LibraryBreakdown[];
-  renderComponentDetails: () => ComponentChild;
+  componentDetails: ComponentInstanceDetail[];
+  collapsedSections: Set<string>;
+  ignoredInstances: Set<string>;
+  ignoredLibraries: Set<string>;
+  onToggleCollapse: (sectionName: string) => void;
+  onToggleIgnoreLibrary: (librarySource: string, instanceIds: string[]) => void;
+  onToggleIgnoreInstance: (instanceId: string) => void;
+  onSelectNode: (nodeId: string) => void;
 }
 
-export function ComponentsTab({ libraryBreakdown, renderComponentDetails }: ComponentsTabProps) {
+export function ComponentsTab({
+  libraryBreakdown,
+  componentDetails,
+  collapsedSections,
+  ignoredInstances,
+  ignoredLibraries,
+  onToggleCollapse,
+  onToggleIgnoreLibrary,
+  onToggleIgnoreInstance,
+  onSelectNode,
+}: ComponentsTabProps) {
   return (
     <div>
       <Text
@@ -77,7 +96,16 @@ export function ComponentsTab({ libraryBreakdown, renderComponentDetails }: Comp
         Component Details
       </Text>
 
-      {renderComponentDetails()}
+      <ComponentDetailsSection
+        componentDetails={componentDetails}
+        collapsedSections={collapsedSections}
+        ignoredInstances={ignoredInstances}
+        ignoredLibraries={ignoredLibraries}
+        onToggleCollapse={onToggleCollapse}
+        onToggleIgnoreLibrary={onToggleIgnoreLibrary}
+        onToggleIgnoreInstance={onToggleIgnoreInstance}
+        onSelectNode={onSelectNode}
+      />
     </div>
   );
 }

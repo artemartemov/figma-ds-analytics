@@ -1,5 +1,9 @@
 import { h, ComponentChildren } from 'preact';
-import { CSSProperties } from 'preact/compat';
+
+// Define our own StyleProps to avoid deprecated JSXInternal.CSSProperties
+type StyleProps = {
+  [key: string]: string | number | undefined;
+};
 
 type TextVariant =
   | 'body'
@@ -15,11 +19,11 @@ type TextVariant =
 interface TextProps {
   variant?: TextVariant;
   children: ComponentChildren;
-  style?: CSSProperties;
+  style?: StyleProps;
   as?: 'p' | 'span' | 'div' | 'label';
 }
 
-const variantStyles: Record<TextVariant, CSSProperties> = {
+const variantStyles: Record<TextVariant, StyleProps> = {
   body: {
     fontSize: 'var(--type-body-font-size)',
     lineHeight: 'var(--type-body-line-height)',

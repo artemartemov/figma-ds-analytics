@@ -1,6 +1,8 @@
-import { h, Fragment, ComponentChild } from 'preact';
+import { h, Fragment } from 'preact';
 import { VerticalSpace } from '@create-figma-plugin/ui';
 import { Text } from '../common';
+import { OrphanDetailsSection } from '../sections';
+import type { OrphanDetail } from '../../types';
 
 interface HardcodedValues {
   colors: number;
@@ -13,14 +15,26 @@ interface HardcodedValues {
 
 interface TokensTabProps {
   hardcodedValues: HardcodedValues;
-  hasOrphanDetails: boolean;
-  renderOrphanDetails: () => ComponentChild;
+  orphanDetails: OrphanDetail[];
+  collapsedSections: Set<string>;
+  ignoredOrphans: Set<string>;
+  categoryColors: { [key: string]: string };
+  onToggleCollapse: (sectionName: string) => void;
+  onToggleIgnoreOrphanEverywhere: (orphanNodeId: string, componentIds: string[]) => void;
+  onToggleIgnoreOrphanInComponent: (orphanNodeId: string, componentId: string) => void;
+  onSelectNode: (nodeId: string) => void;
 }
 
 export function TokensTab({
   hardcodedValues,
-  hasOrphanDetails,
-  renderOrphanDetails,
+  orphanDetails,
+  collapsedSections,
+  ignoredOrphans,
+  categoryColors,
+  onToggleCollapse,
+  onToggleIgnoreOrphanEverywhere,
+  onToggleIgnoreOrphanInComponent,
+  onSelectNode,
 }: TokensTabProps) {
   return (
     <div>
@@ -105,8 +119,19 @@ export function TokensTab({
       >
         Orphan Details by Component
       </Text>
-      {hasOrphanDetails ? (
-        <div>{renderOrphanDetails()}</div>
+      {orphanDetails && orphanDetails.length > 0 ? (
+        <div>
+          <OrphanDetailsSection
+            orphanDetails={orphanDetails}
+            collapsedSections={collapsedSections}
+            ignoredOrphans={ignoredOrphans}
+            categoryColors={categoryColors}
+            onToggleCollapse={onToggleCollapse}
+            onToggleIgnoreOrphanEverywhere={onToggleIgnoreOrphanEverywhere}
+            onToggleIgnoreOrphanInComponent={onToggleIgnoreOrphanInComponent}
+            onSelectNode={onSelectNode}
+          />
+        </div>
       ) : (
         <div
           style={{

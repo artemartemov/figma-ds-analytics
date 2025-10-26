@@ -5,3 +5,4 @@ export { SegmentedControl } from './SegmentedControl';
 export { Text } from './Text';
 export { Button } from './Button';
 export { Link } from './Link';
+export { IconButton } from './IconButton';

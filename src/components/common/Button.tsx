@@ -1,8 +1,13 @@
 import { h, ComponentChildren } from 'preact';
-import { CSSProperties } from 'preact/compat';
+
+// Define our own StyleProps to avoid deprecated JSXInternal.CSSProperties
+// This mirrors the structure but without the deprecation warning
+type StyleProps = {
+  [key: string]: string | number | undefined;
+};
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
-type ButtonSize = 'sm' | 'md' | 'lg';
+type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
 
 interface ButtonProps {
   variant?: ButtonVariant;
@@ -11,7 +16,7 @@ interface ButtonProps {
   onClick?: () => void;
   disabled?: boolean;
   fullWidth?: boolean;
-  style?: CSSProperties;
+  style?: StyleProps;
 }
 
 export function Button({
@@ -23,10 +28,16 @@ export function Button({
   fullWidth = false,
   style,
 }: ButtonProps) {
-  const baseStyles: CSSProperties = {
+  const getHoverBackground = () => {
+    if (disabled) return undefined;
+    if (variant === 'primary') return 'var(--button-bg-hover)';
+    if (variant === 'secondary') return 'var(--alpha-black-10)';
+    return undefined;
+  };
+  const baseStyles: StyleProps = {
     border: 'none',
     borderRadius: 'var(--border-radius-sm)',
-    fontWeight: 'var(--font-weight-semibold)',
+    fontWeight: 'var(--font-weight-normal)',
     letterSpacing: 'var(--letter-spacing-normal)',
     textTransform: 'uppercase',
     cursor: disabled ? 'not-allowed' : 'pointer',
@@ -34,7 +45,7 @@ export function Button({
     width: fullWidth ? '100%' : 'auto',
   };
 
-  const sizeStyles: Record<ButtonSize, CSSProperties> = {
+  const sizeStyles: Record<ButtonSize, StyleProps> = {
     sm: {
       height: '32px',
       padding: '0 var(--spacing-xl)',
@@ -48,11 +59,16 @@ export function Button({
     lg: {
       height: '48px',
       padding: '0 var(--spacing-xxxl)',
-      fontSize: 'var(--font-size-xl)',
+      fontSize: 'var(--font-size-lg)',
+    },
+    xl: {
+      height: '52px',
+      padding: '0 var(--spacing-xxxxl)',
+      fontSize: 'var(--font-size-lg)',
     },
   };
 
-  const variantStyles: Record<ButtonVariant, CSSProperties> = {
+  const variantStyles: Record<ButtonVariant, StyleProps> = {
     primary: {
       background: disabled ? 'var(--button-disabled-bg)' : 'var(--button-bg)',
       color: disabled ? 'var(--button-disabled-text)' : 'var(--button-text)',
@@ -61,6 +77,7 @@ export function Button({
       background: 'transparent',
       border: `1px solid ${disabled ? 'var(--button-disabled-bg)' : 'var(--border-color)'}`,
       color: disabled ? 'var(--button-disabled-text)' : 'var(--text-primary)',
+      borderRadius: 0,
     },
     ghost: {
       background: 'transparent',
@@ -75,8 +92,36 @@ export function Button({
     ...style,
   };
 
+  const handleMouseEnter = (e: MouseEvent) => {
+    const target = e.currentTarget as HTMLButtonElement;
+    if (!disabled && variant === 'primary') {
+      target.style.background = getHoverBackground() || '';
+    } else if (!disabled && variant === 'secondary') {
+      target.style.background = getHoverBackground() || '';
+    } else if (!disabled && variant === 'ghost') {
+      target.style.opacity = '0.7';
+    }
+  };
+
+  const handleMouseLeave = (e: MouseEvent) => {
+    const target = e.currentTarget as HTMLButtonElement;
+    if (!disabled && variant === 'primary') {
+      target.style.background = 'var(--button-bg)';
+    } else if (!disabled && variant === 'secondary') {
+      target.style.background = 'transparent';
+    } else if (!disabled && variant === 'ghost') {
+      target.style.opacity = '1';
+    }
+  };
+
   return (
-    <button onClick={onClick} disabled={disabled} style={combinedStyles}>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={combinedStyles}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {children}
     </button>
   );

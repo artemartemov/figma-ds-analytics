@@ -198,6 +198,7 @@ export const themeStyles = `
       --progress-fill: var(--color-black);
       --progress-fill-secondary: var(--color-gray-800);
       --button-bg: var(--color-gray-900);
+      --button-bg-hover: #000000;
       --button-text: var(--color-white);
       --button-disabled-bg: var(--alpha-black-10);
       --button-disabled-text: var(--alpha-black-30);
@@ -214,6 +215,7 @@ export const themeStyles = `
       --progress-fill: var(--color-white);
       --progress-fill-secondary: var(--color-gray-500);
       --button-bg: var(--color-white);
+      --button-bg-hover: var(--color-gray-50);
       --button-text: var(--color-gray-900);
       --button-disabled-bg: var(--alpha-white-10);
       --button-disabled-text: var(--alpha-white-30);

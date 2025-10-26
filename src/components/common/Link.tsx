@@ -1,16 +1,20 @@
 import { h, ComponentChildren } from 'preact';
-import { CSSProperties } from 'preact/compat';
+
+// Define our own StyleProps to avoid deprecated JSXInternal.CSSProperties
+type StyleProps = {
+  [key: string]: string | number | undefined;
+};
 
 interface LinkProps {
   href?: string;
   onClick?: () => void;
   children: ComponentChildren;
   external?: boolean;
-  style?: CSSProperties;
+  style?: StyleProps;
 }
 
 export function Link({ href, onClick, children, external = false, style }: LinkProps) {
-  const baseStyles: CSSProperties = {
+  const baseStyles: StyleProps = {
     color: 'var(--text-primary)',
     textDecoration: 'underline',
     cursor: 'pointer',
