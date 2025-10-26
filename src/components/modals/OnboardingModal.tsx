@@ -1,6 +1,7 @@
 import { h } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { HelpContent } from './HelpContent';
+import { Button } from '../common';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -59,7 +60,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
           style={{
             fontSize: 'var(--font-size-xl)',
             fontWeight: 'var(--font-weight-bold)',
-            color: 'var(--figma-color-text)',
+            color: 'var(--text-primary)',
             marginBottom: 'var(--spacing-xxl)',
             paddingRight: 'var(--spacing-xxxl)',
             textTransform: 'uppercase',
@@ -73,25 +74,9 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         <HelpContent />
 
         {/* Get Started Button */}
-        <button
-          onClick={onClose}
-          style={{
-            width: '100%',
-            height: 'var(--button-height-md)',
-            marginTop: 'var(--spacing-xxxl)',
-            background: 'var(--button-bg)',
-            color: 'var(--button-text)',
-            border: 'none',
-            borderRadius: 'var(--border-radius-sm)',
-            fontSize: 'var(--font-size-lg)',
-            fontWeight: 'var(--font-weight-semibold)',
-            letterSpacing: 'var(--letter-spacing-normal)',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-          }}
-        >
+        <Button onClick={onClose} fullWidth style={{ marginTop: 'var(--spacing-xxxl)' }}>
           Get Started
-        </button>
+        </Button>
 
         {/* Close button */}
         <button

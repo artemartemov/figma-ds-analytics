@@ -1,4 +1,5 @@
 import { h } from 'preact';
+import { Text } from '../common';
 
 interface OverviewTabProps {
   componentsCount: number;
@@ -19,22 +20,20 @@ export function OverviewTab({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
-          marginBottom: '16px',
+          gap: 'var(--spacing-md)',
+          marginBottom: 'var(--card-heading-margin-bottom)',
         }}
       >
-        <p
+        <Text
+          variant="card-heading"
+          as="p"
           style={{
-            fontSize: '12px',
-            fontWeight: '500',
-            color: 'var(--text-primary)',
-            textTransform: 'uppercase',
             margin: 0,
             lineHeight: 'normal',
           }}
         >
           Summary
-        </p>
+        </Text>
       </div>
 
       {/* Mini summary cards */}
@@ -43,7 +42,7 @@ export function OverviewTab({
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gridTemplateRows: '1fr 1fr',
-          gap: '12px',
+          gap: 'var(--spacing-lg)',
           height: '142px',
         }}
       >
@@ -56,29 +55,27 @@ export function OverviewTab({
             whiteSpace: 'nowrap',
           }}
         >
-          <p
+          <Text
+            variant="label"
+            as="p"
             style={{
-              fontSize: '12px',
-              color: 'var(--text-tertiary)',
-              fontWeight: '400',
+              fontWeight: 'var(--font-weight-normal)',
               lineHeight: 'normal',
               margin: 0,
             }}
           >
             Components
-          </p>
-          <p
+          </Text>
+          <Text
+            variant="metric-large"
+            as="p"
             style={{
-              fontSize: '18px',
-              fontWeight: '700',
-              color: 'var(--text-primary)',
               lineHeight: 'normal',
               margin: 0,
-              fontFeatureSettings: '"tnum"',
             }}
           >
             {componentsCount}
-          </p>
+          </Text>
         </div>
 
         <div
@@ -90,29 +87,27 @@ export function OverviewTab({
             whiteSpace: 'nowrap',
           }}
         >
-          <p
+          <Text
+            variant="label"
+            as="p"
             style={{
-              fontSize: '12px',
-              color: 'var(--text-tertiary)',
-              fontWeight: '400',
+              fontWeight: 'var(--font-weight-normal)',
               lineHeight: 'normal',
               margin: 0,
             }}
           >
             Design Tokens
-          </p>
-          <p
+          </Text>
+          <Text
+            variant="metric-large"
+            as="p"
             style={{
-              fontSize: '18px',
-              fontWeight: '700',
-              color: 'var(--text-primary)',
               lineHeight: 'normal',
               margin: 0,
-              fontFeatureSettings: '"tnum"',
             }}
           >
             {designTokensCount}
-          </p>
+          </Text>
         </div>
 
         <div
@@ -124,29 +119,27 @@ export function OverviewTab({
             whiteSpace: 'nowrap',
           }}
         >
-          <p
+          <Text
+            variant="label"
+            as="p"
             style={{
-              fontSize: '12px',
-              color: 'var(--text-tertiary)',
-              fontWeight: '400',
+              fontWeight: 'var(--font-weight-normal)',
               lineHeight: 'normal',
               margin: 0,
             }}
           >
             Libraries
-          </p>
-          <p
+          </Text>
+          <Text
+            variant="metric-large"
+            as="p"
             style={{
-              fontSize: '18px',
-              fontWeight: '700',
-              color: 'var(--text-primary)',
               lineHeight: 'normal',
               margin: 0,
-              fontFeatureSettings: '"tnum"',
             }}
           >
             {librariesCount}
-          </p>
+          </Text>
         </div>
 
         <div
@@ -158,29 +151,27 @@ export function OverviewTab({
             whiteSpace: 'nowrap',
           }}
         >
-          <p
+          <Text
+            variant="label"
+            as="p"
             style={{
-              fontSize: '12px',
-              color: 'var(--text-tertiary)',
-              fontWeight: '400',
+              fontWeight: 'var(--font-weight-normal)',
               lineHeight: 'normal',
               margin: 0,
             }}
           >
             Orphans
-          </p>
-          <p
+          </Text>
+          <Text
+            variant="metric-large"
+            as="p"
             style={{
-              fontSize: '18px',
-              fontWeight: '700',
-              color: 'var(--text-primary)',
               lineHeight: 'normal',
               margin: 0,
-              fontFeatureSettings: '"tnum"',
             }}
           >
             {orphansCount}
-          </p>
+          </Text>
         </div>
       </div>
     </div>

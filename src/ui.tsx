@@ -9,7 +9,7 @@ import {
   IconChevronRight16,
 } from '@create-figma-plugin/ui';
 import { emit, on } from '@create-figma-plugin/utilities';
-import { Checkbox, SegmentedControl } from './components/common';
+import { Checkbox, SegmentedControl, Text, Button } from './components/common';
 import { Modal, OnboardingModal, HelpModal } from './components/modals';
 import { StatCard } from './components/cards';
 import { OverviewTab, ComponentsTab, TokensTab } from './components/tabs';
@@ -1037,7 +1037,7 @@ GETTING STARTED
                 background: 'transparent',
                 color: '#9D9D9D',
                 fontSize: '12px',
-                fontFamily: 'JetBrains Mono, monospace',
+                fontFamily: 'var(--font-family-mono)',
                 fontWeight: '300',
                 cursor: 'pointer',
                 padding: '4px',
@@ -1080,16 +1080,15 @@ GETTING STARTED
             }}
           >
             <div style={{ textAlign: 'left' }}>
-              <div
+              <Text
+                variant="heading-subsection"
+                as="div"
                 style={{
-                  fontSize: '11px',
-                  fontWeight: '600',
-                  color: 'var(--text-primary)',
                   marginBottom: '16px',
                 }}
               >
                 {progress.step}
-              </div>
+              </Text>
             </div>
             <div
               style={{
@@ -1117,7 +1116,8 @@ GETTING STARTED
                   }}
                 />
               </div>
-              <div
+              <Text
+                as="div"
                 style={{
                   position: 'absolute',
                   right: '0',
@@ -1130,7 +1130,7 @@ GETTING STARTED
                 }}
               >
                 {Math.round(progress.percent)}%
-              </div>
+              </Text>
             </div>
           </div>
 
@@ -1146,31 +1146,18 @@ GETTING STARTED
               zIndex: 100,
             }}
           >
-            <button
+            <Button
+              variant="secondary"
               onClick={handleCancelAnalysis}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--figma-color-bg-hover)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-              }}
+              fullWidth
               style={{
-                width: '100%',
                 height: '52px',
-                background: 'transparent',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border-color)',
                 borderRadius: '0',
-                fontSize: '11px',
-                fontWeight: '300',
-                letterSpacing: '0.1em',
-                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-start',
                 gap: '8px',
                 paddingLeft: '20px',
-                transition: 'background 0.2s, border-color 0.2s',
               }}
             >
               <svg
@@ -1186,7 +1173,7 @@ GETTING STARTED
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
               CANCEL
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -1273,7 +1260,7 @@ GETTING STARTED
                 background: 'transparent',
                 color: '#9D9D9D',
                 fontSize: '12px',
-                fontFamily: 'JetBrains Mono, monospace',
+                fontFamily: 'var(--font-family-mono)',
                 fontWeight: '300',
                 cursor: 'pointer',
                 padding: '4px',
@@ -1334,37 +1321,18 @@ GETTING STARTED
               zIndex: 100,
             }}
           >
-            <button
+            <Button
               onClick={handleAnalyze}
               disabled={!hasSelection}
-              onMouseEnter={(e) => {
-                if (hasSelection) {
-                  e.currentTarget.style.opacity = '0.85';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (hasSelection) {
-                  e.currentTarget.style.opacity = '1';
-                }
-              }}
+              fullWidth
               style={{
-                width: '100%',
                 height: '52px',
-                background: hasSelection ? 'var(--button-bg)' : 'var(--button-disabled-bg)',
-                color: hasSelection ? 'var(--button-text)' : 'var(--button-disabled-text)',
-                border: 'none',
                 borderRadius: '0',
-                fontSize: '11px',
-                fontWeight: '300',
-                letterSpacing: '0.1em',
-                cursor: hasSelection ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-start',
                 gap: '8px',
                 paddingLeft: '20px',
-                transition: 'opacity 0.2s',
-                opacity: 1,
               }}
             >
               <svg
@@ -1381,7 +1349,7 @@ GETTING STARTED
                 <path d="M18 17V9M13 17V5M8 17v-3" />
               </svg>
               ANALYZE SELECTION
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -1468,7 +1436,7 @@ GETTING STARTED
                 background: 'transparent',
                 color: '#9D9D9D',
                 fontSize: '12px',
-                fontFamily: 'JetBrains Mono, monospace',
+                fontFamily: 'var(--font-family-mono)',
                 fontWeight: '300',
                 cursor: 'pointer',
                 padding: '4px',
@@ -1511,17 +1479,17 @@ GETTING STARTED
             }}
           >
             <div style={{ textAlign: 'left', maxWidth: '320px' }}>
-              <div
+              <Text
+                variant="heading-subsection"
+                as="div"
                 style={{
-                  fontSize: '11px',
-                  fontWeight: '600',
-                  color: 'var(--text-primary)',
                   marginBottom: '8px',
                 }}
               >
                 NO SELECTION
-              </div>
-              <div
+              </Text>
+              <Text
+                as="div"
                 style={{
                   fontSize: '12px',
                   color: 'var(--text-tertiary)',
@@ -1530,7 +1498,7 @@ GETTING STARTED
               >
                 Select frames, components, or sections on your canvas to analyze design system
                 coverage
-              </div>
+              </Text>
             </div>
           </div>
 
@@ -1546,19 +1514,12 @@ GETTING STARTED
               zIndex: 100,
             }}
           >
-            <button
+            <Button
               disabled
+              fullWidth
               style={{
-                width: '100%',
                 height: '52px',
-                background: 'var(--button-disabled-bg)',
-                color: 'var(--button-disabled-text)',
-                border: 'none',
                 borderRadius: '0',
-                fontSize: '11px',
-                fontWeight: '300',
-                letterSpacing: '0.1em',
-                cursor: 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-start',
@@ -1580,7 +1541,7 @@ GETTING STARTED
                 <path d="M18 17V9M13 17V5M8 17v-3" />
               </svg>
               ANALYZE SELECTION
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -1664,7 +1625,7 @@ GETTING STARTED
                 background: 'transparent',
                 color: '#9D9D9D',
                 fontSize: '12px',
-                fontFamily: 'JetBrains Mono, monospace',
+                fontFamily: 'var(--font-family-mono)',
                 fontWeight: '300',
                 cursor: 'pointer',
                 padding: '4px',
@@ -2295,37 +2256,18 @@ This measures token adoption at the property level, not component level. Each co
               zIndex: 100,
             }}
           >
-            <button
+            <Button
               onClick={handleAnalyze}
               disabled={!hasSelection}
-              onMouseEnter={(e) => {
-                if (hasSelection) {
-                  e.currentTarget.style.opacity = '0.85';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (hasSelection) {
-                  e.currentTarget.style.opacity = '1';
-                }
-              }}
+              fullWidth
               style={{
-                width: '100%',
                 height: '52px',
-                background: hasSelection ? 'var(--button-bg)' : 'var(--button-disabled-bg)',
-                color: hasSelection ? 'var(--button-text)' : 'var(--button-disabled-text)',
-                border: 'none',
                 borderRadius: '0',
-                fontSize: '11px',
-                fontWeight: '300',
-                letterSpacing: '0.1em',
-                cursor: hasSelection ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-start',
                 gap: '8px',
                 paddingLeft: '20px',
-                transition: 'opacity 0.2s',
-                opacity: 1,
               }}
             >
               <svg
@@ -2344,7 +2286,7 @@ This measures token adoption at the property level, not component level. Each co
               {data
                 ? `RE-ANALYZE ${selectionCount} ${selectionCount === 1 ? 'ITEM' : 'ITEMS'}`
                 : 'ANALYZE SELECTION'}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -2415,17 +2357,17 @@ This measures token adoption at the property level, not component level. Each co
           }}
         >
           <div style={{ textAlign: 'left', maxWidth: '320px' }}>
-            <div
+            <Text
+              variant="heading-subsection"
+              as="div"
               style={{
-                fontSize: '11px',
-                fontWeight: '600',
-                color: 'var(--text-primary)',
                 marginBottom: '8px',
               }}
             >
               {selectionCount} {selectionCount === 1 ? 'ITEM' : 'ITEMS'} SELECTED
-            </div>
-            <div
+            </Text>
+            <Text
+              as="div"
               style={{
                 fontSize: '12px',
                 color: 'var(--text-tertiary)',
@@ -2433,7 +2375,7 @@ This measures token adoption at the property level, not component level. Each co
               }}
             >
               Ready to analyze design system coverage
-            </div>
+            </Text>
           </div>
         </div>
 
@@ -2449,33 +2391,14 @@ This measures token adoption at the property level, not component level. Each co
             zIndex: 100,
           }}
         >
-          <button
+          <Button
             onClick={handleAnalyze}
-            onMouseEnter={(e) => {
-              if (hasSelection) {
-                e.currentTarget.style.opacity = '0.85';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1';
-            }}
+            fullWidth
             style={{
-              width: '100%',
               height: '52px',
-              background: 'var(--button-bg)',
-              color: 'var(--button-text)',
-              border: 'none',
               borderRadius: '0',
-              fontSize: '11px',
-              fontWeight: '300',
-              letterSpacing: '0.1em',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
               justifyContent: 'flex-start',
-              gap: '8px',
               paddingLeft: '20px',
-              transition: 'opacity 0.2s',
             }}
           >
             <svg
@@ -2492,7 +2415,7 @@ This measures token adoption at the property level, not component level. Each co
               <path d="M18 17V9M13 17V5M8 17v-3" />
             </svg>
             ANALYZE SELECTION
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -55,8 +55,8 @@ export function Tooltip({ content, dark = false, position = 'right' }: TooltipPr
           width: '12px',
           height: '12px',
           borderRadius: '50%',
-          background: dark ? 'rgba(255,255,255,0.2)' : '#e8e8e8',
-          color: dark ? 'rgba(255,255,255,0.9)' : '#666',
+          background: dark ? 'var(--alpha-white-20)' : 'var(--color-gray-150)',
+          color: dark ? 'var(--alpha-white-90)' : 'var(--color-gray-700)',
           fontSize: '8px',
           fontWeight: '600',
           cursor: 'help',
@@ -70,8 +70,8 @@ export function Tooltip({ content, dark = false, position = 'right' }: TooltipPr
           style={{
             position: 'absolute',
             ...tooltipStyles,
-            background: 'rgba(0,0,0,0.9)',
-            color: '#f0f0f0ff',
+            background: 'var(--alpha-black-90)',
+            color: 'var(--color-gray-50)',
             padding: '12px 16px',
             borderRadius: '8px',
             fontSize: '11px',
@@ -90,7 +90,7 @@ export function Tooltip({ content, dark = false, position = 'right' }: TooltipPr
               ...arrowStyles,
               width: '8px',
               height: '8px',
-              background: 'rgba(0,0,0,0.9)',
+              background: 'var(--alpha-black-90)',
             }}
           />
         </div>

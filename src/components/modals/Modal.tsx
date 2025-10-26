@@ -68,7 +68,7 @@ export function Modal({ isOpen, onClose, title, content }: ModalProps) {
             style={{
               marginBottom: 'var(--spacing-xxs)',
               color: 'var(--text-primary)',
-              fontFamily: 'JetBrains Mono, monospace',
+              fontFamily: 'var(--font-family-mono)',
               fontSize: 'var(--font-size-sm)',
               whiteSpace: 'normal',
               wordWrap: 'break-word',

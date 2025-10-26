@@ -18,7 +18,7 @@ export function Checkbox({ checked, onChange }: CheckboxProps) {
         minWidth: '14px',
         minHeight: '14px',
         borderRadius: '3px',
-        background: checked ? '#000000' : '#E5E5E5',
+        background: checked ? 'var(--color-black)' : 'var(--color-gray-200)',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',

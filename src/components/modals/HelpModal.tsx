@@ -1,6 +1,7 @@
 import { h } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { HelpContent } from './HelpContent';
+import { Button } from '../common';
 
 // Help Modal (same content as onboarding, but always accessible)
 interface HelpModalProps {
@@ -62,7 +63,7 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
           style={{
             fontSize: 'var(--font-size-xl)',
             fontWeight: 'var(--font-weight-bold)',
-            color: 'var(--figma-color-text)',
+            color: 'var(--text-primary)',
             marginBottom: 'var(--spacing-xxl)',
             paddingRight: 'var(--spacing-xxxl)',
             textTransform: 'uppercase',
@@ -76,25 +77,9 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
         <HelpContent />
 
         {/* Get Started Button */}
-        <button
-          onClick={onClose}
-          style={{
-            width: '100%',
-            height: 'var(--button-height-md)',
-            marginTop: 'var(--spacing-xxxl)',
-            background: 'var(--button-bg)',
-            color: 'var(--button-text)',
-            border: 'none',
-            borderRadius: 'var(--border-radius-sm)',
-            fontSize: 'var(--font-size-lg)',
-            fontWeight: 'var(--font-weight-semibold)',
-            letterSpacing: 'var(--letter-spacing-normal)',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-          }}
-        >
+        <Button onClick={onClose} fullWidth style={{ marginTop: 'var(--spacing-xxxl)' }}>
           Got It
-        </button>
+        </Button>
 
         {/* Close button */}
         <button

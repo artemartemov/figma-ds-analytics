@@ -1,5 +1,6 @@
 import { h, Fragment, ComponentChild } from 'preact';
-import { VerticalSpace, Text } from '@create-figma-plugin/ui';
+import { VerticalSpace } from '@create-figma-plugin/ui';
+import { Text } from '../common';
 
 interface HardcodedValues {
   colors: number;
@@ -24,17 +25,13 @@ export function TokensTab({
   return (
     <div>
       {/* Hardcoded Values Breakdown */}
-      <div
-        style={{
-          fontSize: '12px',
-          color: 'var(--text-primary)',
-          fontWeight: '500',
-          textTransform: 'uppercase',
-          marginBottom: '16px',
-        }}
+      <Text
+        variant="card-heading"
+        as="div"
+        style={{ marginBottom: 'var(--card-heading-margin-bottom)' }}
       >
         Hardcoded by Type
-      </div>
+      </Text>
       {hardcodedValues && hardcodedValues.totalHardcoded > 0 ? (
         <Fragment>
           {[
@@ -51,41 +48,24 @@ export function TokensTab({
                   : 0;
 
               return (
-                <div key={item.label} style={{ marginBottom: '12px' }}>
+                <div key={item.label} style={{ marginBottom: 'var(--list-item-margin-bottom)' }}>
                   <div
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      marginBottom: '6px',
+                      marginBottom: 'var(--list-item-gap)',
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-                      {item.label}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        fontFeatureSettings: '"tnum"',
-                        color: 'var(--text-tertiary)',
-                      }}
-                    >
-                      {item.count}
-                    </span>
+                    <Text variant="label">{item.label}</Text>
+                    <Text variant="value">{item.count}</Text>
                   </div>
                   <div
                     style={{
-                      height: '2px',
+                      height: 'var(--progress-bar-height)',
                       width: '100%',
                       background: 'var(--track-bg-tab)',
-                      borderRadius: '4px',
+                      borderRadius: 'var(--progress-bar-border-radius)',
                     }}
                   >
                     <div
@@ -93,7 +73,7 @@ export function TokensTab({
                         height: '100%',
                         width: percentage + '%',
                         background: 'var(--progress-fill)',
-                        borderRadius: '4px',
+                        borderRadius: 'var(--progress-bar-border-radius)',
                         transformOrigin: 'left',
                         animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                       }}
@@ -106,9 +86,9 @@ export function TokensTab({
       ) : (
         <Text
           style={{
-            color: 'var(--figma-color-text-tertiary)',
-            fontSize: '11px',
-            marginBottom: '16px',
+            color: 'var(--text-tertiary)',
+            fontSize: 'var(--font-size-md)',
+            marginBottom: 'var(--spacing-xl)',
           }}
         >
           No hardcoded values detected
@@ -118,44 +98,40 @@ export function TokensTab({
       <VerticalSpace space="medium" />
 
       {/* Orphan Details */}
-      <div
-        style={{
-          fontSize: '12px',
-          color: 'var(--text-primary)',
-          fontWeight: '500',
-          textTransform: 'uppercase',
-          marginBottom: '16px',
-        }}
+      <Text
+        variant="card-heading"
+        as="div"
+        style={{ marginBottom: 'var(--card-heading-margin-bottom)' }}
       >
         Orphan Details by Component
-      </div>
+      </Text>
       {hasOrphanDetails ? (
         <div>{renderOrphanDetails()}</div>
       ) : (
         <div
           style={{
-            padding: '32px',
+            padding: 'var(--spacing-xxxxl)',
             textAlign: 'center',
             background: 'var(--figma-color-bg)',
-            borderRadius: '4px',
+            borderRadius: 'var(--border-radius-sm)',
             border: '1px solid var(--figma-color-border)',
           }}
         >
-          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🎉</div>
+          <div style={{ fontSize: '40px', marginBottom: 'var(--spacing-lg)' }}>🎉</div>
           <Text
             style={{
-              fontSize: '13px',
-              fontWeight: '600',
-              color: 'var(--figma-color-text)',
-              marginBottom: '4px',
+              fontSize: 'var(--font-size-xl)',
+              fontWeight: 'var(--font-weight-semibold)',
+              color: 'var(--text-primary)',
+              marginBottom: 'var(--spacing-xxs)',
             }}
           >
             No Orphans Found
           </Text>
           <Text
             style={{
-              fontSize: '11px',
-              color: 'var(--figma-color-text-tertiary)',
+              fontSize: 'var(--font-size-md)',
+              color: 'var(--text-tertiary)',
             }}
           >
             All properties are using design tokens

@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { Tooltip, DonutChart } from '../common';
+import { Tooltip, DonutChart, Text } from '../common';
 
 interface StatCardProps {
   title: string;
@@ -34,26 +34,17 @@ export function StatCard({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '12px',
+          marginBottom: 'var(--card-heading-margin-bottom)',
         }}
       >
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: 'var(--spacing-xs)',
           }}
         >
-          <div
-            style={{
-              fontSize: '12px',
-              color: 'var(--text-primary)',
-              fontWeight: '500',
-              textTransform: 'uppercase',
-            }}
-          >
-            {title}
-          </div>
+          <Text variant="card-heading">{title}</Text>
           <Tooltip position="bottom" content={tooltipContent} />
         </div>
       </div>
@@ -62,13 +53,13 @@ export function StatCard({
       <div
         style={{
           background: 'var(--card-bg)',
-          padding: '20px',
-          borderRadius: '4px',
+          padding: 'var(--card-padding)',
+          borderRadius: 'var(--card-border-radius)',
           border: 'none',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          gap: '24px',
+          gap: 'var(--card-gap)',
         }}
       >
         {/* Progress bars */}
@@ -77,7 +68,7 @@ export function StatCard({
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
+            gap: 'var(--progress-bar-gap)',
             justifyContent: 'center',
           }}
         >
@@ -88,43 +79,26 @@ export function StatCard({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '6px',
+                marginBottom: 'var(--section-label-margin-bottom)',
               }}
             >
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: 'var(--spacing-xs)',
                 }}
               >
-                <span
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--text-secondary)',
-                    fontWeight: '500',
-                  }}
-                >
-                  {tokensLabel}
-                </span>
+                <Text variant="label">{tokensLabel}</Text>
               </div>
-              <div
-                style={{
-                  fontSize: '12px',
-                  fontWeight: '500',
-                  fontFeatureSettings: '"tnum"',
-                  color: 'var(--text-tertiary)',
-                }}
-              >
-                {formatPercent(tokensValue)}
-              </div>
+              <Text variant="value">{formatPercent(tokensValue)}</Text>
             </div>
             <div
               style={{
-                height: '2px',
+                height: 'var(--progress-bar-height)',
                 width: '100%',
                 background: 'var(--track-bg-card)',
-                borderRadius: '4px',
+                borderRadius: 'var(--progress-bar-border-radius)',
               }}
             >
               <div
@@ -132,7 +106,7 @@ export function StatCard({
                   height: '100%',
                   width: `${tokensValue}%`,
                   background: 'var(--progress-fill)',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--progress-bar-border-radius)',
                   transformOrigin: 'left',
                   animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                 }}
@@ -147,43 +121,26 @@ export function StatCard({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '6px',
+                marginBottom: 'var(--section-label-margin-bottom)',
               }}
             >
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: 'var(--spacing-xs)',
                 }}
               >
-                <span
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--text-secondary)',
-                    fontWeight: '500',
-                  }}
-                >
-                  {componentsLabel}
-                </span>
+                <Text variant="label">{componentsLabel}</Text>
               </div>
-              <div
-                style={{
-                  fontSize: '12px',
-                  fontWeight: '500',
-                  fontFeatureSettings: '"tnum"',
-                  color: 'var(--text-tertiary)',
-                }}
-              >
-                {formatPercent(componentsValue)}
-              </div>
+              <Text variant="value">{formatPercent(componentsValue)}</Text>
             </div>
             <div
               style={{
-                height: '2px',
+                height: 'var(--progress-bar-height)',
                 width: '100%',
                 background: 'var(--track-bg-card)',
-                borderRadius: '4px',
+                borderRadius: 'var(--progress-bar-border-radius)',
               }}
             >
               <div
@@ -191,7 +148,7 @@ export function StatCard({
                   height: '100%',
                   width: `${componentsValue}%`,
                   background: 'var(--progress-fill)',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--progress-bar-border-radius)',
                   transformOrigin: 'left',
                   animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                   animationDelay: '0.1s',

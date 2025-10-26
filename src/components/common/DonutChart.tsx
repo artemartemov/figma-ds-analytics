@@ -116,8 +116,8 @@ export function DonutChart({
         >
           <div
             style={{
-              fontSize: '14px',
-              fontWeight: '900',
+              fontSize: 'var(--font-size-xxl)',
+              fontWeight: 'var(--font-weight-black)',
               lineHeight: '1',
               fontFeatureSettings: '"tnum"',
               color: 'var(--text-primary)',
@@ -128,11 +128,11 @@ export function DonutChart({
           {centerLabel && (
             <div
               style={{
-                fontSize: '7px',
-                marginTop: '2px',
+                fontSize: 'var(--font-size-xxs)',
+                marginTop: 'var(--spacing-xxxs)',
                 opacity: 0.6,
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
+                letterSpacing: 'var(--letter-spacing-label)',
                 color: 'var(--text-primary)',
               }}
             >

@@ -1,5 +1,6 @@
 import { h, ComponentChild } from 'preact';
 import { VerticalSpace } from '@create-figma-plugin/ui';
+import { Text } from '../common';
 
 interface LibraryBreakdown {
   name: string;
@@ -15,58 +16,37 @@ interface ComponentsTabProps {
 export function ComponentsTab({ libraryBreakdown, renderComponentDetails }: ComponentsTabProps) {
   return (
     <div>
-      <div
-        style={{
-          fontSize: '12px',
-          color: 'var(--text-primary)',
-          fontWeight: '500',
-          textTransform: 'uppercase',
-          marginBottom: '16px',
-        }}
+      <Text
+        variant="card-heading"
+        as="div"
+        style={{ marginBottom: 'var(--card-heading-margin-bottom)' }}
       >
         Component Sources Overview
-      </div>
+      </Text>
 
       {/* Minimal bar charts */}
       {libraryBreakdown && libraryBreakdown.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: 'var(--spacing-xxl)' }}>
           {libraryBreakdown.map((lib, _index) => {
             return (
-              <div key={lib.name} style={{ marginBottom: '12px' }}>
+              <div key={lib.name} style={{ marginBottom: 'var(--list-item-margin-bottom)' }}>
                 <div
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '6px',
+                    marginBottom: 'var(--list-item-gap)',
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    {lib.name}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      fontFeatureSettings: '"tnum"',
-                      color: 'var(--text-tertiary)',
-                    }}
-                  >
-                    {lib.count}
-                  </span>
+                  <Text variant="label">{lib.name}</Text>
+                  <Text variant="value">{lib.count}</Text>
                 </div>
                 <div
                   style={{
-                    height: '2px',
+                    height: 'var(--progress-bar-height)',
                     width: '100%',
                     background: 'var(--track-bg-tab)',
-                    borderRadius: '4px',
+                    borderRadius: 'var(--progress-bar-border-radius)',
                   }}
                 >
                   <div
@@ -74,7 +54,7 @@ export function ComponentsTab({ libraryBreakdown, renderComponentDetails }: Comp
                       height: '100%',
                       width: lib.percentage + '%',
                       background: 'var(--progress-fill)',
-                      borderRadius: '4px',
+                      borderRadius: 'var(--progress-bar-border-radius)',
                       transformOrigin: 'left',
                       animation: 'barGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                     }}
@@ -89,17 +69,13 @@ export function ComponentsTab({ libraryBreakdown, renderComponentDetails }: Comp
       <VerticalSpace space="medium" />
 
       {/* Component Details Header */}
-      <div
-        style={{
-          fontSize: '12px',
-          color: 'var(--text-primary)',
-          fontWeight: '500',
-          textTransform: 'uppercase',
-          marginBottom: '16px',
-        }}
+      <Text
+        variant="card-heading"
+        as="div"
+        style={{ marginBottom: 'var(--card-heading-margin-bottom)' }}
       >
         Component Details
-      </div>
+      </Text>
 
       {renderComponentDetails()}
     </div>
