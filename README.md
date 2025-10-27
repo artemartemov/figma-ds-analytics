@@ -2,17 +2,6 @@
 
 A Figma plugin that measures design system adoption by analyzing component usage and token adoption in your designs. Built with research-backed methodologies from industry leaders like IBM, Atlassian, and Pinterest.
 
-## Features
-
-- **Selection-Based Analysis** - Analyze specific frames, sections, or components instead of entire pages
-- **Component Coverage** - Track usage of design system components vs. local/custom components
-- **Token Adoption** - Measure adoption of design tokens (colors, typography, radius, borders)
-- **Orphan Rate** - Identify hardcoded values that should be using design tokens (target: <20%)
-- **Foundation-First Weighting** - Research-backed formula (Token Adoption 55%, Component Coverage 45%)
-- **Library Breakdown** - See which team libraries are being used most
-- **Industry Benchmarks** - Compare your adoption against industry standards
-- **Transparent Formulas** - Show executives exactly how metrics are calculated
-
 ## Installation
 
 ### For Development
@@ -40,79 +29,6 @@ A Figma plugin that measures design system adoption by analyzing component usage
    - Open Figma Desktop App
    - Go to Plugins → Development → Import plugin from manifest...
    - Select the `manifest.json` file from this directory
-
-## Usage
-
-### Quick Start
-
-1. **Select** one or more frames, sections, or components on your canvas
-2. **Run** the plugin from Plugins → Design System Coverage
-3. **View** your metrics and insights
-
-### Configure Team Libraries
-
-1. Click **⚙️ Settings** in the plugin
-2. Enable the team libraries you want to track
-3. Click **Save & Apply**
-4. Re-analyze your selection
-
-### Understanding the Metrics
-
-#### Design System Adoption (Overall Score)
-
-**Formula:** `(Token Adoption × 0.55) + (Component Coverage × 0.45)`
-
-The overall adoption score uses **Foundation-First weighting** that prioritizes design tokens (55%) over component coverage (45%). This reflects industry research showing that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.
-
-**Industry Benchmarks:**
-
-- **<40%** - Early adoption (needs intervention)
-- **40-60%** - Healthy early growth (focus on education)
-- **60-80%** - Strong momentum (optimize and migrate)
-- **80-95%** - Mature success (sustainability focus)
-- **>95%** - Exceptional achievement (industry-leading)
-
-#### Component Coverage
-
-**Formula:** `DS Components / (DS Components + Local Components) × 100`
-
-Measures what percentage of component instances come from your design system libraries vs. local/custom components.
-
-#### Token Adoption
-
-**Formula:** `Variable-bound Properties / (Variable-bound + Hardcoded Properties) × 100`
-
-Measures the percentage of properties (colors, typography, radius, borders) that are using design tokens instead of hardcoded values. This is calculated at the **property level**, not component level.
-
-#### Orphan Rate
-
-**Formula:** `Hardcoded Properties / Total Properties × 100`
-
-The inverse of Token Adoption. Identifies "orphan" values - hardcoded colors, typography, radius, and borders that should be using design tokens. Industry target is **<20%**.
-
-**What's measured:**
-
-- ✅ Colors (fills, strokes)
-- ✅ Typography (font size, line height, letter spacing, font family, weight)
-- ✅ Border Radius (corner radius > 0)
-- ✅ Borders (stroke weight > 0)
-- ❌ Spacing (currently excluded)
-
-**What's skipped:**
-
-- Zero values (padding: 0, radius: 0, strokeWeight: 0)
-- Invisible fills/strokes
-- Text using text styles (counted as token adoption)
-
-## Performance
-
-The plugin is optimized for large files:
-
-- **Instance Limit:** Analyzes up to 1,000 component instances for detailed token detection
-- **Depth Limit:** Traverses up to 50 levels deep to prevent stack overflow
-- **Progress Logging:** Shows progress every 100 instances in the console (Cmd+Option+I)
-
-For files with thousands of components, use selection-based analysis to target specific sections.
 
 ## Development
 
@@ -226,6 +142,98 @@ npm run watch
 - `npm run build` - Compile TypeScript to JavaScript
 - `npm run watch` - Watch mode for development (if configured)
 
+### Development with Claude Code
+
+This project includes Claude Code instructions in `.claude/CLAUDE.md` for AI-assisted development. If you're using Claude Code:
+
+1. Open the project in Claude Code
+2. Claude will automatically read the project instructions
+3. Ask Claude to help with features, bug fixes, or refactoring
+
+## Usage
+
+### Quick Start
+
+1. **Select** one or more frames, sections, or components on your canvas
+2. **Run** the plugin from Plugins → Design System Coverage
+3. **View** your metrics and insights
+
+### Configure Team Libraries
+
+1. Click **⚙️ Settings** in the plugin
+2. Enable the team libraries you want to track
+3. Click **Save & Apply**
+4. Re-analyze your selection
+
+## Features
+
+- **Selection-Based Analysis** - Analyze specific frames, sections, or components instead of entire pages
+- **Component Coverage** - Track usage of design system components vs. local/custom components
+- **Token Adoption** - Measure adoption of design tokens (colors, typography, radius, borders)
+- **Orphan Rate** - Identify hardcoded values that should be using design tokens (target: <20%)
+- **Foundation-First Weighting** - Research-backed formula (Token Adoption 55%, Component Coverage 45%)
+- **Library Breakdown** - See which team libraries are being used most
+- **Industry Benchmarks** - Compare your adoption against industry standards
+- **Transparent Formulas** - Show executives exactly how metrics are calculated
+
+## Understanding the Metrics
+
+### Design System Adoption (Overall Score)
+
+**Formula:** `(Token Adoption × 0.55) + (Component Coverage × 0.45)`
+
+The overall adoption score uses **Foundation-First weighting** that prioritizes design tokens (55%) over component coverage (45%). This reflects industry research showing that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.
+
+**Industry Benchmarks:**
+
+- **<40%** - Early adoption (needs intervention)
+- **40-60%** - Healthy early growth (focus on education)
+- **60-80%** - Strong momentum (optimize and migrate)
+- **80-95%** - Mature success (sustainability focus)
+- **>95%** - Exceptional achievement (industry-leading)
+
+### Component Coverage
+
+**Formula:** `DS Components / (DS Components + Local Components) × 100`
+
+Measures what percentage of component instances come from your design system libraries vs. local/custom components.
+
+### Token Adoption
+
+**Formula:** `Variable-bound Properties / (Variable-bound + Hardcoded Properties) × 100`
+
+Measures the percentage of properties (colors, typography, radius, borders) that are using design tokens instead of hardcoded values. This is calculated at the **property level**, not component level.
+
+### Orphan Rate
+
+**Formula:** `Hardcoded Properties / Total Properties × 100`
+
+The inverse of Token Adoption. Identifies "orphan" values - hardcoded colors, typography, radius, and borders that should be using design tokens. Industry target is **<20%**.
+
+**What's measured:**
+
+- ✅ Colors (fills, strokes)
+- ✅ Typography (font size, line height, letter spacing, font family, weight)
+- ✅ Border Radius (corner radius > 0)
+- ✅ Borders (stroke weight > 0)
+- ❌ Spacing (currently excluded)
+
+**What's skipped:**
+
+- Zero values (padding: 0, radius: 0, strokeWeight: 0)
+- Invisible fills/strokes
+- Text using text styles (counted as token adoption)
+
+## Performance
+
+The plugin is optimized for large files:
+
+- **Instance Limit:** Analyzes up to 1,000 component instances for detailed token detection
+- **Depth Limit:** Traverses up to 50 levels deep to prevent stack overflow
+- **Progress Logging:** Shows progress every 100 instances in the console (Cmd+Option+I)
+
+For files with thousands of components, use selection-based analysis to target specific sections.
+
 ## Research Foundation
 
 This plugin's methodology is based on research from:
@@ -253,14 +261,6 @@ Contributions are welcome! Please:
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-### Development with Claude Code
-
-This project includes Claude Code instructions in `.claude/CLAUDE.md` for AI-assisted development. If you're using Claude Code:
-
-1. Open the project in Claude Code
-2. Claude will automatically read the project instructions
-3. Ask Claude to help with features, bug fixes, or refactoring
 
 ## Roadmap
 
