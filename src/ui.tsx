@@ -711,7 +711,10 @@ Wrapper components (local components built with DS) are excluded from this count
             fullWidth
             style={{
               borderRadius: '0',
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'flex-start',
+              gap: '8px',
               paddingLeft: '20px',
             }}
           >
