@@ -8,7 +8,7 @@ A Figma plugin that measures design system adoption by analyzing component usage
 - **Component Coverage** - Track usage of design system components vs. local/custom components
 - **Token Adoption** - Measure adoption of design tokens (colors, typography, radius, borders)
 - **Orphan Rate** - Identify hardcoded values that should be using design tokens (target: <20%)
-- **Balanced Weighting** - Equal weight formula (Variables 50%, Components 50%)
+- **Foundation-First Weighting** - Research-backed formula (Token Adoption 55%, Component Coverage 45%)
 - **Library Breakdown** - See which team libraries are being used most
 - **Industry Benchmarks** - Compare your adoption against industry standards
 - **Transparent Formulas** - Show executives exactly how metrics are calculated
@@ -18,17 +18,20 @@ A Figma plugin that measures design system adoption by analyzing component usage
 ### For Development
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/artemartemov/figma-ds-analytics.git
    cd figma-ds-analytics
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Build the plugin**
+
    ```bash
    npm run build
    ```
@@ -56,11 +59,13 @@ A Figma plugin that measures design system adoption by analyzing component usage
 ### Understanding the Metrics
 
 #### Design System Adoption (Overall Score)
-**Formula:** `(Token Adoption × 0.5) + (Component Coverage × 0.5)`
 
-The overall adoption score uses **balanced weighting** that treats design tokens and components equally (50% each). This provides a comprehensive view of design system adoption across both foundational elements and component usage.
+**Formula:** `(Token Adoption × 0.55) + (Component Coverage × 0.45)`
+
+The overall adoption score uses **Foundation-First weighting** that prioritizes design tokens (55%) over component coverage (45%). This reflects industry research showing that foundational elements (tokens/variables) drive 80% of consistency value. Tokens are harder to adopt but more impactful than components.
 
 **Industry Benchmarks:**
+
 - **<40%** - Early adoption (needs intervention)
 - **40-60%** - Healthy early growth (focus on education)
 - **60-80%** - Strong momentum (optimize and migrate)
@@ -68,21 +73,25 @@ The overall adoption score uses **balanced weighting** that treats design tokens
 - **>95%** - Exceptional achievement (industry-leading)
 
 #### Component Coverage
+
 **Formula:** `DS Components / (DS Components + Local Components) × 100`
 
 Measures what percentage of component instances come from your design system libraries vs. local/custom components.
 
 #### Token Adoption
+
 **Formula:** `Variable-bound Properties / (Variable-bound + Hardcoded Properties) × 100`
 
 Measures the percentage of properties (colors, typography, radius, borders) that are using design tokens instead of hardcoded values. This is calculated at the **property level**, not component level.
 
 #### Orphan Rate
+
 **Formula:** `Hardcoded Properties / Total Properties × 100`
 
 The inverse of Token Adoption. Identifies "orphan" values - hardcoded colors, typography, radius, and borders that should be using design tokens. Industry target is **<20%**.
 
 **What's measured:**
+
 - ✅ Colors (fills, strokes)
 - ✅ Typography (font size, line height, letter spacing, font family, weight)
 - ✅ Border Radius (corner radius > 0)
@@ -90,6 +99,7 @@ The inverse of Token Adoption. Identifies "orphan" values - hardcoded colors, ty
 - ❌ Spacing (currently excluded)
 
 **What's skipped:**
+
 - Zero values (padding: 0, radius: 0, strokeWeight: 0)
 - Invisible fills/strokes
 - Text using text styles (counted as token adoption)
@@ -97,6 +107,7 @@ The inverse of Token Adoption. Identifies "orphan" values - hardcoded colors, ty
 ## Performance
 
 The plugin is optimized for large files:
+
 - **Instance Limit:** Analyzes up to 1,000 component instances for detailed token detection
 - **Depth Limit:** Traverses up to 50 levels deep to prevent stack overflow
 - **Progress Logging:** Shows progress every 100 instances in the console (Cmd+Option+I)
@@ -109,38 +120,96 @@ For files with thousands of components, use selection-based analysis to target s
 
 ```
 figma-ds-coverage/
-├── code.ts           # Main plugin logic (TypeScript)
-├── ui.html           # Plugin UI (HTML/CSS/JS)
-├── manifest.json     # Plugin manifest
-├── tsconfig.json     # TypeScript configuration
-├── package.json      # Dependencies
-├── .claude/          # Claude Code instructions
-└── README.md         # Documentation
+├── src/
+│   ├── code.ts                      # Plugin backend (Figma sandbox)
+│   ├── ui.tsx                       # Main UI component (755 lines, refactored from 2,238)
+│   ├── content/                     # Content management
+│   │   ├── index.ts                # Central export point
+│   │   ├── constants.ts            # App constants (colors, weights, sources)
+│   │   ├── messages.ts             # UI messages, labels, tooltips, modals
+│   │   ├── help.ts                 # Help documentation content
+│   │   └── types.ts                # Shared type definitions
+│   ├── utils/                       # Business logic utilities
+│   │   ├── libraryHelpers.ts       # Library detection & categorization
+│   │   ├── metricsCalculation.ts   # Metrics calculation logic
+│   │   └── orphanHelpers.ts        # Orphan instance management
+│   ├── components/                  # UI components
+│   │   ├── common/                 # Reusable components (Button, Checkbox, etc.)
+│   │   ├── cards/                  # Metric cards (StatCard, etc.)
+│   │   ├── sections/               # Detail sections (ComponentDetails, OrphanDetails)
+│   │   ├── modals/                 # Modal components (Help, Onboarding, Settings)
+│   │   └── tabs/                   # Tab content (Overview, Components, Tokens)
+│   ├── icons/                       # SVG icon definitions
+│   ├── theme.ts                     # Design token system (CSS variables)
+│   └── types.ts                     # Global type definitions
+├── manifest.json                    # Figma plugin configuration
+├── tsconfig.json                    # TypeScript configuration
+├── package.json                     # Dependencies
+├── .claude/                         # Claude Code instructions
+│   └── CLAUDE.md
+└── README.md                        # Documentation
 ```
+
+**Architecture Highlights:**
+
+- **Modular Design** - Separated concerns into content, utils, and components
+- **66% Size Reduction** - ui.tsx reduced from 2,238 lines to 755 lines
+- **Centralized Constants** - Single source of truth for colors, weights, and text
+- **Reusable Utilities** - Pure functions for metrics calculation and library detection
+- **Design Token System** - CSS variables in theme.ts for consistent styling
 
 ### Key Functions
 
-**`analyzeCoverage()`** (code.ts:4551)
-- Main analysis function
+#### Backend (src/code.ts)
+
+**`analyzeCoverage()`**
+
+- Main analysis function running in Figma sandbox
 - Scans selected nodes for component instances
 - Counts library vs. local components
 - Detects variable-bound and hardcoded properties
-- Returns metrics object
+- Returns CoverageMetrics object to UI
 
-**`countVariableBoundProperties()`** (code.ts:5129)
+**`countVariableBoundProperties()`**
+
 - Counts properties using design tokens
 - Checks fills, strokes, typography, radius, borders
-- Skips zero values
+- Skips zero values to avoid false positives
 
-**`detectHardcodedValues()`** (code.ts:5253)
+**`detectHardcodedValues()`**
+
 - Detects hardcoded properties (orphans)
 - Mirror logic of countVariableBoundProperties
 - Filters out intentional zero values
 
-**`displayResults()`** (ui.html:452)
-- Renders metrics in the UI
-- Calculates balanced 50/50 weighted score
-- Shows breakdowns and benchmarks
+#### Frontend (src/)
+
+**`getFilteredMetrics()`** (utils/metricsCalculation.ts)
+
+- Main metrics calculation orchestrator
+- Filters ignored components and instances
+- Calculates component counts and token adoption
+- Applies Foundation-First weighting (55/45)
+- Returns FilteredMetrics for UI display
+
+**Library Detection** (utils/libraryHelpers.ts)
+
+- `isWrapperComponent()` - Detects local wrapper components
+- `isLibraryComponent()` - Detects design system library components
+- `categorizeComponentSource()` - Unified categorization logic
+
+**Content Management** (content/)
+
+- `constants.ts` - Centralized colors, weights, library sources
+- `messages.ts` - UI labels, tooltips, modal content generators
+- `help.ts` - Help documentation and onboarding content
+
+**UI Components** (components/)
+
+- `StatCard` - Metric display cards with tooltips
+- `ComponentDetailsSection` - Component instance breakdowns
+- `OrphanDetailsSection` - Hardcoded value details
+- `Modal`, `HelpModal`, `OnboardingModal` - Modal dialogs
 
 ### Building
 
@@ -167,11 +236,13 @@ This plugin's methodology is based on research from:
 - **Airbnb Design System** - Near 100% at maturity
 
 Key insights applied:
-- Balanced weighting (tokens = components, 50/50 split)
-- Orphan Rate as a quality metric (<20% target)
-- Property-level token measurement (not component-level)
-- Transparent formula display for executives
-- Industry benchmarks for context
+
+- **Foundation-First weighting** (tokens 55%, components 45%) - Research shows foundational elements drive 80% of consistency value
+- **Orphan Rate** as a quality metric (<20% target)
+- **Property-level** token measurement (not component-level)
+- **Transparent formulas** displayed to executives with calculation breakdowns
+- **Industry benchmarks** for context and goal-setting
+- **Modular architecture** for maintainability and extensibility
 
 ## Contributing
 
