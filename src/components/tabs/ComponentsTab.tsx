@@ -1,5 +1,6 @@
 import { h } from 'preact';
-import { VerticalSpace } from '@create-figma-plugin/ui';
+import { useState } from 'preact/hooks';
+import { VerticalSpace, Textbox } from '@create-figma-plugin/ui';
 import { Text } from '../common';
 import { ComponentDetailsSection } from '../sections';
 import type { ComponentInstanceDetail } from '../../types';
@@ -33,6 +34,20 @@ export function ComponentsTab({
   onToggleIgnoreInstance,
   onSelectNode,
 }: ComponentsTabProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter component details based on search query
+  const filteredComponents = componentDetails.filter((instance) => {
+    if (!searchQuery.trim()) return true;
+
+    const query = searchQuery.toLowerCase();
+    return (
+      instance.instanceName.toLowerCase().includes(query) ||
+      instance.componentName.toLowerCase().includes(query) ||
+      instance.librarySource.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div>
       <Text
@@ -96,8 +111,30 @@ export function ComponentsTab({
         Component Details
       </Text>
 
+      {/* Search Filter */}
+      <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+        <Textbox
+          onInput={(e) => setSearchQuery(e.currentTarget.value)}
+          placeholder="Search components..."
+          value={searchQuery}
+        />
+        {searchQuery && (
+          <Text
+            variant="label"
+            style={{
+              marginTop: 'var(--spacing-xs)',
+              color: 'var(--figma-color-text-secondary)',
+              fontSize: '10px',
+            }}
+          >
+            {filteredComponents.length} of {componentDetails.length} component
+            {componentDetails.length === 1 ? '' : 's'}
+          </Text>
+        )}
+      </div>
+
       <ComponentDetailsSection
-        componentDetails={componentDetails}
+        componentDetails={filteredComponents}
         collapsedSections={collapsedSections}
         ignoredInstances={ignoredInstances}
         ignoredLibraries={ignoredLibraries}
