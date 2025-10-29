@@ -148,8 +148,9 @@ export async function analyzeTokens(
   // Collect token-bound property details
   const tokenBoundDetails: TokenBoundDetail[] = [];
   for (const instance of instancesToAnalyze) {
-    const componentId = instance.mainComponent?.id || instance.id;
-    const componentName = instance.mainComponent?.name || instance.name || 'Unknown Component';
+    const mainComponent = await instance.getMainComponentAsync();
+    const componentId = mainComponent?.id || instance.id;
+    const componentName = mainComponent?.name || instance.name || 'Unknown Component';
     const instanceId = instance.id;
     collectTokenBoundDetails(
       instance,
@@ -210,8 +211,9 @@ export async function analyzeOrphans(
   // Collect detailed orphan information
   const orphanDetails: OrphanDetail[] = [];
   for (const instance of instancesToAnalyze) {
-    const componentId = instance.mainComponent?.id || instance.id;
-    const componentName = instance.mainComponent?.name || instance.name || 'Unknown Component';
+    const mainComponent = await instance.getMainComponentAsync();
+    const componentId = mainComponent?.id || instance.id;
+    const componentName = mainComponent?.name || instance.name || 'Unknown Component';
     const instanceId = instance.id;
     collectOrphanDetails(instance, orphanDetails, 0, componentId, componentName, instanceId);
   }

@@ -105,7 +105,7 @@ async function analyzeCoverage(): Promise<CoverageMetrics> {
     librarySourceCounts,
     componentInstanceDetails,
     wrapperInstanceIds,
-  } = categorizeInstances(componentInstances, getLibraryNameFromKey);
+  } = await categorizeInstances(componentInstances, getLibraryNameFromKey);
 
   // Step 3: Calculate variable usage (component-level)
   const { componentsWithVariables, componentsWithoutVariables } = calculateVariableUsage(
