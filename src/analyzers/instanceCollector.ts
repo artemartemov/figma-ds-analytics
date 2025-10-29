@@ -20,16 +20,16 @@ export interface CategorizationResult {
 /**
  * Helper: Check if a component instance contains DS components internally
  */
-function containsDSComponents(
+async function containsDSComponents(
   instance: InstanceNode,
   getLibraryNameFromKey: (key: string) => string | null
-): boolean {
+): Promise<boolean> {
   if (!('findAll' in instance)) return false;
 
   const internalInstances = instance.findAll((node) => node.type === 'INSTANCE') as InstanceNode[];
 
   for (const internal of internalInstances) {
-    const mainComp = internal.mainComponent;
+    const mainComp = await internal.getMainComponentAsync();
     if (mainComp?.remote && mainComp.key) {
       const mappedLib = getLibraryNameFromKey(mainComp.key);
       if (mappedLib) {
@@ -86,10 +86,10 @@ export function collectComponentInstances(
 /**
  * Categorize component instances into library, local, and wrapper types
  */
-export function categorizeInstances(
+export async function categorizeInstances(
   componentInstances: InstanceNode[],
   getLibraryNameFromKey: (key: string) => string | null
-): CategorizationResult {
+): Promise<CategorizationResult> {
   let libraryInstances = 0;
   let localInstances = 0;
 
@@ -106,12 +106,12 @@ export function categorizeInstances(
   const wrapperInstanceIds = new Set<string>();
 
   for (const instance of componentInstances) {
-    const mainComponent = instance.mainComponent;
+    const mainComponent = await instance.getMainComponentAsync();
     const isRemote = mainComponent?.remote === true;
 
     if (!isRemote) {
       // Check if this local component contains DS components
-      const usesDS = containsDSComponents(instance, getLibraryNameFromKey);
+      const usesDS = await containsDSComponents(instance, getLibraryNameFromKey);
       if (usesDS) {
         // This is a wrapper - mark it for exclusion from counts
         wrapperInstanceIds.add(instance.id);
@@ -121,7 +121,7 @@ export function categorizeInstances(
 
   // Step 2: Process all instances for categorization and counting
   for (const instance of componentInstances) {
-    const mainComponent = instance.mainComponent;
+    const mainComponent = await instance.getMainComponentAsync();
     const isRemote = mainComponent?.remote === true;
     const isWrapper = wrapperInstanceIds.has(instance.id);
 
