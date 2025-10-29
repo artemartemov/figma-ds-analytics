@@ -6,6 +6,7 @@
   "main": "build/main.js",
   "ui": "build/ui.js",
   "permissions": ["teamlibrary"],
+  "documentAccess": "dynamic-page",
   "networkAccess": {
     "allowedDomains": ["https://api.figma.com"]
   }
