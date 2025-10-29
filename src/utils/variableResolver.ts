@@ -7,9 +7,9 @@ const aliasResolutions = new Map<string, string>();
  * Resolve a variable ID to its source (following alias chain)
  * Internal helper function
  */
-function resolveVariableId(id: string): string {
+async function resolveVariableId(id: string): Promise<string> {
   try {
-    const variable = figma.variables.getVariableById(id);
+    const variable = await figma.variables.getVariableByIdAsync(id);
     if (!variable) return id;
 
     // Check if this variable is an alias by looking at its value
@@ -20,7 +20,7 @@ function resolveVariableId(id: string): string {
     if (value && typeof value === 'object' && 'id' in value) {
       // This is an alias - recursively resolve to find the source
       const aliasedId = (value as any).id;
-      const resolvedId = resolveVariableId(aliasedId);
+      const resolvedId = await resolveVariableId(aliasedId);
       // Track the resolution for debugging
       if (resolvedId !== id) {
         aliasResolutions.set(id, resolvedId);
@@ -39,7 +39,7 @@ function resolveVariableId(id: string): string {
  * Collect all variable IDs from a node's bound variables
  * Internal helper function
  */
-function collectVariableIds(node: any): Set<string> {
+async function collectVariableIds(node: any): Promise<Set<string>> {
   const variableIds = new Set<string>();
 
   if (!node.boundVariables) return variableIds;
@@ -47,45 +47,49 @@ function collectVariableIds(node: any): Set<string> {
   const boundVariables = node.boundVariables;
 
   // Helper to extract IDs from variable bindings and resolve aliases
-  const extractId = (binding: any) => {
+  const extractId = async (binding: any) => {
     if (binding && binding.id) {
       // Resolve aliases to get the source variable ID
-      const resolvedId = resolveVariableId(binding.id);
+      const resolvedId = await resolveVariableId(binding.id);
       variableIds.add(resolvedId);
     }
   };
 
   // Helper to extract IDs from arrays of bindings
-  const extractFromArray = (arr: any[]) => {
+  const extractFromArray = async (arr: any[]) => {
     if (Array.isArray(arr)) {
-      arr.forEach(extractId);
+      for (const item of arr) {
+        await extractId(item);
+      }
     }
   };
 
   // Check for variables in fills
   if (boundVariables.fills) {
-    extractFromArray(boundVariables.fills);
+    await extractFromArray(boundVariables.fills);
   }
 
   // Check for variables in strokes
   if (boundVariables.strokes) {
-    extractFromArray(boundVariables.strokes);
+    await extractFromArray(boundVariables.strokes);
   }
 
   // Check for variables in component properties
   if (boundVariables.componentProperties) {
     const props = Object.values(boundVariables.componentProperties);
-    props.forEach(extractId);
+    for (const prop of props) {
+      await extractId(prop);
+    }
   }
 
   // Check for variables in effects
   if (boundVariables.effects) {
-    extractFromArray(boundVariables.effects);
+    await extractFromArray(boundVariables.effects);
   }
 
   // Check for variables in layout grids
   if (boundVariables.layoutGrids) {
-    extractFromArray(boundVariables.layoutGrids);
+    await extractFromArray(boundVariables.layoutGrids);
   }
 
   // Check other common bindable fields
@@ -122,13 +126,13 @@ function collectVariableIds(node: any): Set<string> {
 
   for (const field of fields) {
     if (boundVariables[field]) {
-      extractId(boundVariables[field]);
+      await extractId(boundVariables[field]);
     }
   }
 
   // Check text range fills
   if (boundVariables.textRangeFills) {
-    extractFromArray(boundVariables.textRangeFills);
+    await extractFromArray(boundVariables.textRangeFills);
   }
 
   return variableIds;
@@ -137,18 +141,18 @@ function collectVariableIds(node: any): Set<string> {
 /**
  * Recursively collect all variable IDs from a node and its children
  */
-export function collectVariableIdsRecursive(node: any): Set<string> {
+export async function collectVariableIdsRecursive(node: any): Promise<Set<string>> {
   const allIds = new Set<string>();
 
   // Collect from this node
-  const nodeIds = collectVariableIds(node);
+  const nodeIds = await collectVariableIds(node);
   nodeIds.forEach((id) => allIds.add(id));
 
   // Recursively collect from children
   if ('children' in node) {
     const children = node.children as SceneNode[];
     for (const child of children) {
-      const childIds = collectVariableIdsRecursive(child);
+      const childIds = await collectVariableIdsRecursive(child);
       childIds.forEach((id) => allIds.add(id));
     }
   }

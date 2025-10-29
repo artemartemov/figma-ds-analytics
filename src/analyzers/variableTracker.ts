@@ -24,7 +24,7 @@ export async function trackVariableUsage(
 
   // Collect all variable IDs from component instances
   for (const instance of componentInstances) {
-    const variableIds = collectVariableIdsRecursive(instance);
+    const variableIds = await collectVariableIdsRecursive(instance);
 
     for (const id of variableIds) {
       allVariableIds.add(id);
@@ -39,9 +39,9 @@ export async function trackVariableUsage(
       } else {
         // Variable not in mapping - try to get collection info for debugging
         unmappedVariableIds.add(id);
-        const variable = figma.variables.getVariableById(id);
+        const variable = await figma.variables.getVariableByIdAsync(id);
         if (variable) {
-          const collection = figma.variables.getVariableCollectionById(
+          const collection = await figma.variables.getVariableCollectionByIdAsync(
             variable.variableCollectionId
           );
           if (collection && collection.remote) {
