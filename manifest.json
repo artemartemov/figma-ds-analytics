@@ -1,18 +1,12 @@
 {
   "api": "1.0.0",
-  "editorType": [
-    "figma"
-  ],
-  "id": "ds-coverage-tracker",
+  "editorType": ["figma"],
+  "id": "1565423802456660407",
   "name": "Design System Coverage",
   "main": "build/main.js",
   "ui": "build/ui.js",
-  "permissions": [
-    "teamlibrary"
-  ],
+  "permissions": ["teamlibrary"],
   "networkAccess": {
-    "allowedDomains": [
-      "https://api.figma.com"
-    ]
+    "allowedDomains": ["https://api.figma.com"]
   }
 }
